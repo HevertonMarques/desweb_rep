@@ -1,0 +1,10 @@
+﻿Funcionalidade;Administrador;Coordenador;Orientador;Aluno;Acesso público
+Carga massiva de projetos;X;;;;
+Carga massiva de professores;X;;;;
+CRUD de professor;;X;;;
+Consultar projetos;;X;;;X
+Registrar trabalho, grupo e membros (CRUD de trabalhos);;;X;;
+Informar áreas de atuação, interdisciplinaridade e setor externo;;;X;;
+Realizar status (andamento): todos os status;;;X;;
+Realizar status (andamento): Cancelado, Pendente, Concluído;;;;X;
+Confirmar participação no grupo (time);;;;X;

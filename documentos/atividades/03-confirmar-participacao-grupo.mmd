@@ -1,0 +1,18 @@
+flowchart TD
+  ini(("Início")) --> a1["Aluno acessa o sistema"]
+  a1 --> s1["Sistema lista os grupos em que o aluno foi adicionado"]
+  s1 --> d1{"Há participação pendente?"}
+  d1 -- Não --> s2["Sistema informa que não há pendências"]
+  d1 -- Sim --> a2["Aluno seleciona o grupo"]
+  a2 --> d2{"Aluno confirma a participação?"}
+  d2 -- Sim --> s3["Sistema registra a participação como confirmada"]
+  d2 -- Não --> s4["Sistema mantém a participação pendente"]
+  s2 --> fim((Fim))
+  s3 --> fim
+  s4 --> fim
+  classDef ator fill:#E6F1FB,stroke:#185FA5,color:#0C447C
+  classDef sis fill:#F1EFE8,stroke:#5F5E5A,color:#2C2C2A
+  classDef dec fill:#FAEEDA,stroke:#854F0B,color:#633806
+  class a1,a2 ator
+  class s1,s2,s3,s4 sis
+  class d1,d2 dec

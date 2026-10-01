@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1360" height="1280" viewBox="0 0 680 640" font-family="Arial, Helvetica, sans-serif">
+<rect width="680" height="640" fill="#ffffff"/>
+<rect x="150" y="36" width="380" height="576" rx="12" fill="none" stroke="#888780" stroke-width="1" stroke-dasharray="5 4"/>
+<text x="340" y="56" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" fill="#2C2C2A">Módulo controle (registro)</text>
+<g stroke="#5F5E5A" stroke-width="0.8" fill="none">
+<line x1="89" y1="119" x2="170" y2="100"/>
+<line x1="89" y1="119" x2="170" y2="158"/>
+<line x1="89" y1="235" x2="170" y2="216"/>
+<line x1="89" y1="235" x2="170" y2="274"/>
+<line x1="89" y1="330" x2="170" y2="274"/>
+<line x1="591" y1="380" x2="510" y2="332"/>
+<line x1="591" y1="380" x2="510" y2="390"/>
+<line x1="591" y1="380" x2="510" y2="448"/>
+<line x1="591" y1="525" x2="510" y2="506"/>
+<line x1="591" y1="525" x2="510" y2="566"/>
+</g>
+<ellipse cx="340" cy="100" rx="170" ry="24" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.8"/>
+<text x="340" y="100" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" fill="#3C3489">Carga massiva de projetos</text>
+<ellipse cx="340" cy="158" rx="170" ry="24" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.8"/>
+<text x="340" y="158" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" fill="#3C3489">Carga massiva de professores</text>
+<ellipse cx="340" cy="216" rx="170" ry="24" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.8"/>
+<text x="340" y="216" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" fill="#3C3489">CRUD de professor</text>
+<ellipse cx="340" cy="274" rx="170" ry="24" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.8"/>
+<text x="340" y="274" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" fill="#3C3489">Consultar projetos</text>
+<ellipse cx="340" cy="332" rx="170" ry="24" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.8"/>
+<text x="340" y="332" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" fill="#3C3489">Registrar trabalho, grupo e membros</text>
+<ellipse cx="340" cy="390" rx="170" ry="28" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.8"/>
+<text x="340" y="381" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" fill="#3C3489">Informar áreas de atuação,</text>
+<text x="340" y="399" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" fill="#3C3489">interdisciplinaridade e setor externo</text>
+<ellipse cx="340" cy="448" rx="170" ry="24" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.8"/>
+<text x="340" y="448" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" fill="#3C3489">Realizar status (andamento)</text>
+<ellipse cx="340" cy="506" rx="170" ry="24" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.8"/>
+<text x="340" y="506" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" fill="#3C3489">Confirmar participação no grupo</text>
+<ellipse cx="340" cy="566" rx="170" ry="28" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.8"/>
+<text x="340" y="557" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" fill="#3C3489">Realizar status (andamento)</text>
+<text x="340" y="575" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="normal" fill="#3C3489">Cancelado, pendente, concluído</text>
+<g stroke="#2C2C2A" stroke-width="1.5" fill="none" stroke-linecap="round">
+<circle cx="75" cy="93" r="8"/><line x1="75" y1="101" x2="75" y2="125"/><line x1="63" y1="109" x2="87" y2="109"/><line x1="75" y1="125" x2="65" y2="141"/><line x1="75" y1="125" x2="85" y2="141"/>
+<circle cx="75" cy="209" r="8"/><line x1="75" y1="217" x2="75" y2="241"/><line x1="63" y1="225" x2="87" y2="225"/><line x1="75" y1="241" x2="65" y2="257"/><line x1="75" y1="241" x2="85" y2="257"/>
+<circle cx="75" cy="304" r="8"/><line x1="75" y1="312" x2="75" y2="336"/><line x1="63" y1="320" x2="87" y2="320"/><line x1="75" y1="336" x2="65" y2="352"/><line x1="75" y1="336" x2="85" y2="352"/>
+<circle cx="605" cy="354" r="8"/><line x1="605" y1="362" x2="605" y2="386"/><line x1="593" y1="370" x2="617" y2="370"/><line x1="605" y1="386" x2="595" y2="402"/><line x1="605" y1="386" x2="615" y2="402"/>
+<circle cx="605" cy="499" r="8"/><line x1="605" y1="507" x2="605" y2="531"/><line x1="593" y1="515" x2="617" y2="515"/><line x1="605" y1="531" x2="595" y2="547"/><line x1="605" y1="531" x2="615" y2="547"/>
+</g>
+<text x="75" y="162" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" fill="#2C2C2A">Administrador</text>
+<text x="75" y="278" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" fill="#2C2C2A">Coordenador</text>
+<text x="75" y="373" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" fill="#2C2C2A">Acesso público</text>
+<text x="605" y="424" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" fill="#2C2C2A">Orientador</text>
+<text x="605" y="441" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="normal" fill="#2C2C2A">(professor)</text>
+<text x="605" y="569" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" fill="#2C2C2A">Aluno</text>
+<text x="605" y="586" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="normal" fill="#2C2C2A">(membro de time)</text>
+</svg>

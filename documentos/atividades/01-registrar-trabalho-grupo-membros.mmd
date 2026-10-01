@@ -1,0 +1,24 @@
+flowchart TD
+  ini(("Início")) --> a1["Orientador acessa o sistema"]
+  a1 --> a2["Orientador informa os dados do trabalho"]
+  a2 --> a3["Orientador informa áreas de atuação, interdisciplinaridade e setor externo"]
+  a3 --> d1{"Dados válidos?"}
+  d1 -- Não --> s1["Sistema exibe os erros"]
+  s1 --> a2
+  d1 -- Sim --> s2["Sistema registra o projeto com status NOVO"]
+  s2 --> a4["Orientador adiciona o grupo"]
+  a4 --> a5["Orientador adiciona um membro (aluno)"]
+  a5 --> d2{"Aluno localizado?"}
+  d2 -- Não --> s3["Sistema informa que o aluno não foi encontrado"]
+  s3 --> a5
+  d2 -- Sim --> s4["Sistema vincula o aluno ao grupo, aguardando confirmação"]
+  s4 --> d3{"Adicionar outro membro?"}
+  d3 -- Sim --> a5
+  d3 -- Não --> s5["Sistema salva o grupo e os membros"]
+  s5 --> fim((Fim))
+  classDef ator fill:#E6F1FB,stroke:#185FA5,color:#0C447C
+  classDef sis fill:#F1EFE8,stroke:#5F5E5A,color:#2C2C2A
+  classDef dec fill:#FAEEDA,stroke:#854F0B,color:#633806
+  class a1,a2,a3,a4,a5 ator
+  class s1,s2,s3,s4,s5 sis
+  class d1,d2,d3 dec
