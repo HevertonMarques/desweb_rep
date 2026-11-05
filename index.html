@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DevTrack System - Painel de Controle e Registros</title>
+  <title>DevTrack System - Gestão e Perfis de Acesso</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <script>
@@ -37,9 +37,6 @@
       background: rgba(156, 163, 175, 0.3);
       border-radius: 3px;
     }
-    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-      background: rgba(156, 163, 175, 0.5);
-    }
   </style>
 </head>
 <body class="bg-slate-900 text-slate-100 font-sans antialiased min-h-screen flex flex-col transition-colors duration-200" id="app-body">
@@ -56,7 +53,6 @@
       <div class="p-4 border-b border-slate-800/80 flex items-center justify-between">
         <div class="flex items-center gap-3 min-w-0">
           <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-400 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20 shrink-0">
-            <i class="fa-solid fa-[#]"></i>
             <i class="fa-solid fa-square-poll-vertical text-lg"></i>
           </div>
           <div class="min-w-0">
@@ -76,7 +72,7 @@
         </div>
         <div class="min-w-0 flex-1">
           <div class="text-xs font-semibold text-slate-200 truncate">DevTrack System</div>
-          <div class="text-[11px] text-slate-400 truncate">v2.4 • Prof. André Marcos</div>
+          <div class="text-[11px] text-slate-400 truncate">v2.5 • Controle de Níveis</div>
         </div>
       </div>
 
@@ -104,7 +100,7 @@
 
         <button onclick="switchTab('profile')" id="nav-profile" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-slate-400 hover:text-slate-200 hover:bg-slate-900">
           <i class="fa-solid fa-graduation-cap w-5 text-center"></i>
-          <span class="truncate">Perfil & Progresso</span>
+          <span class="truncate">Perfil & Nível de Acesso</span>
         </button>
       </nav>
 
@@ -121,19 +117,19 @@
         </a>
       </div>
 
-      <!-- User Profile Card -->
+      <!-- Active Profile Indicator -->
       <div class="p-3 border-t border-slate-800/80 flex items-center justify-between gap-2 min-w-0">
         <div class="flex items-center gap-2.5 min-w-0 flex-1">
           <div class="relative shrink-0">
-            <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-xs">
+            <div id="user-avatar" class="w-9 h-9 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-xs">
               ED
             </div>
             <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-slate-950"></span>
           </div>
           <div class="min-w-0 flex-1">
-            <div class="text-xs font-semibold text-slate-200 truncate">Estudante Dev</div>
-            <div class="text-[10px] text-emerald-400 flex items-center gap-1 truncate">
-              <span>• Ativo</span>
+            <div id="user-name" class="text-xs font-semibold text-slate-200 truncate">Estudante Dev</div>
+            <div id="user-role-badge" class="text-[10px] text-indigo-400 font-medium truncate">
+              Perfil: Aluno
             </div>
           </div>
         </div>
@@ -156,12 +152,23 @@
           <h1 id="page-title" class="text-lg md:text-xl font-bold text-slate-100 truncate">Painel de Controle e Registros</h1>
         </div>
 
+        <!-- Role Selector Switcher -->
         <div class="flex items-center gap-3">
-          <button onclick="exportReport()" class="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium rounded-lg border border-slate-700/80 transition-colors">
+          <div class="flex items-center bg-slate-950 border border-slate-800 rounded-lg p-1 text-xs">
+            <span class="text-slate-400 px-2 hidden sm:inline"><i class="fa-solid fa-user-shield mr-1"></i> Acesso:</span>
+            <select id="role-selector" onchange="changeRole(this.value)" class="bg-slate-900 text-slate-200 font-medium rounded px-2 py-1 focus:outline-none text-xs border border-slate-800">
+              <option value="student">Aluno (Restrito)</option>
+              <option value="teacher">Prof. André Marcos (Docente)</option>
+              <option value="admin">Administrador (Total)</option>
+            </select>
+          </div>
+
+          <button onclick="exportReport()" id="btn-report" class="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium rounded-lg border border-slate-700/80 transition-colors">
             <i class="fa-solid fa-file-arrow-down text-indigo-400"></i>
             <span>Relatório</span>
           </button>
-          <button onclick="openNewModal()" class="flex items-center gap-2 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg shadow-lg shadow-indigo-600/20 transition-all">
+
+          <button onclick="openNewModal()" id="btn-new-entry" class="flex items-center gap-2 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg shadow-lg shadow-indigo-600/20 transition-all">
             <i class="fa-solid fa-plus"></i>
             <span class="hidden sm:inline">Nova Entrega</span>
           </button>
@@ -217,7 +224,7 @@
             </div>
           </div>
 
-          <!-- Main Grid (Progress & Recent Activities) -->
+          <!-- Main Grid -->
           <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
             <!-- Progress breakdown -->
@@ -260,20 +267,10 @@
                     <div class="bg-indigo-500 h-full rounded-full" style="width: 75%"></div>
                   </div>
                 </div>
-
-                <div>
-                  <div class="flex justify-between text-xs font-medium mb-1">
-                    <span class="text-slate-300">Consumo de APIs & Backend Integration</span>
-                    <span class="text-amber-400">50%</span>
-                  </div>
-                  <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
-                    <div class="bg-amber-500 h-full rounded-full" style="width: 50%"></div>
-                  </div>
-                </div>
               </div>
             </div>
 
-            <!-- Quick Tasks / Logs -->
+            <!-- Quick Tasks -->
             <div class="bg-slate-950/60 p-5 rounded-xl border border-slate-800/80 space-y-4">
               <div class="flex items-center justify-between">
                 <h2 class="text-base font-bold text-slate-100 flex items-center gap-2">
@@ -286,25 +283,9 @@
                 <div class="flex items-center justify-between p-2.5 bg-slate-900 rounded-lg border border-slate-800 text-xs">
                   <div class="flex items-center gap-2.5">
                     <input type="checkbox" checked class="rounded border-slate-700 text-indigo-600 focus:ring-0 bg-slate-800">
-                    <span class="line-through text-slate-500">Enviar protótipo v2.4</span>
+                    <span class="line-through text-slate-500">Enviar protótipo v2.5</span>
                   </div>
                   <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-medium">Feito</span>
-                </div>
-
-                <div class="flex items-center justify-between p-2.5 bg-slate-900 rounded-lg border border-slate-800 text-xs">
-                  <div class="flex items-center gap-2.5">
-                    <input type="checkbox" class="rounded border-slate-700 text-indigo-600 focus:ring-0 bg-slate-800">
-                    <span class="text-slate-300">Revisar sintaxe do DOM JS</span>
-                  </div>
-                  <span class="text-[10px] px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 font-medium">Hoje</span>
-                </div>
-
-                <div class="flex items-center justify-between p-2.5 bg-slate-900 rounded-lg border border-slate-800 text-xs">
-                  <div class="flex items-center gap-2.5">
-                    <input type="checkbox" class="rounded border-slate-700 text-indigo-600 focus:ring-0 bg-slate-800">
-                    <span class="text-slate-300">Organizar arquivos da Aula 05</span>
-                  </div>
-                  <span class="text-[10px] px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 font-medium">Amanhã</span>
                 </div>
               </div>
 
@@ -335,7 +316,7 @@
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="projects-grid">
-            <!-- Dynamic projects injected via JS -->
+            <!-- Dynamic projects -->
           </div>
         </div>
 
@@ -343,7 +324,7 @@
         <div id="view-tasks" class="space-y-6 hidden">
           <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80 flex items-center justify-between">
             <h2 class="text-base font-bold text-slate-100">Tabela de Controle de Registros</h2>
-            <span class="text-xs text-slate-400">Acompanhamento formal por data</span>
+            <span class="text-xs text-slate-400">Acompanhamento por Nível de Acesso</span>
           </div>
 
           <div class="bg-slate-950/60 rounded-xl border border-slate-800/80 overflow-hidden">
@@ -355,11 +336,11 @@
                     <th class="p-3.5">Categoria</th>
                     <th class="p-3.5">Data limite</th>
                     <th class="p-3.5">Status</th>
-                    <th class="p-3.5 text-right">Ação</th>
+                    <th class="p-3.5 text-right action-col">Ação</th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-800/60 text-slate-300" id="tasks-table-body">
-                  <!-- Dynamic tasks injected via JS -->
+                  <!-- Dynamic tasks -->
                 </tbody>
               </table>
             </div>
@@ -387,10 +368,7 @@
               </div>
               <textarea id="code-input" class="flex-1 bg-slate-950 text-slate-200 font-mono text-xs p-3 focus:outline-none resize-none custom-scrollbar" spellcheck="false"><div class="p-4 bg-indigo-950/40 border border-indigo-500/30 rounded-xl text-center">
   <h2 class="text-indigo-400 font-bold text-base mb-1">DevTrack System - Teste</h2>
-  <p class="text-xs text-slate-300">Protótipo interativo pronto para apresentação!</p>
-  <button class="mt-3 px-3 py-1 bg-indigo-600 text-white text-xs rounded-lg font-medium">
-    Botão de Teste
-  </button>
+  <p class="text-xs text-slate-300">Protótipo interativo com níveis de acesso!</p>
 </div></textarea>
             </div>
 
@@ -407,31 +385,22 @@
         <!-- PROFILE VIEW -->
         <div id="view-profile" class="space-y-6 hidden">
           <div class="bg-slate-950/60 p-6 rounded-xl border border-slate-800/80 flex flex-col md:flex-row items-center gap-6">
-            <div class="w-20 h-20 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold shadow-xl shadow-indigo-500/20 shrink-0">
+            <div id="profile-avatar-large" class="w-20 h-20 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold shadow-xl shadow-indigo-500/20 shrink-0">
               ED
             </div>
             <div class="space-y-1 text-center md:text-left flex-1 min-w-0">
-              <h2 class="text-xl font-bold text-slate-100">Estudante Dev</h2>
-              <p class="text-xs text-indigo-400">Desenvolvimento Web • Prof. André Marcos</p>
-              <p class="text-xs text-slate-400 pt-1">Sistema de registros e controle de entregas da disciplina acadêmica.</p>
-            </div>
-            <div class="flex gap-2 shrink-0">
-              <span class="px-3 py-1.5 bg-slate-900 border border-slate-800 text-slate-300 text-xs rounded-lg font-medium">
-                <i class="fa-solid fa-code-commit text-indigo-400 mr-1"></i> 24 Commits
-              </span>
+              <h2 id="profile-name-large" class="text-xl font-bold text-slate-100">Estudante Dev</h2>
+              <p id="profile-role-description" class="text-xs text-indigo-400">Desenvolvimento Web • Perfil: Aluno (Restrito)</p>
+              <p class="text-xs text-slate-400 pt-1">Nível de permissão selecionado dinamicamente para demonstração.</p>
             </div>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="bg-slate-950/60 p-5 rounded-xl border border-slate-800/80 space-y-3">
-              <h3 class="text-sm font-bold text-slate-200 border-b border-slate-800 pb-2">Habilidades Registradas</h3>
-              <div class="flex flex-wrap gap-2 pt-1">
-                <span class="px-2.5 py-1 bg-indigo-500/10 text-indigo-400 text-xs rounded-md border border-indigo-500/20">HTML5 / CSS3</span>
-                <span class="px-2.5 py-1 bg-indigo-500/10 text-indigo-400 text-xs rounded-md border border-indigo-500/20">JavaScript ES6+</span>
-                <span class="px-2.5 py-1 bg-indigo-500/10 text-indigo-400 text-xs rounded-md border border-indigo-500/20">Tailwind CSS</span>
-                <span class="px-2.5 py-1 bg-indigo-500/10 text-indigo-400 text-xs rounded-md border border-indigo-500/20">Git & GitHub</span>
-                <span class="px-2.5 py-1 bg-indigo-500/10 text-indigo-400 text-xs rounded-md border border-indigo-500/20">DOM Manipulation</span>
-              </div>
+              <h3 class="text-sm font-bold text-slate-200 border-b border-slate-800 pb-2">Permissões do Perfil Atual</h3>
+              <ul class="text-xs space-y-2 text-slate-300" id="role-permissions-list">
+                <!-- Permissions injected by JS -->
+              </ul>
             </div>
 
             <div class="bg-slate-950/60 p-5 rounded-xl border border-slate-800/80 space-y-3">
@@ -439,7 +408,7 @@
               <ul class="text-xs space-y-2 text-slate-300">
                 <li class="flex justify-between"><span class="text-slate-500">Curso:</span> <span>Desenvolvimento Web</span></li>
                 <li class="flex justify-between"><span class="text-slate-500">Docente:</span> <span>Prof. André Marcos</span></li>
-                <li class="flex justify-between"><span class="text-slate-500">Sistema:</span> <span>DevTrack System v2.4</span></li>
+                <li class="flex justify-between"><span class="text-slate-500">Sistema:</span> <span>DevTrack System v2.5</span></li>
               </ul>
             </div>
           </div>
@@ -497,7 +466,9 @@
   </div>
 
   <script>
-    // Initial State & Data
+    // State Data
+    let currentRole = 'student'; // 'student', 'teacher', 'admin'
+
     let projectsData = [
       { id: 1, title: "Exercício 01 - Estrutura HTML5", category: "HTML/CSS", status: "Concluído", date: "10/02/2026", desc: "Criação de marcas e formulários semânticos." },
       { id: 2, title: "Exercício 02 - Estilização CSS Grid", category: "HTML/CSS", status: "Concluído", date: "17/02/2026", desc: "Layouts responsivos com CSS Grid e Flexbox." },
@@ -508,7 +479,73 @@
 
     let isDarkTheme = true;
 
-    // Mobile Sidebar Handler
+    // Change Role System
+    function changeRole(role) {
+      currentRole = role;
+      
+      const avatar = document.getElementById('user-avatar');
+      const avatarLarge = document.getElementById('profile-avatar-large');
+      const userName = document.getElementById('user-name');
+      const userNameLarge = document.getElementById('profile-name-large');
+      const roleBadge = document.getElementById('user-role-badge');
+      const roleDesc = document.getElementById('profile-role-description');
+      const permissionsList = document.getElementById('role-permissions-list');
+      const btnNewEntry = document.getElementById('btn-new-entry');
+
+      if (role === 'admin') {
+        avatar.innerText = 'AD';
+        avatarLarge.innerText = 'AD';
+        userName.innerText = 'Administrador';
+        userNameLarge.innerText = 'Administrador do Sistema';
+        roleBadge.innerText = 'Perfil: Admin (Acesso Total)';
+        roleBadge.className = 'text-[10px] text-red-400 font-semibold truncate';
+        roleDesc.innerText = 'Acesso irrestrito a configurações, exclusão de dados e relatórios gerais.';
+        
+        permissionsList.innerHTML = `
+          <li class="flex items-center gap-2 text-emerald-400"><i class="fa-solid fa-check"></i> Gestão de usuários e turmas</li>
+          <li class="flex items-center gap-2 text-emerald-400"><i class="fa-solid fa-check"></i> Exclusão e edição de registros de qualquer aluno</li>
+          <li class="flex items-center gap-2 text-emerald-400"><i class="fa-solid fa-check"></i> Exportação de relatórios gerais</li>
+          <li class="flex items-center gap-2 text-emerald-400"><i class="fa-solid fa-check"></i> Acesso ao Playground e Logs</li>
+        `;
+        btnNewEntry.classList.remove('hidden');
+      } else if (role === 'teacher') {
+        avatar.innerText = 'AM';
+        avatarLarge.innerText = 'AM';
+        userName.innerText = 'Prof. André Marcos';
+        userNameLarge.innerText = 'Prof. André Marcos';
+        roleBadge.innerText = 'Perfil: Docente / Coordenador';
+        roleBadge.className = 'text-[10px] text-amber-400 font-semibold truncate';
+        roleDesc.innerText = 'Controle pedagógico, criação de atividades e gestão de notas.';
+        
+        permissionsList.innerHTML = `
+          <li class="flex items-center gap-2 text-emerald-400"><i class="fa-solid fa-check"></i> Cadastro e avaliação de atividades</li>
+          <li class="flex items-center gap-2 text-emerald-400"><i class="fa-solid fa-check"></i> Alteração de status das entregas</li>
+          <li class="flex items-center gap-2 text-emerald-400"><i class="fa-solid fa-check"></i> Geração de relatórios por turma</li>
+          <li class="flex items-center gap-2 text-slate-500"><i class="fa-solid fa-xmark"></i> Exclusão de logs do sistema (Bloqueado)</li>
+        `;
+        btnNewEntry.classList.remove('hidden');
+      } else {
+        avatar.innerText = 'ED';
+        avatarLarge.innerText = 'ED';
+        userName.innerText = 'Estudante Dev';
+        userNameLarge.innerText = 'Estudante Dev';
+        roleBadge.innerText = 'Perfil: Aluno (Restrito)';
+        roleBadge.className = 'text-[10px] text-indigo-400 font-semibold truncate';
+        roleDesc.innerText = 'Visualização de tarefas, envio de trabalhos e playground de código.';
+        
+        permissionsList.innerHTML = `
+          <li class="flex items-center gap-2 text-emerald-400"><i class="fa-solid fa-check"></i> Envio e visualização de entregas próprias</li>
+          <li class="flex items-center gap-2 text-emerald-400"><i class="fa-solid fa-check"></i> Acesso ao Playground de teste de código</li>
+          <li class="flex items-center gap-2 text-slate-500"><i class="fa-solid fa-xmark"></i> Exclusão de registros (Apenas leitura/envio)</li>
+          <li class="flex items-center gap-2 text-slate-500"><i class="fa-solid fa-xmark"></i> Alteração de notas e status globais</li>
+        `;
+        btnNewEntry.classList.add('hidden'); // Students can't add global tasks directly in restricted mode
+      }
+
+      renderData();
+    }
+
+    // Sidebar Mobile
     function toggleSidebar() {
       const sidebar = document.getElementById('sidebar');
       const backdrop = document.getElementById('sidebar-backdrop');
@@ -524,7 +561,7 @@
         projects: 'Registros de Projetos & Aulas',
         tasks: 'Controle de Tarefas & Entregas',
         editor: 'Playground & Documentação',
-        profile: 'Perfil Acadêmico'
+        profile: 'Perfil & Nível de Acesso'
       };
 
       tabs.forEach(id => {
@@ -554,7 +591,7 @@
       }
     }
 
-    // Render Projects Grid & Tasks Table
+    // Render Data with Role Protection
     function renderData() {
       const grid = document.getElementById('projects-grid');
       const tbody = document.getElementById('tasks-table-body');
@@ -567,9 +604,13 @@
       projectsData.forEach(item => {
         if (item.status === 'Concluído') completedCount++;
 
-        // Render Card
         const statusBg = item.status === 'Concluído' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20';
         
+        // Hide delete action for Students
+        const deleteButtonHtml = (currentRole === 'admin' || currentRole === 'teacher') 
+          ? `<button onclick="deleteProject(${item.id})" class="text-slate-500 hover:text-red-400 transition-colors" title="Excluir Registro"><i class="fa-solid fa-trash"></i></button>`
+          : `<span class="text-[10px] text-slate-600"><i class="fa-solid fa-lock"></i> Bloqueado</span>`;
+
         grid.innerHTML += `
           <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80 flex flex-col justify-between space-y-3">
             <div>
@@ -582,24 +623,22 @@
             </div>
             <div class="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[11px] text-slate-500">
               <span><i class="fa-regular fa-calendar mr-1"></i>${item.date}</span>
-              <span class="text-indigo-400 hover:underline cursor-pointer">Ver Detalhes</span>
+              ${deleteButtonHtml}
             </div>
           </div>
         `;
 
-        // Render Table Row
         tbody.innerHTML += `
           <tr class="hover:bg-slate-900/50">
             <td class="p-3.5 font-medium text-slate-200">${item.title}</td>
             <td class="p-3.5 text-slate-400">${item.category}</td>
             <td class="p-3.5 text-slate-400">${item.date}</td>
             <td class="p-3.5"><span class="px-2 py-0.5 rounded text-[10px] font-semibold border ${statusBg}">${item.status}</span></td>
-            <td class="p-3.5 text-right"><button onclick="deleteProject(${item.id})" class="text-slate-500 hover:text-red-400 transition-colors"><i class="fa-solid fa-trash"></i></button></td>
+            <td class="p-3.5 text-right action-col">${deleteButtonHtml}</td>
           </tr>
         `;
       });
 
-      // Update Metrics
       document.getElementById('metric-total').innerText = projectsData.length;
       document.getElementById('metric-completed').innerText = completedCount;
       document.getElementById('metric-pending').innerText = projectsData.length - completedCount;
@@ -625,7 +664,7 @@
         category,
         status,
         date: new Date().toLocaleDateString('pt-BR'),
-        desc: 'Novo registro adicionado dinamicamente no painel.'
+        desc: `Adicionado pelo perfil: ${currentRole.toUpperCase()}`
       };
 
       projectsData.unshift(newObj);
@@ -635,11 +674,14 @@
     }
 
     function deleteProject(id) {
+      if (currentRole === 'student') {
+        alert('Acesso negado: Perfil de Aluno não possui permissão para excluir registros.');
+        return;
+      }
       projectsData = projectsData.filter(p => p.id !== id);
       renderData();
     }
 
-    // Quick Task Handler
     function addQuickTask() {
       const input = document.getElementById('quick-task-input');
       const val = input.value.trim();
@@ -658,7 +700,6 @@
       input.value = '';
     }
 
-    // Live Code Output Engine
     function runCode() {
       const code = document.getElementById('code-input').value;
       const iframe = document.getElementById('code-output');
@@ -678,7 +719,6 @@
       doc.close();
     }
 
-    // Toggle Dark / Light Theme (Visual Simulation)
     function toggleTheme() {
       const body = document.getElementById('app-body');
       const btnIcon = document.querySelector('#theme-toggle-btn i');
@@ -695,12 +735,10 @@
       isDarkTheme = !isDarkTheme;
     }
 
-    // Export Academic Report
     function exportReport() {
       window.print();
     }
 
-    // Filter projects
     function filterProjects() {
       const query = document.getElementById('search-projects').value.toLowerCase();
       const cards = document.querySelectorAll('#projects-grid > div');
@@ -710,10 +748,9 @@
       });
     }
 
-    // Initialize
     window.onload = () => {
-      renderData();
+      changeRole('student');
     };
   </script>
 </body>
-  </html>
+</html>
