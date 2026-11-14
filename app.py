@@ -12,13 +12,13 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "modulo2_extensionista.db")
 
 # ==========================================
-# CONFIGURAÇÕES DE E-MAIL (SMTP)
+# CONFIGURAÇÕES DO AGENTE DE E-MAIL (SMTP)
 # ==========================================
-SMTP_ENABLED = False
+SMTP_ENABLED = True  # Ativado para disparar os e-mails automaticamente
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
-SMTP_USER = "seu_email@gmail.com"
-SMTP_PASSWORD = "sua_senha_de_app_google"
+SMTP_USER = "extensao.unifaccamp@gmail.com"
+SMTP_PASSWORD = yoeqjrrcpntozqvs # Substitua pela sua Senha de App do Google
 
 SENHA_PROVISORIA_PADRAO = "123456"
 
@@ -111,32 +111,61 @@ def init_db():
     conn.close()
 
 
-def enviar_notificacao_email(destinatario_email, nome_aluno, titulo_projeto, nome_grupo, orientador):
+# ==========================================
+# FUNÇÕES DO AGENTE DE E-MAIL (SMTP)
+# ==========================================
+def enviar_email_transacional(destinatario_email, assunto, corpo_texto):
+    """Envia o e-mail via servidor SMTP do Gmail de forma segura."""
+    if not SMTP_ENABLED:
+        print(f"[SMTP DESLIGADO] E-mail para {destinatario_email} ignorado.")
+        return
+
+    try:
+        msg = MIMEMultipart()
+        msg["From"] = SMTP_USER
+        msg["To"] = destinatario_email
+        msg["Subject"] = assunto
+        msg.attach(MIMEText(corpo_texto, "plain", "utf-8"))
+
+        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+            server.starttls()
+            server.login(SMTP_USER, SMTP_PASSWORD)
+            server.send_message(msg)
+        print(f"[AGENTE SMTP] E-mail enviado com sucesso para {destinatario_email}")
+    except Exception as e:
+        print(f"[ERRO AGENTE SMTP] Falha ao enviar para {destinatario_email}: {e}")
+
+
+def enviar_notificacao_conta_criada(destinatario_email, nome, ra, senha_provisoria):
+    """Dispara as credenciais de acesso (RA e senha provisória) quando a conta é criada."""
+    assunto = "Seu Acesso ao Módulo 2: Controle Extensionista - UNIFACCAMP"
+    corpo = f"""
+Olá, {nome}!
+
+Sua conta de acesso ao Módulo 2: Controle Extensionista (UNIFACCAMP) foi criada com sucesso.
+
+Credenciais de Acesso:
+- RA ou E-mail: {ra}
+- Senha Provisória: {senha_provisoria}
+
+Acesse o sistema e utilize a senha provisória acima. No primeiro acesso, o sistema exigirá a troca obrigatória da senha por motivos de segurança.
+    """.strip()
+    enviar_email_transacional(destinatario_email, assunto, corpo)
+
+
+def enviar_notificacao_convite_projeto(destinatario_email, nome_aluno, titulo_projeto, nome_grupo, orientador):
+    """Dispara o convite para o aluno aceitar ou recusar sua participação no projeto."""
     assunto = f"Convite de Projeto Extensionista: {titulo_projeto}"
     corpo = f"""
 Olá, {nome_aluno}!
 
 Você foi incluído(a) no grupo "{nome_grupo}" do projeto extensionista:
-Projeto: {titulo_projeto}
-Orientador(a): {orientador}
+- Projeto: {titulo_projeto}
+- Orientador(a): {orientador}
 
-Acesse o sistema com seu RA ou E-mail para ACEITAR ou REJEITAR sua participação no projeto.
+Acesse o sistema com seu RA ou E-mail para ACEITAR ou REJEITAR sua participação diretamente no seu painel de aluno.
     """.strip()
-
-    if SMTP_ENABLED:
-        try:
-            msg = MIMEMultipart()
-            msg["From"] = SMTP_USER
-            msg["To"] = destinatario_email
-            msg["Subject"] = assunto
-            msg.attach(MIMEText(corpo, "plain", "utf-8"))
-
-            with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
-                server.starttls()
-                server.login(SMTP_USER, SMTP_PASSWORD)
-                server.send_message(msg)
-        except Exception as e:
-            print(f"[ERRO SMTP] Falha ao enviar e-mail para {destinatario_email}: {e}")
+    enviar_email_transacional(destinatario_email, assunto, corpo)
 
 
 init_db()
@@ -387,6 +416,10 @@ def criar_usuario():
 
     cursor.close()
     conn.close()
+
+    # Dispara o e-mail automático com o RA e a senha provisória
+    enviar_notificacao_conta_criada(email, nome, ra, SENHA_PROVISORIA_PADRAO)
+
     return jsonify({"id": new_id, "ra": ra, "nome": nome, "email": email, "role": role, "curso": curso}), 201
 
 
@@ -505,7 +538,8 @@ def criar_projeto():
             "INSERT INTO grupo_membros (grupo_id, ra, nome, status_participacao, justificativa_recusa) VALUES (?, ?, ?, 'PENDENTE', '')",
             (grupo_id, aluno_acc["ra"], aluno_acc["nome"])
         )
-        enviar_notificacao_email(aluno_acc["email"], aluno_acc["nome"], titulo, grupo_nome, orientador_nome)
+        # Dispara o e-mail de convite para o aluno aceitar/rejeitar
+        enviar_notificacao_convite_projeto(aluno_acc["email"], aluno_acc["nome"], titulo, grupo_nome, orientador_nome)
 
     conn.commit()
     cursor.close()
@@ -772,7 +806,7 @@ def carga_massiva_json():
 
 
 # ==========================================
-# ROTAS DO ALUNO (ACEITAR/REJEITAR COM JUSTIFICATIVA E EDITAR NOME PRÓPRIO)
+# ROTAS DO ALUNO (ACEITAR/REJEITAR E EDITAR NOME)
 # ==========================================
 @app.route("/api/membros/<int:membro_id>/resposta", methods=["PATCH"])
 def responder_convite_aluno(membro_id):
