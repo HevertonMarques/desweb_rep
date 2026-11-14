@@ -422,6 +422,102 @@ def deletar_projeto(projeto_id):
 
 
 # ==========================================
+# CARGA MASSIVA VIA JSON (ACERVO PROJETOS / PROFESSORES)
+# ==========================================
+@app.route("/api/carga-massiva", methods=["POST"])
+def carga_massiva_json():
+    data = request.json or {}
+    actor_role = data.get("actor_role")
+    tipo = data.get("tipo")  # 'usuarios' ou 'projetos'
+    registros = data.get("registros", [])
+
+    if actor_role not in ["admin", "coordenador"]:
+        return jsonify({"error": "Apenas Administrador ou Coordenador podem importar acervos"}), 403
+
+    if not isinstance(registros, list) or len(registros) == 0:
+        return jsonify({"error": "O JSON deve conter uma lista [...] com pelo menos 1 registro"}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    inseridos = 0
+    ignorados = 0
+
+    try:
+        if tipo == "usuarios":
+            for u in registros:
+                ra = str(u.get("ra", "")).strip()
+                nome = str(u.get("nome", "")).strip()
+                email = str(u.get("email", "")).strip()
+                senha = str(u.get("senha", "123456")).strip()
+                role = str(u.get("role", "orientador")).strip().lower()
+
+                if role not in ["coordenador", "orientador", "aluno"] or (actor_role == "coordenador" and role == "coordenador"):
+                    ignorados += 1
+                    continue
+                if not ra or not nome or not email:
+                    ignorados += 1
+                    continue
+
+                try:
+                    cursor.execute(
+                        "INSERT INTO usuarios (ra, nome, email, senha, role) VALUES (?, ?, ?, ?, ?)",
+                        (ra, nome, email, senha, role)
+                    )
+                    inseridos += 1
+                except sqlite3.IntegrityError:
+                    ignorados += 1
+
+        elif tipo == "projetos":
+            for p in registros:
+                titulo = str(p.get("titulo", "")).strip()
+                setor_externo = str(p.get("setor_externo", "Não informado")).strip()
+                areas_atuacao = str(p.get("areas_atuacao", "Geral")).strip()
+                interdisciplinaridade = str(p.get("interdisciplinaridade", "Não especificada")).strip()
+                orientador_nome = str(p.get("orientador_nome", "Orientador")).strip()
+                status = str(p.get("status", "NOVO")).strip().upper()
+                if status not in ["NOVO", "EM ANDAMENTO", "CONCLUIDO", "CANCELADO"]:
+                    status = "NOVO"
+                publicado = 1 if p.get("publicado", False) else 0
+                grupo_nome = str(p.get("grupo_nome", f"Grupo - {titulo[:25]}")).strip()
+                membros = p.get("membros", [])
+
+                if not titulo:
+                    ignorados += 1
+                    continue
+
+                cursor.execute(
+                    """INSERT INTO projetos (titulo, setor_externo, areas_atuacao, interdisciplinaridade, status, publicado, orientador_nome)
+                       VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                    (titulo, setor_externo, areas_atuacao, interdisciplinaridade, status, publicado, orientador_nome)
+                )
+                projeto_id = cursor.lastrowid
+                cursor.execute("INSERT INTO grupos (projeto_id, nome) VALUES (?, ?)", (projeto_id, grupo_nome))
+                grupo_id = cursor.lastrowid
+
+                for m in membros:
+                    m_ra = str(m.get("ra", "")).strip()
+                    m_nome = str(m.get("nome", "")).strip()
+                    m_status = str(m.get("status_participacao", "PENDENTE")).strip().upper()
+                    if m_status not in ["PENDENTE", "CONFIRMADO", "RECUSADO"]:
+                        m_status = "PENDENTE"
+                    if m_ra and m_nome:
+                        cursor.execute(
+                            "INSERT INTO grupo_membros (grupo_id, ra, nome, status_participacao) VALUES (?, ?, ?, ?)",
+                            (grupo_id, m_ra, m_nome, m_status)
+                        )
+                inseridos += 1
+        else:
+            return jsonify({"error": "Tipo de acervo inválido"}), 400
+
+        conn.commit()
+    finally:
+        cursor.close()
+        conn.close()
+
+    return jsonify({"message": f"Importação concluída: {inseridos} registro(s) inserido(s), {ignorados} ignorado(s)."})
+
+
+# ==========================================
 # ROTAS DO ALUNO (ACEITAR/REJEITAR E EDITAR DADOS PRÓPRIOS)
 # ==========================================
 @app.route("/api/membros/<int:membro_id>/resposta", methods=["PATCH"])
