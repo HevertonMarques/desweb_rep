@@ -357,8 +357,8 @@
           <div class="bg-slate-950/60 rounded-xl border border-slate-800/80 overflow-hidden">
             <div class="p-4 border-b border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Contas Cadastradas no Sistema</h4>
-                <p class="text-[11px] text-slate-400">Gerencie acessos bloqueados e redefina senhas provisórias.</p>
+                <h4 id="usuarios-list-title" class="text-xs font-bold text-slate-300 uppercase tracking-wider">Contas Cadastradas no Sistema</h4>
+                <p id="usuarios-list-subtitle" class="text-[11px] text-slate-400">Gerencie acessos e contas subordinadas ao seu perfil.</p>
               </div>
               <div class="relative w-full sm:w-72">
                 <i class="fa-solid fa-magnifying-glass text-slate-500 text-xs absolute left-3 top-1/2 -translate-y-1/2"></i>
@@ -881,6 +881,19 @@
         navContas.classList.remove("hidden");
         document.getElementById("proj-orientador").value = currentUser.nome;
         populateRoleOptions();
+
+        const listTitle = document.getElementById("usuarios-list-title");
+        const listSub = document.getElementById("usuarios-list-subtitle");
+        if (currentUser.role === "orientador") {
+          listTitle.textContent = "Alunos Cadastrados no Sistema";
+          listSub.textContent = "Exibindo exclusivamente contas de alunos cadastradas.";
+        } else if (currentUser.role === "coordenador") {
+          listTitle.textContent = "Orientadores e Alunos Cadastrados";
+          listSub.textContent = "Gerencie desbloqueios e contas de orientadores e alunos.";
+        } else {
+          listTitle.textContent = "Contas Cadastradas no Sistema";
+          listSub.textContent = "Visão completa: gerencie desbloqueios e redefina senhas provisórias.";
+        }
       }
 
       if (["admin", "coordenador"].includes(currentUser.role)) {
@@ -972,7 +985,6 @@
         }
         await loadProjetos();
 
-        // Se for o primeiro acesso de Aluno, Coordenador ou Orientador, exige troca imediata da senha provisória
         if (currentUser.primeiro_acesso && currentUser.role !== "admin") {
           openChangePasswordModal(true);
         }
@@ -1072,6 +1084,7 @@
 
     function logout() {
       currentUser = null;
+      allUsuarios = [];
       localStorage.removeItem("extensao_user");
       updateUIForUser();
       renderProjetos();
@@ -1603,10 +1616,11 @@
     }
 
     // ==========================================
-    // CONTAS E USUÁRIOS (PESQUISA, DESBLOQUEIO E REDEFINIÇÃO DE SENHA)
+    // CONTAS E USUÁRIOS (FILTRO ESTRITO POR HIERARQUIA, PESQUISA, DESBLOQUEIO E REDEFINIÇÃO DE SENHA)
     // ==========================================
     async function loadUsuarios() {
-      const res = await fetch("/api/usuarios");
+      if (!currentUser) return;
+      const res = await fetch(`/api/usuarios?actor_role=${encodeURIComponent(currentUser.role)}`);
       allUsuarios = await res.json();
       atualizarSeletorDeCursos();
       renderUsuariosTable();
@@ -1614,20 +1628,28 @@
 
     function renderUsuariosTable() {
       const tbody = document.getElementById("usuarios-table-body");
-      if (!tbody) return;
+      if (!tbody || !currentUser) return;
       const query = (document.getElementById("search-usuarios")?.value || "").toLowerCase().trim();
 
-      const filtrados = allUsuarios.filter(u =>
+      // Dupla garantia de visibilidade hierárquica também no frontend
+      const visiveisPorHierarquia = allUsuarios.filter(u => {
+        if (currentUser.role === "admin") return true;
+        if (currentUser.role === "coordenador") return u.role === "orientador" || u.role === "aluno";
+        if (currentUser.role === "orientador") return u.role === "aluno";
+        return false;
+      });
+
+      const filtrados = visiveisPorHierarquia.filter(u =>
         u.nome.toLowerCase().includes(query) || u.ra.toLowerCase().includes(query)
       );
 
       if (filtrados.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-xs text-slate-400">Nenhum usuário encontrado para "${query}".</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-xs text-slate-400">Nenhum usuário encontrado.</td></tr>`;
         return;
       }
 
-      const canUnlock = currentUser && ["admin", "coordenador"].includes(currentUser.role);
-      const isAdmin = currentUser && currentUser.role === "admin";
+      const canUnlock = ["admin", "coordenador"].includes(currentUser.role);
+      const isAdmin = currentUser.role === "admin";
 
       tbody.innerHTML = filtrados.map(u => {
         const statusBadge = u.bloqueado
@@ -1742,7 +1764,16 @@
 
     async function deletarUsuario(id) {
       if (!confirm("Remover esta conta de usuário?")) return;
-      await fetch(`/api/usuarios/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/usuarios/${id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ actor_role: currentUser.role })
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error || "Sem permissão para excluir este usuário.");
+        return;
+      }
       await loadUsuarios();
       renderCursosEAlunosFiltro("create");
     }
