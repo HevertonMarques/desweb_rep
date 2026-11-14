@@ -247,8 +247,8 @@
                   <input type="text" id="proj-grupo" required placeholder="Ex: Equipe Alfa Extensionista" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
                 </div>
                 <div>
-                  <label class="block text-xs font-medium text-slate-300 mb-1">Orientador Responsável *</label>
-                  <input type="text" id="proj-orientador" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
+                  <label class="block text-xs font-medium text-slate-300 mb-1">Orientador(es) Responsável(is) *</label>
+                  <input type="text" id="proj-orientador" required placeholder="Ex: Prof. André Marcos" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
                 </div>
               </div>
 
@@ -594,7 +594,7 @@
             <input type="text" id="edit-proj-grupo" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100" />
           </div>
           <div>
-            <label class="block text-xs font-medium text-slate-300 mb-1">Orientador</label>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Orientador(es)</label>
             <input type="text" id="edit-proj-orientador" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100" />
           </div>
         </div>
@@ -1118,7 +1118,7 @@
         alert("Senha atualizada com sucesso!");
       } catch (err) {
         errEl.textContent = "Erro de conexão ao alterar senha.";
-        errEl.classList.remove("hidden");
+        errEl.classList.add("hidden");
       }
     }
 
@@ -1224,6 +1224,14 @@
 
       grid.innerHTML = filtrados.map(p => {
         const badgeClass = statusColors[p.status] || "bg-slate-800 text-slate-300 border-slate-700";
+        
+        // Verifica se o orientador logado é o responsável por este projeto específico (ou admin/coordenador)
+        const podeGerenciarEsteProjeto = currentUser && (
+          currentUser.role === "admin" ||
+          currentUser.role === "coordenador" ||
+          (currentUser.role === "orientador" && p.orientador_nome.toLowerCase().includes(currentUser.nome.toLowerCase()))
+        );
+
         const membrosHtml = (p.grupo?.membros || []).map(m => {
           const stIcon = m.status_participacao === "CONFIRMADO"
             ? `<span class="text-emerald-400" title="Confirmado"><i class="fa-solid fa-circle-check"></i></span>`
@@ -1244,7 +1252,7 @@
           </li>`;
         }).join("");
 
-        const managerControls = isManager ? `
+        const managerControls = podeGerenciarEsteProjeto ? `
           <div class="pt-3 mt-3 border-t border-slate-800/80 space-y-2.5">
             <div class="flex items-center justify-between gap-2">
               <select onchange="alterarStatusProjeto(${p.id}, this.value)" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-[11px] text-slate-200 focus:outline-none focus:border-indigo-500">
@@ -1271,7 +1279,7 @@
               </button>
             </div>
           </div>
-        ` : "";
+        ` : (isManager ? `<div class="pt-2 mt-2 border-t border-slate-800/80 text-[10px] text-slate-500 italic text-center">Apenas o orientador responsável (${p.orientador_nome}), Coordenador ou Admin podem gerenciar este projeto.</div>` : "");
 
         return `
           <div class="bg-slate-950/70 border border-slate-800/80 rounded-xl p-4 flex flex-col justify-between hover:border-slate-700 transition-all">
@@ -1286,7 +1294,7 @@
               <div class="space-y-1 text-[11px] text-slate-300 mb-3">
                 <div><span class="text-slate-500">Áreas:</span> ${p.areas_atuacao}</div>
                 <div><span class="text-slate-500">Interdisciplinaridade:</span> ${p.interdisciplinaridade}</div>
-                <div><span class="text-slate-500">Orientador:</span> ${p.orientador_nome}</div>
+                <div><span class="text-slate-500">Orientador(es):</span> ${p.orientador_nome}</div>
               </div>
 
               <div class="bg-slate-900/50 rounded-lg p-2.5 border border-slate-800/60">
@@ -1573,6 +1581,7 @@
       const id = document.getElementById("edit-proj-id").value;
       const payload = {
         actor_role: currentUser.role,
+        actor_nome: currentUser.nome,
         titulo: document.getElementById("edit-proj-titulo").value,
         setor_externo: document.getElementById("edit-proj-setor").value,
         areas_atuacao: document.getElementById("edit-proj-areas").value,
@@ -1598,20 +1607,36 @@
     }
 
     async function alterarStatusProjeto(projetoId, status) {
-      await fetch(`/api/projetos/${projetoId}/status`, {
+      const res = await fetch(`/api/projetos/${projetoId}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ actor_role: currentUser.role, status })
+        body: JSON.stringify({ 
+          actor_role: currentUser.role, 
+          actor_nome: currentUser.nome, 
+          status 
+        })
       });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Erro ao alterar status.");
+      }
       await loadProjetos();
     }
 
     async function togglePublicarProjeto(projetoId, publicar) {
-      await fetch(`/api/projetos/${projetoId}/publicar`, {
+      const res = await fetch(`/api/projetos/${projetoId}/publicar`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ actor_role: currentUser.role, publicado: publicar })
+        body: JSON.stringify({ 
+          actor_role: currentUser.role, 
+          actor_nome: currentUser.nome, 
+          publicado: publicar 
+        })
       });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Erro ao alterar publicação.");
+      }
       await loadProjetos();
     }
 
@@ -1622,7 +1647,10 @@
         const res = await fetch(`/api/projetos/${projetoId}`, {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ actor_role: currentUser.role })
+          body: JSON.stringify({ 
+            actor_role: currentUser.role, 
+            actor_nome: currentUser.nome 
+          })
         });
         const data = await res.json();
         if (!res.ok) {
@@ -1929,7 +1957,7 @@
       let justificativa = "";
       if (status === "RECUSADO") {
         const motivo = prompt("Informe opcionalmente o motivo da recusa para o orientador (ex.: Choque de horário):");
-        if (motivo === null) return; // Cancelou o diálogo
+        if (motivo === null) return;
         justificativa = motivo.trim();
       }
 
