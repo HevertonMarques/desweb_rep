@@ -203,7 +203,6 @@ def login():
             conn.close()
             return jsonify({"error": "Credenciais inválidas."}), 401
 
-    # Login bem-sucedido: zera contador de tentativas falhas
     cursor.execute("UPDATE usuarios SET tentativas_falhas = 0 WHERE id = ?", (user["id"],))
     conn.commit()
     cursor.close()
@@ -303,15 +302,41 @@ def desbloquear_usuario(user_id):
 
 @app.route("/api/usuarios", methods=["GET"])
 def listar_usuarios():
+    actor_role = request.args.get("actor_role", "").strip().lower()
+
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute(
-        """SELECT id, ra, nome, email, role, COALESCE(curso, '') AS curso,
-                  COALESCE(primeiro_acesso, 0) AS primeiro_acesso,
-                  COALESCE(tentativas_falhas, 0) AS tentativas_falhas,
-                  COALESCE(bloqueado, 0) AS bloqueado
-           FROM usuarios ORDER BY id ASC"""
-    )
+
+    # Filtro estrito de visibilidade hierárquica direto no banco de dados
+    if actor_role == "admin":
+        cursor.execute(
+            """SELECT id, ra, nome, email, role, COALESCE(curso, '') AS curso,
+                      COALESCE(primeiro_acesso, 0) AS primeiro_acesso,
+                      COALESCE(tentativas_falhas, 0) AS tentativas_falhas,
+                      COALESCE(bloqueado, 0) AS bloqueado
+               FROM usuarios ORDER BY id ASC"""
+        )
+    elif actor_role == "coordenador":
+        cursor.execute(
+            """SELECT id, ra, nome, email, role, COALESCE(curso, '') AS curso,
+                      COALESCE(primeiro_acesso, 0) AS primeiro_acesso,
+                      COALESCE(tentativas_falhas, 0) AS tentativas_falhas,
+                      COALESCE(bloqueado, 0) AS bloqueado
+               FROM usuarios WHERE role IN ('orientador', 'aluno') ORDER BY id ASC"""
+        )
+    elif actor_role == "orientador":
+        cursor.execute(
+            """SELECT id, ra, nome, email, role, COALESCE(curso, '') AS curso,
+                      COALESCE(primeiro_acesso, 0) AS primeiro_acesso,
+                      COALESCE(tentativas_falhas, 0) AS tentativas_falhas,
+                      COALESCE(bloqueado, 0) AS bloqueado
+               FROM usuarios WHERE role = 'aluno' ORDER BY id ASC"""
+        )
+    else:
+        cursor.close()
+        conn.close()
+        return jsonify([])
+
     users = [dict(row) for row in cursor.fetchall()]
     cursor.close()
     conn.close()
@@ -326,7 +351,7 @@ def criar_usuario():
     ra = data.get("ra", "").strip()
     nome = data.get("nome", "").strip()
     email = data.get("email", "").strip()
-    senha = SENHA_PROVISORIA_PADRAO  # Sempre inicia com a senha provisória 123456
+    senha = SENHA_PROVISORIA_PADRAO
     curso = data.get("curso", "").strip() if role == "aluno" else ""
 
     if actor_role not in ["admin", "coordenador", "orientador"]:
@@ -362,9 +387,32 @@ def criar_usuario():
 
 @app.route("/api/usuarios/<int:user_id>", methods=["DELETE"])
 def deletar_usuario(user_id):
+    data = request.json or {}
+    actor_role = data.get("actor_role", "")
+
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM usuarios WHERE id = ? AND role != 'admin'", (user_id,))
+    cursor.execute("SELECT role FROM usuarios WHERE id = ?", (user_id,))
+    target = cursor.fetchone()
+    if not target or target["role"] == "admin":
+        cursor.close()
+        conn.close()
+        return jsonify({"error": "Operação não permitida."}), 403
+
+    if actor_role == "coordenador" and target["role"] not in ["orientador", "aluno"]:
+        cursor.close()
+        conn.close()
+        return jsonify({"error": "Coordenadores só podem remover Orientadores e Alunos."}), 403
+    if actor_role == "orientador" and target["role"] != "aluno":
+        cursor.close()
+        conn.close()
+        return jsonify({"error": "Orientadores só podem remover contas de Alunos."}), 403
+    if actor_role not in ["admin", "coordenador", "orientador"]:
+        cursor.close()
+        conn.close()
+        return jsonify({"error": "Sem permissão."}), 403
+
+    cursor.execute("DELETE FROM usuarios WHERE id = ?", (user_id,))
     conn.commit()
     cursor.close()
     conn.close()
@@ -707,7 +755,6 @@ def editar_dados_proprios_aluno(membro_id):
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # Atualiza apenas o nome; o RA permanece imutável conforme fornecido pela instituição
     cursor.execute("SELECT ra FROM grupo_membros WHERE id = ?", (membro_id,))
     membro = cursor.fetchone()
     if membro:
