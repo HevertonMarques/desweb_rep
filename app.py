@@ -14,11 +14,13 @@ DB_PATH = os.path.join(BASE_DIR, "modulo2_extensionista.db")
 # ==========================================
 # CONFIGURAÇÕES DE E-MAIL (SMTP)
 # ==========================================
-SMTP_ENABLED = False  # Mude para True se configurar SMTP externo
+SMTP_ENABLED = False
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
 SMTP_USER = "seu_email@gmail.com"
 SMTP_PASSWORD = "sua_senha_de_app_google"
+
+SENHA_PROVISORIA_PADRAO = "123456"
 
 
 def get_db_connection():
@@ -29,7 +31,7 @@ def get_db_connection():
 
 
 def init_db():
-    """Cria as tabelas SQL automaticamente, aplica migração de curso e insere o Administrador inicial."""
+    """Cria as tabelas SQL automaticamente, aplica migrações e insere o Administrador inicial."""
     conn = get_db_connection()
     cursor = conn.cursor()
 
@@ -42,6 +44,9 @@ def init_db():
             senha TEXT NOT NULL,
             role TEXT NOT NULL CHECK(role IN ('admin', 'coordenador', 'orientador', 'aluno')),
             curso TEXT DEFAULT '',
+            primeiro_acesso INTEGER DEFAULT 1,
+            tentativas_falhas INTEGER DEFAULT 0,
+            bloqueado INTEGER DEFAULT 0,
             criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
 
@@ -74,17 +79,24 @@ def init_db():
         );
     """)
 
-    # Migração segura: adiciona a coluna 'curso' caso o banco já existisse antes
+    # Migração segura para bancos já existentes
     cursor.execute("PRAGMA table_info(usuarios)")
     colunas = [col["name"] for col in cursor.fetchall()]
     if "curso" not in colunas:
         cursor.execute("ALTER TABLE usuarios ADD COLUMN curso TEXT DEFAULT ''")
+    if "primeiro_acesso" not in colunas:
+        cursor.execute("ALTER TABLE usuarios ADD COLUMN primeiro_acesso INTEGER DEFAULT 0")
+    if "tentativas_falhas" not in colunas:
+        cursor.execute("ALTER TABLE usuarios ADD COLUMN tentativas_falhas INTEGER DEFAULT 0")
+    if "bloqueado" not in colunas:
+        cursor.execute("ALTER TABLE usuarios ADD COLUMN bloqueado INTEGER DEFAULT 0")
 
     # Insere APENAS o Administrador inicial caso ainda não exista
     cursor.execute("SELECT id FROM usuarios WHERE email = ?", ("admin@faccamp.com",))
     if not cursor.fetchone():
         cursor.execute(
-            "INSERT INTO usuarios (ra, nome, email, senha, role, curso) VALUES (?, ?, ?, ?, ?, ?)",
+            """INSERT INTO usuarios (ra, nome, email, senha, role, curso, primeiro_acesso, tentativas_falhas, bloqueado)
+               VALUES (?, ?, ?, ?, ?, ?, 0, 0, 0)""",
             ("ADMIN01", "Administrador FACCAMP", "admin@faccamp.com", "adminhrv2026", "admin", "")
         )
 
@@ -121,7 +133,6 @@ Acesse o sistema com seu RA ou E-mail para ACEITAR ou REJEITAR sua participaçã
             print(f"[ERRO SMTP] Falha ao enviar e-mail para {destinatario_email}: {e}")
 
 
-# Inicializa o banco automaticamente ao carregar a aplicação
 init_db()
 
 
@@ -134,7 +145,7 @@ def index():
 
 
 # ==========================================
-# ROTAS DE AUTENTICAÇÃO E CONTAS
+# ROTAS DE AUTENTICAÇÃO, BLOQUEIO E SENHAS
 # ==========================================
 @app.route("/api/login", methods=["POST"])
 def login():
@@ -145,24 +156,162 @@ def login():
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute(
-        "SELECT id, ra, nome, email, role, curso FROM usuarios WHERE (LOWER(email) = ? OR LOWER(ra) = ?) AND senha = ?",
-        (identifier, identifier, senha)
+        """SELECT id, ra, nome, email, senha, role, COALESCE(curso, '') AS curso,
+                  COALESCE(primeiro_acesso, 0) AS primeiro_acesso,
+                  COALESCE(tentativas_falhas, 0) AS tentativas_falhas,
+                  COALESCE(bloqueado, 0) AS bloqueado
+           FROM usuarios
+           WHERE LOWER(email) = ? OR LOWER(ra) = ?""",
+        (identifier, identifier)
     )
-    row = cursor.fetchone()
+    user = cursor.fetchone()
+
+    if not user:
+        cursor.close()
+        conn.close()
+        return jsonify({"error": "Credenciais inválidas."}), 401
+
+    if user["bloqueado"] == 1:
+        cursor.close()
+        conn.close()
+        return jsonify({"error": "Acesso bloqueado após 5 tentativas incorretas. Solicite o desbloqueio a um Coordenador ou Administrador."}), 403
+
+    if user["senha"] != senha:
+        if user["role"] == "aluno":
+            novas_tentativas = user["tentativas_falhas"] + 1
+            if novas_tentativas >= 5:
+                cursor.execute(
+                    "UPDATE usuarios SET tentativas_falhas = ?, bloqueado = 1 WHERE id = ?",
+                    (novas_tentativas, user["id"])
+                )
+                conn.commit()
+                cursor.close()
+                conn.close()
+                return jsonify({"error": "Você atingiu 5 tentativas incorretas. Seu acesso foi BLOQUEADO. Procure um Coordenador ou Administrador."}), 403
+            else:
+                restantes = 5 - novas_tentativas
+                cursor.execute(
+                    "UPDATE usuarios SET tentativas_falhas = ? WHERE id = ?",
+                    (novas_tentativas, user["id"])
+                )
+                conn.commit()
+                cursor.close()
+                conn.close()
+                return jsonify({"error": f"Senha incorreta. Restam {restantes} tentativa(s) antes do bloqueio."}), 401
+        else:
+            cursor.close()
+            conn.close()
+            return jsonify({"error": "Credenciais inválidas."}), 401
+
+    # Login bem-sucedido: zera contador de tentativas falhas
+    cursor.execute("UPDATE usuarios SET tentativas_falhas = 0 WHERE id = ?", (user["id"],))
+    conn.commit()
     cursor.close()
     conn.close()
 
-    if not row:
-        return jsonify({"error": "Credenciais inválidas"}), 401
+    return jsonify({
+        "id": user["id"],
+        "ra": user["ra"],
+        "nome": user["nome"],
+        "email": user["email"],
+        "role": user["role"],
+        "curso": user["curso"],
+        "primeiro_acesso": bool(user["primeiro_acesso"])
+    })
 
-    return jsonify(dict(row))
+
+@app.route("/api/usuarios/<int:user_id>/alterar-senha", methods=["PATCH"])
+def alterar_senha_usuario(user_id):
+    data = request.json or {}
+    nova_senha = data.get("nova_senha", "").strip()
+    senha_atual = data.get("senha_atual", "").strip()
+    forcar_primeiro_acesso = bool(data.get("forcar_primeiro_acesso", False))
+
+    if len(nova_senha) < 6 or len(nova_senha) > 18:
+        return jsonify({"error": "A nova senha deve ter entre 6 e 18 caracteres."}), 400
+    if nova_senha == SENHA_PROVISORIA_PADRAO:
+        return jsonify({"error": "A nova senha não pode ser igual à senha provisória (123456)."}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT senha FROM usuarios WHERE id = ?", (user_id,))
+    row = cursor.fetchone()
+    if not row:
+        cursor.close()
+        conn.close()
+        return jsonify({"error": "Usuário não encontrado."}), 404
+
+    if not forcar_primeiro_acesso and senha_atual and row["senha"] != senha_atual:
+        cursor.close()
+        conn.close()
+        return jsonify({"error": "A senha atual informada está incorreta."}), 400
+
+    cursor.execute(
+        "UPDATE usuarios SET senha = ?, primeiro_acesso = 0, tentativas_falhas = 0 WHERE id = ?",
+        (nova_senha, user_id)
+    )
+    conn.commit()
+    cursor.close()
+    conn.close()
+    return jsonify({"message": "Senha alterada com sucesso!"})
+
+
+@app.route("/api/usuarios/<int:user_id>/redefinir-senha", methods=["PATCH"])
+def redefinir_senha_provisoria(user_id):
+    data = request.json or {}
+    actor_role = data.get("actor_role")
+    if actor_role != "admin":
+        return jsonify({"error": "Apenas o Administrador pode redefinir senhas para a provisória."}), 403
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT role FROM usuarios WHERE id = ?", (user_id,))
+    row = cursor.fetchone()
+    if not row or row["role"] == "admin":
+        cursor.close()
+        conn.close()
+        return jsonify({"error": "Operação não permitida para este usuário."}), 400
+
+    cursor.execute(
+        "UPDATE usuarios SET senha = ?, primeiro_acesso = 1, tentativas_falhas = 0 WHERE id = ?",
+        (SENHA_PROVISORIA_PADRAO, user_id)
+    )
+    conn.commit()
+    cursor.close()
+    conn.close()
+    return jsonify({"message": "Senha redefinida para a provisória (123456). O usuário deverá trocá-la no próximo acesso."})
+
+
+@app.route("/api/usuarios/<int:user_id>/desbloquear", methods=["PATCH"])
+def desbloquear_usuario(user_id):
+    data = request.json or {}
+    actor_role = data.get("actor_role")
+    if actor_role not in ["admin", "coordenador"]:
+        return jsonify({"error": "Apenas Coordenadores e Administrador podem desbloquear usuários."}), 403
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE usuarios SET bloqueado = 0, tentativas_falhas = 0 WHERE id = ?",
+        (user_id,)
+    )
+    conn.commit()
+    cursor.close()
+    conn.close()
+    return jsonify({"message": "Usuário desbloqueado com sucesso!"})
 
 
 @app.route("/api/usuarios", methods=["GET"])
 def listar_usuarios():
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT id, ra, nome, email, role, COALESCE(curso, '') AS curso FROM usuarios ORDER BY id ASC")
+    cursor.execute(
+        """SELECT id, ra, nome, email, role, COALESCE(curso, '') AS curso,
+                  COALESCE(primeiro_acesso, 0) AS primeiro_acesso,
+                  COALESCE(tentativas_falhas, 0) AS tentativas_falhas,
+                  COALESCE(bloqueado, 0) AS bloqueado
+           FROM usuarios ORDER BY id ASC"""
+    )
     users = [dict(row) for row in cursor.fetchall()]
     cursor.close()
     conn.close()
@@ -177,11 +326,9 @@ def criar_usuario():
     ra = data.get("ra", "").strip()
     nome = data.get("nome", "").strip()
     email = data.get("email", "").strip()
-    senha = data.get("senha", "").strip()
+    senha = SENHA_PROVISORIA_PADRAO  # Sempre inicia com a senha provisória 123456
     curso = data.get("curso", "").strip() if role == "aluno" else ""
 
-    if len(senha) < 6 or len(senha) > 18:
-        return jsonify({"error": "A senha deve ter entre 6 e 18 caracteres."}), 400
     if actor_role not in ["admin", "coordenador", "orientador"]:
         return jsonify({"error": "Acesso negado"}), 403
     if actor_role == "orientador" and role != "aluno":
@@ -191,13 +338,14 @@ def criar_usuario():
     if role == "admin":
         return jsonify({"error": "Não é permitido criar novos administradores"}), 403
     if role == "aluno" and not curso:
-        return jsonify({"error": "Informe o curso ao cadastrar uma conta de Aluno."}), 400
+        return jsonify({"error": "Selecione o curso ao cadastrar uma conta de Aluno."}), 400
 
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
         cursor.execute(
-            "INSERT INTO usuarios (ra, nome, email, senha, role, curso) VALUES (?, ?, ?, ?, ?, ?)",
+            """INSERT INTO usuarios (ra, nome, email, senha, role, curso, primeiro_acesso, tentativas_falhas, bloqueado)
+               VALUES (?, ?, ?, ?, ?, ?, 1, 0, 0)""",
             (ra, nome, email, senha, role, curso)
         )
         conn.commit()
@@ -210,38 +358,6 @@ def criar_usuario():
     cursor.close()
     conn.close()
     return jsonify({"id": new_id, "ra": ra, "nome": nome, "email": email, "role": role, "curso": curso}), 201
-
-
-@app.route("/api/usuarios/<int:user_id>", methods=["PUT"])
-def editar_usuario(user_id):
-    data = request.json
-    actor_role = data.get("actor_role")
-    ra = data.get("ra", "").strip()
-    nome = data.get("nome", "").strip()
-    email = data.get("email", "").strip()
-    senha = data.get("senha", "").strip()
-    role = data.get("role")
-    curso = data.get("curso", "").strip() if role == "aluno" else ""
-
-    if actor_role == "coordenador" and role == "coordenador":
-        return jsonify({"error": "Coordenador não pode editar outro Coordenador"}), 403
-
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    if senha:
-        cursor.execute(
-            "UPDATE usuarios SET ra=?, nome=?, email=?, senha=?, role=?, curso=? WHERE id=?",
-            (ra, nome, email, senha, role, curso, user_id)
-        )
-    else:
-        cursor.execute(
-            "UPDATE usuarios SET ra=?, nome=?, email=?, role=?, curso=? WHERE id=?",
-            (ra, nome, email, role, curso, user_id)
-        )
-    conn.commit()
-    cursor.close()
-    conn.close()
-    return jsonify({"message": "Usuário atualizado com sucesso"})
 
 
 @app.route("/api/usuarios/<int:user_id>", methods=["DELETE"])
@@ -297,7 +413,6 @@ def criar_projeto():
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # Valida se todos os integrantes possuem conta de 'aluno' no sistema
     membros_validados = []
     ras_vistos = set()
     for m in membros:
@@ -351,7 +466,6 @@ def editar_projeto(projeto_id):
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # Valida se todos os integrantes possuem conta de 'aluno' no sistema
     membros_validados = []
     ras_vistos = set()
     for m in data.get("membros", []):
@@ -469,7 +583,7 @@ def deletar_projeto(projeto_id):
 def carga_massiva_json():
     data = request.json or {}
     actor_role = data.get("actor_role")
-    tipo = data.get("tipo")  # 'usuarios' ou 'projetos'
+    tipo = data.get("tipo")
     registros = data.get("registros", [])
 
     if actor_role not in ["admin", "coordenador"]:
@@ -489,20 +603,21 @@ def carga_massiva_json():
                 ra = str(u.get("ra", "")).strip()
                 nome = str(u.get("nome", "")).strip()
                 email = str(u.get("email", "")).strip()
-                senha = str(u.get("senha", "123456")).strip()
+                senha = SENHA_PROVISORIA_PADRAO
                 role = str(u.get("role", "orientador")).strip().lower()
                 curso = str(u.get("curso", "")).strip() if role == "aluno" else ""
 
                 if role not in ["coordenador", "orientador", "aluno"] or (actor_role == "coordenador" and role == "coordenador"):
                     ignorados += 1
                     continue
-                if not ra or not nome or not email or len(senha) < 6 or len(senha) > 18:
+                if not ra or not nome or not email:
                     ignorados += 1
                     continue
 
                 try:
                     cursor.execute(
-                        "INSERT INTO usuarios (ra, nome, email, senha, role, curso) VALUES (?, ?, ?, ?, ?, ?)",
+                        """INSERT INTO usuarios (ra, nome, email, senha, role, curso, primeiro_acesso, tentativas_falhas, bloqueado)
+                           VALUES (?, ?, ?, ?, ?, ?, 1, 0, 0)""",
                         (ra, nome, email, senha, role, curso)
                     )
                     inseridos += 1
@@ -562,7 +677,7 @@ def carga_massiva_json():
 
 
 # ==========================================
-# ROTAS DO ALUNO (ACEITAR/REJEITAR E EDITAR DADOS PRÓPRIOS)
+# ROTAS DO ALUNO (ACEITAR/REJEITAR E EDITAR NOME PRÓPRIO - RA IMUTÁVEL)
 # ==========================================
 @app.route("/api/membros/<int:membro_id>/resposta", methods=["PATCH"])
 def responder_convite_aluno(membro_id):
@@ -585,17 +700,25 @@ def editar_dados_proprios_aluno(membro_id):
     data = request.json
     user_id = data.get("user_id")
     novo_nome = data.get("nome", "").strip()
-    novo_ra = data.get("ra", "").strip()
+
+    if not novo_nome:
+        return jsonify({"error": "O nome não pode ficar em branco."}), 400
 
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("UPDATE grupo_membros SET nome = ?, ra = ? WHERE id = ?", (novo_nome, novo_ra, membro_id))
+
+    # Atualiza apenas o nome; o RA permanece imutável conforme fornecido pela instituição
+    cursor.execute("SELECT ra FROM grupo_membros WHERE id = ?", (membro_id,))
+    membro = cursor.fetchone()
+    if membro:
+        cursor.execute("UPDATE grupo_membros SET nome = ? WHERE LOWER(ra) = LOWER(?)", (novo_nome, membro["ra"]))
     if user_id:
-        cursor.execute("UPDATE usuarios SET nome = ?, ra = ? WHERE id = ? AND role = 'aluno'", (novo_nome, novo_ra, user_id))
+        cursor.execute("UPDATE usuarios SET nome = ? WHERE id = ? AND role = 'aluno'", (novo_nome, user_id))
+
     conn.commit()
     cursor.close()
     conn.close()
-    return jsonify({"message": "Dados atualizados"})
+    return jsonify({"message": "Nome atualizado com sucesso"})
 
 
 if __name__ == "__main__":
