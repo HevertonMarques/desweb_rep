@@ -115,12 +115,66 @@
 
         <!-- VIEW 1: CONSULTAR PROJETOS -->
         <div id="view-consultar" class="space-y-6">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-950/60 p-4 rounded-xl border border-slate-800/80">
+
+          <!-- 1. Cards de Resumo (Indicadores KPI) -->
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div class="bg-slate-950/70 border border-slate-800/80 rounded-xl p-3.5 flex items-center justify-between">
+              <div>
+                <p class="text-[11px] font-medium text-slate-400">Total Visível</p>
+                <p id="kpi-total" class="text-xl font-bold text-slate-100 mt-0.5">0</p>
+              </div>
+              <div class="w-9 h-9 rounded-lg bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+                <i class="fa-solid fa-folder-open text-sm"></i>
+              </div>
+            </div>
+
+            <div class="bg-slate-950/70 border border-slate-800/80 rounded-xl p-3.5 flex items-center justify-between">
+              <div>
+                <p class="text-[11px] font-medium text-slate-400">Em Andamento</p>
+                <p id="kpi-andamento" class="text-xl font-bold text-amber-400 mt-0.5">0</p>
+              </div>
+              <div class="w-9 h-9 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                <i class="fa-solid fa-spinner text-sm"></i>
+              </div>
+            </div>
+
+            <div class="bg-slate-950/70 border border-slate-800/80 rounded-xl p-3.5 flex items-center justify-between">
+              <div>
+                <p class="text-[11px] font-medium text-slate-400">Concluídos</p>
+                <p id="kpi-concluidos" class="text-xl font-bold text-emerald-400 mt-0.5">0</p>
+              </div>
+              <div class="w-9 h-9 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                <i class="fa-solid fa-circle-check text-sm"></i>
+              </div>
+            </div>
+
+            <div class="bg-slate-950/70 border border-slate-800/80 rounded-xl p-3.5 flex items-center justify-between">
+              <div>
+                <p class="text-[11px] font-medium text-slate-400">No Mural Público</p>
+                <p id="kpi-publicados" class="text-xl font-bold text-sky-400 mt-0.5">0</p>
+              </div>
+              <div class="w-9 h-9 rounded-lg bg-sky-500/15 border border-sky-500/30 flex items-center justify-center text-sky-400">
+                <i class="fa-solid fa-globe text-sm"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. Barra de Busca + Filtro por Status -->
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-slate-950/60 p-4 rounded-xl border border-slate-800/80">
             <div>
               <h3 class="text-base font-bold text-slate-100">Projetos Extensionistas Registrados</h3>
               <p class="text-xs text-slate-400" id="consultar-subtitle">Consulta pública de trabalhos extensionistas publicados</p>
             </div>
-            <input type="text" id="search-projetos" onkeyup="renderProjetos()" placeholder="Buscar por título, área ou aluno..." class="w-full sm:w-72 bg-slate-900 border border-slate-700/80 rounded-lg px-3.5 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500" />
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+              <select id="filter-status-projetos" onchange="renderProjetos()" class="bg-slate-900 border border-slate-700/80 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+                <option value="TODOS">Todos os Status</option>
+                <option value="NOVO">NOVO</option>
+                <option value="EM ANDAMENTO">EM ANDAMENTO</option>
+                <option value="CONCLUIDO">CONCLUÍDO</option>
+                <option value="CANCELADO">CANCELADO</option>
+              </select>
+              <input type="text" id="search-projetos" onkeyup="renderProjetos()" placeholder="Buscar por título, área ou aluno..." class="w-full sm:w-64 bg-slate-900 border border-slate-700/80 rounded-lg px-3.5 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500" />
+            </div>
           </div>
 
           <div id="projetos-cards-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -132,7 +186,7 @@
         <div id="view-meus-grupos" class="space-y-6 hidden">
           <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80">
             <h3 class="text-base font-bold text-slate-100 mb-1">Meus Grupos e Confirmação</h3>
-            <p class="text-xs text-slate-400">Aceite ou rejeite sua vinculação nos projetos extensionistas em que seu RA foi incluído.</p>
+            <p class="text-xs text-slate-400">Aceite ou rejeite sua vinculação nos projetos extensionistas em que seu RA foi incluído, ou corrija seus dados cadastrais.</p>
           </div>
 
           <div class="bg-slate-950/60 rounded-xl border border-slate-800/80 overflow-hidden p-4">
@@ -403,6 +457,33 @@
     </div>
   </div>
 
+  <!-- MODAL: ALUNO EDITAR SEUS PRÓPRIOS DADOS -->
+  <div id="edit-aluno-self-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-6 shadow-2xl">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-base font-bold text-slate-100">Editar Meus Dados no Projeto</h3>
+        <button onclick="closeEditAlunoSelfModal()" class="text-slate-400 hover:text-white">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <form onsubmit="handleSalvarAlunoSelf(event)" class="space-y-4">
+        <input type="hidden" id="edit-self-membro-id" />
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Meu Nome Completo</label>
+          <input type="text" id="edit-self-nome" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3.5 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Meu RA / Matrícula</label>
+          <input type="text" id="edit-self-ra" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3.5 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeEditAlunoSelfModal()" class="px-4 py-2 bg-slate-800 text-slate-300 text-xs font-semibold rounded-lg">Cancelar</button>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg">Salvar Dados</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script>
     let currentUser = JSON.parse(localStorage.getItem("extensao_user") || "null");
     let allProjetos = [];
@@ -624,20 +705,34 @@
     function renderProjetos() {
       const grid = document.getElementById("projetos-cards-grid");
       const query = (document.getElementById("search-projetos").value || "").toLowerCase();
+      const statusFilter = document.getElementById("filter-status-projetos").value;
       const isManager = currentUser && ["admin", "coordenador", "orientador"].includes(currentUser.role);
 
-      const filtrados = allProjetos.filter(p => {
+      // Projetos visíveis conforme perfil (antes do filtro de texto/status) para os KPIs
+      const visiveisPorPerfil = allProjetos.filter(p => {
         if (!currentUser && !p.publicado) return false;
         if (currentUser && currentUser.role === "aluno" && !p.publicado) {
           const isMember = (p.grupo?.membros || []).some(m => m.ra.toLowerCase() === currentUser.ra.toLowerCase());
           if (!isMember) return false;
         }
+        return true;
+      });
+
+      // Atualiza os 4 cards KPI
+      document.getElementById("kpi-total").textContent = visiveisPorPerfil.length;
+      document.getElementById("kpi-andamento").textContent = visiveisPorPerfil.filter(p => p.status === "EM ANDAMENTO").length;
+      document.getElementById("kpi-concluidos").textContent = visiveisPorPerfil.filter(p => p.status === "CONCLUIDO").length;
+      document.getElementById("kpi-publicados").textContent = visiveisPorPerfil.filter(p => p.publicado).length;
+
+      // Aplica filtro de status e busca textual
+      const filtrados = visiveisPorPerfil.filter(p => {
+        if (statusFilter !== "TODOS" && p.status !== statusFilter) return false;
         const texto = `${p.titulo} ${p.areas_atuacao} ${p.setor_externo} ${p.orientador_nome} ${(p.grupo?.membros || []).map(m => m.nome).join(" ")}`.toLowerCase();
         return texto.includes(query);
       });
 
       if (filtrados.length === 0) {
-        grid.innerHTML = `<div class="col-span-full text-center py-10 text-xs text-slate-400 bg-slate-950/40 rounded-xl border border-slate-800/60">Nenhum projeto encontrado no momento.</div>`;
+        grid.innerHTML = `<div class="col-span-full text-center py-10 text-xs text-slate-400 bg-slate-950/40 rounded-xl border border-slate-800/60">Nenhum projeto encontrado para os filtros aplicados.</div>`;
         return;
       }
 
@@ -986,7 +1081,7 @@
     }
 
     // ==========================================
-    // ALUNO: ACEITAR / REJEITAR PARTICIPAÇÃO
+    // ALUNO: ACEITAR / REJEITAR E EDITAR DADOS PRÓPRIOS
     // ==========================================
     function renderAlunoGrupos() {
       const container = document.getElementById("pending-groups-container");
@@ -1015,13 +1110,17 @@
       }
 
       container.innerHTML = meusVinculos.map(({ projeto, membro }) => `
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
             <div class="text-xs font-bold text-slate-100">${projeto.titulo}</div>
             <div class="text-[11px] text-slate-400">Grupo: <span class="text-indigo-400 font-medium">${projeto.grupo.nome}</span> • Orientador: ${projeto.orientador_nome}</div>
+            <div class="text-[11px] text-slate-300 mt-1">Registrado como: <span class="font-semibold">${membro.nome}</span> (RA: <span class="font-mono">${membro.ra}</span>)</div>
             <div class="mt-1 text-[11px]">Status da sua participação: <span class="font-bold ${membro.status_participacao === "CONFIRMADO" ? "text-emerald-400" : membro.status_participacao === "RECUSADO" ? "text-red-400" : "text-amber-400"}">${membro.status_participacao}</span></div>
           </div>
-          <div class="flex items-center gap-2">
+          <div class="flex flex-wrap items-center gap-2">
+            <button onclick="openEditAlunoSelfModal(${membro.id}, '${membro.nome.replace(/'/g, "\\'")}', '${membro.ra}')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold rounded-lg transition-colors">
+              <i class="fa-solid fa-user-pen mr-1"></i> Editar Meus Dados
+            </button>
             <button onclick="responderConvite(${membro.id}, 'CONFIRMADO')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg transition-colors">
               <i class="fa-solid fa-check mr-1"></i> Aceitar
             </button>
@@ -1040,6 +1139,45 @@
         body: JSON.stringify({ status_participacao: status })
       });
       await loadProjetos();
+    }
+
+    function openEditAlunoSelfModal(membroId, nomeAtual, raAtual) {
+      document.getElementById("edit-self-membro-id").value = membroId;
+      document.getElementById("edit-self-nome").value = nomeAtual;
+      document.getElementById("edit-self-ra").value = raAtual;
+      document.getElementById("edit-aluno-self-modal").classList.remove("hidden");
+    }
+
+    function closeEditAlunoSelfModal() {
+      document.getElementById("edit-aluno-self-modal").classList.add("hidden");
+    }
+
+    async function handleSalvarAlunoSelf(e) {
+      e.preventDefault();
+      const membroId = document.getElementById("edit-self-membro-id").value;
+      const novoNome = document.getElementById("edit-self-nome").value.trim();
+      const novoRa = document.getElementById("edit-self-ra").value.trim();
+
+      const res = await fetch(`/api/membros/${membroId}/aluno-self`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: currentUser.id,
+          nome: novoNome,
+          ra: novoRa
+        })
+      });
+
+      if (res.ok) {
+        currentUser.nome = novoNome;
+        currentUser.ra = novoRa;
+        localStorage.setItem("extensao_user", JSON.stringify(currentUser));
+        updateUIForUser();
+        closeEditAlunoSelfModal();
+        await loadProjetos();
+      } else {
+        alert("Erro ao atualizar seus dados.");
+      }
     }
   </script>
 </body>
