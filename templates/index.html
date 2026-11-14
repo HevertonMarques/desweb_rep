@@ -60,6 +60,11 @@
             <i class="fa-solid fa-users-gear w-4 text-center"></i>
             <span>Criar Acessos / Contas</span>
           </button>
+
+          <button onclick="switchTab('carga-massiva')" id="nav-carga-massiva" class="hidden w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-900 transition-all">
+            <i class="fa-solid fa-file-code w-4 text-center"></i>
+            <span>Carga Massiva (JSON)</span>
+          </button>
         </nav>
       </div>
 
@@ -138,10 +143,10 @@
           </div>
         </div>
 
-        <!-- VIEW 3: REGISTRAR TRABALHO / GRUPO (ADMIN, COORDENADOR, ORIENTADOR) -->
+        <!-- VIEW 3: REGISTRAR TRABALHO / GRUPO (MANUAL) -->
         <div id="view-registrar-trabalho" class="space-y-6 hidden">
           <div class="bg-slate-950/60 p-5 rounded-xl border border-slate-800/80 max-w-3xl">
-            <h3 class="text-base font-bold text-slate-100 mb-1">Cadastrar Novo Projeto Extensionista</h3>
+            <h3 class="text-base font-bold text-slate-100 mb-1">Cadastrar Novo Projeto Extensionista (Manual)</h3>
             <p class="text-xs text-slate-400 mb-5">Preencha os dados do projeto, o nome do grupo e os RAs dos alunos integrantes.</p>
 
             <form onsubmit="handleCriarProjeto(event)" class="space-y-4">
@@ -200,11 +205,11 @@
           </div>
         </div>
 
-        <!-- VIEW 4: CRIAR ACESSOS / CONTAS -->
+        <!-- VIEW 4: CRIAR ACESSOS / CONTAS (MANUAL) -->
         <div id="view-gerenciar-contas" class="space-y-6 hidden">
           <div class="bg-slate-950/60 p-5 rounded-xl border border-slate-800/80 max-w-3xl">
-            <h3 class="text-base font-bold text-slate-100 mb-1">Criar Nova Conta de Acesso</h3>
-            <p class="text-xs text-slate-400 mb-4" id="conta-role-hint">Cadastre usuários respeitando a hierarquia de permissões.</p>
+            <h3 class="text-base font-bold text-slate-100 mb-1">Criar Nova Conta de Acesso (Manual)</h3>
+            <p class="text-xs text-slate-400 mb-4">Cadastre usuários individualmente respeitando a hierarquia de permissões.</p>
 
             <form onsubmit="handleCriarUsuario(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -257,6 +262,57 @@
                   <!-- Dynamically populated -->
                 </tbody>
               </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- VIEW 5: CARGA MASSIVA VIA JSON (ACERVO DE PROJETOS E PROFESSORES) -->
+        <div id="view-carga-massiva" class="space-y-6 hidden">
+          <div class="bg-slate-950/60 p-5 rounded-xl border border-slate-800/80 max-w-4xl space-y-5">
+            <div>
+              <h3 class="text-base font-bold text-slate-100 mb-1">Importação de Acervo em Lote (JSON)</h3>
+              <p class="text-xs text-slate-400">Importe múltiplos projetos ou professores/usuários de uma só vez. Esta opção complementa o cadastro manual.</p>
+            </div>
+
+            <!-- Seleção do Tipo de Acervo -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Tipo de Acervo para Importar *</label>
+                <select id="json-tipo-acervo" onchange="updateJsonExample()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
+                  <option value="projetos">Acervo de Projetos Extensionistas</option>
+                  <option value="usuarios">Acervo de Professores / Usuários</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Carregar Arquivo .json do Dispositivo</label>
+                <input type="file" id="json-file-input" accept=".json,application/json" onchange="handleJsonFileUpload(event)" class="w-full text-xs text-slate-300 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-indigo-400 hover:file:bg-slate-700 cursor-pointer" />
+              </div>
+            </div>
+
+            <!-- Bloco Visual de Exemplo da Estrutura JSON -->
+            <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4">
+              <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                <span class="text-xs font-semibold text-indigo-400"><i class="fa-solid fa-circle-info mr-1"></i> Modelo de Estrutura Obrigatória do JSON:</span>
+                <button type="button" onclick="preencherComExemploJson()" class="px-3 py-1 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 text-[11px] font-semibold rounded-lg transition-colors">
+                  <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Preencher Caixa com Este Exemplo
+                </button>
+              </div>
+              <pre id="json-example-preview" class="text-[11px] font-mono text-emerald-300 bg-slate-950 p-3 rounded-lg border border-slate-800/80 overflow-x-auto custom-scrollbar leading-relaxed"></pre>
+            </div>
+
+            <!-- Área de Texto para Colar / Editar o JSON -->
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1">Conteúdo JSON para Importação *</label>
+              <textarea id="json-raw-input" rows="8" placeholder="Cole aqui a lista JSON [...] ou selecione um arquivo .json acima..." class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs font-mono text-slate-100 focus:outline-none focus:border-indigo-500 custom-scrollbar"></textarea>
+            </div>
+
+            <div class="flex items-center justify-between gap-4 pt-1">
+              <span id="json-import-feedback" class="text-xs font-medium"></span>
+              <button type="button" onclick="handleImportarJson()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg shadow-lg shadow-emerald-600/20 transition-all flex items-center gap-2">
+                <i class="fa-solid fa-file-import"></i>
+                <span>Processar e Importar Acervo</span>
+              </button>
             </div>
           </div>
         </div>
@@ -352,8 +408,44 @@
     let allProjetos = [];
     let allUsuarios = [];
 
+    const JSON_EXEMPLOS = {
+      projetos: JSON.stringify([
+        {
+          titulo: "Automação Residencial Comunitária",
+          setor_externo: "Associação de Moradores",
+          areas_atuacao: "Tecnologia e Engenharia",
+          interdisciplinaridade: "Ciência da Computação + Elétrica",
+          orientador_nome: "Prof. André Marcos",
+          status: "EM ANDAMENTO",
+          publicado: true,
+          grupo_nome: "Equipe Tech Extensão",
+          membros: [
+            { ra: "2026001", nome: "João Silva", status_participacao: "CONFIRMADO" },
+            { ra: "2026002", nome: "Maria Souza", status_participacao: "PENDENTE" }
+          ]
+        }
+      ], null, 2),
+      usuarios: JSON.stringify([
+        {
+          ra: "PROF101",
+          nome: "Prof. André Marcos",
+          email: "andre.marcos@faccamp.com",
+          senha: "prof123",
+          role: "orientador"
+        },
+        {
+          ra: "2026001",
+          nome: "João Silva",
+          email: "joao.silva@faccamp.com",
+          senha: "aluno123",
+          role: "aluno"
+        }
+      ], null, 2)
+    };
+
     document.addEventListener("DOMContentLoaded", async () => {
       addMembroField("membros-list-create");
+      updateJsonExample();
       updateUIForUser();
       await loadProjetos();
       if (currentUser && ["admin", "coordenador", "orientador"].includes(currentUser.role)) {
@@ -369,7 +461,7 @@
     }
 
     function switchTab(tab) {
-      ["consultar", "meus-grupos", "registrar-trabalho", "gerenciar-contas"].forEach(t => {
+      ["consultar", "meus-grupos", "registrar-trabalho", "gerenciar-contas", "carga-massiva"].forEach(t => {
         document.getElementById(`view-${t}`).classList.add("hidden");
         const navBtn = document.getElementById(`nav-${t}`);
         if (navBtn) {
@@ -389,7 +481,8 @@
         "consultar": "Consultar Projetos Extensionistas",
         "meus-grupos": "Confirmação de Participação em Grupos",
         "registrar-trabalho": "Registrar Trabalho / Grupo Extensionista",
-        "gerenciar-contas": "Gerenciar Acessos e Contas"
+        "gerenciar-contas": "Gerenciar Acessos e Contas",
+        "carga-massiva": "Carga Massiva de Acervo (JSON)"
       };
       document.getElementById("page-title").textContent = titles[tab] || "Módulo 2: Controle";
 
@@ -405,10 +498,12 @@
       const navMeusGrupos = document.getElementById("nav-meus-grupos");
       const navRegistrar = document.getElementById("nav-registrar-trabalho");
       const navContas = document.getElementById("nav-gerenciar-contas");
+      const navCargaMassiva = document.getElementById("nav-carga-massiva");
 
       navMeusGrupos.classList.add("hidden");
       navRegistrar.classList.add("hidden");
       navContas.classList.add("hidden");
+      navCargaMassiva.classList.add("hidden");
 
       if (!currentUser) {
         btnLogin.classList.remove("hidden");
@@ -443,6 +538,10 @@
         navContas.classList.remove("hidden");
         document.getElementById("proj-orientador").value = currentUser.nome;
         populateRoleOptions();
+      }
+
+      if (["admin", "coordenador"].includes(currentUser.role)) {
+        navCargaMassiva.classList.remove("hidden");
       }
     }
 
@@ -758,6 +857,79 @@
         await loadProjetos();
       } catch (err) {
         alert("Erro de conexão ao excluir projeto.");
+      }
+    }
+
+    // ==========================================
+    // CARGA MASSIVA VIA JSON
+    // ==========================================
+    function updateJsonExample() {
+      const tipo = document.getElementById("json-tipo-acervo").value;
+      document.getElementById("json-example-preview").textContent = JSON_EXEMPLOS[tipo];
+      document.getElementById("json-import-feedback").textContent = "";
+    }
+
+    function preencherComExemploJson() {
+      const tipo = document.getElementById("json-tipo-acervo").value;
+      document.getElementById("json-raw-input").value = JSON_EXEMPLOS[tipo];
+      document.getElementById("json-import-feedback").textContent = "";
+    }
+
+    function handleJsonFileUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        document.getElementById("json-raw-input").value = evt.target.result;
+      };
+      reader.readAsText(file, "UTF-8");
+    }
+
+    async function handleImportarJson() {
+      const tipo = document.getElementById("json-tipo-acervo").value;
+      const rawText = document.getElementById("json-raw-input").value.trim();
+      const feedback = document.getElementById("json-import-feedback");
+
+      if (!rawText) {
+        feedback.className = "text-xs font-medium text-red-400";
+        feedback.textContent = "Cole o conteúdo JSON ou selecione um arquivo primeiro.";
+        return;
+      }
+
+      let registros;
+      try {
+        registros = JSON.parse(rawText);
+      } catch (err) {
+        feedback.className = "text-xs font-medium text-red-400";
+        feedback.textContent = "JSON inválido: verifique vírgulas, chaves e aspas.";
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/carga-massiva", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            actor_role: currentUser.role,
+            tipo: tipo,
+            registros: registros
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          feedback.className = "text-xs font-medium text-red-400";
+          feedback.textContent = data.error || "Erro ao importar acervo.";
+          return;
+        }
+
+        feedback.className = "text-xs font-medium text-emerald-400";
+        feedback.textContent = data.message;
+        document.getElementById("json-raw-input").value = "";
+        await loadProjetos();
+        await loadUsuarios();
+      } catch (err) {
+        feedback.className = "text-xs font-medium text-red-400";
+        feedback.textContent = "Erro de conexão ao processar importação.";
       }
     }
 
