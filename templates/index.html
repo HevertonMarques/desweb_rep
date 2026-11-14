@@ -201,13 +201,13 @@
           </div>
         </div>
 
-        <!-- VIEW 3: REGISTRAR TRABALHO / GRUPO (MANUAL) -->
+        <!-- VIEW 3: REGISTRAR TRABALHO / GRUPO -->
         <div id="view-registrar-trabalho" class="space-y-6 hidden">
-          <div class="bg-slate-950/60 p-5 rounded-xl border border-slate-800/80 max-w-3xl">
-            <h3 class="text-base font-bold text-slate-100 mb-1">Cadastrar Novo Projeto Extensionista (Manual)</h3>
-            <p class="text-xs text-slate-400 mb-5">Preencha os dados do projeto, o nome do grupo e os RAs dos alunos integrantes.</p>
+          <div class="bg-slate-950/60 p-5 rounded-xl border border-slate-800/80 max-w-4xl">
+            <h3 class="text-base font-bold text-slate-100 mb-1">Cadastrar Novo Projeto Extensionista</h3>
+            <p class="text-xs text-slate-400 mb-5">Preencha os dados do projeto e inclua alunos cadastrados selecionando por cursos ou digitando o RA.</p>
 
-            <form onsubmit="handleCriarProjeto(event)" class="space-y-4">
+            <form onsubmit="handleCriarProjeto(event)" class="space-y-5">
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label class="block text-xs font-medium text-slate-300 mb-1">Título do Projeto *</label>
@@ -226,7 +226,7 @@
                 </div>
                 <div>
                   <label class="block text-xs font-medium text-slate-300 mb-1">Interdisciplinaridade *</label>
-                  <input type="text" id="proj-inter" required placeholder="Ex: Engenharia de Software + Administração" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
+                  <input type="text" id="proj-inter" required placeholder="Ex: Ciência da Computação + Administração" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
                 </div>
               </div>
 
@@ -241,12 +241,47 @@
                 </div>
               </div>
 
-              <!-- Membros do Grupo -->
+              <!-- SELEÇÃO DE ALUNOS POR CURSOS (MÚLTIPLOS CURSOS + CHECKBOXES) -->
+              <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-4 space-y-3">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <h4 class="text-xs font-bold text-indigo-300"><i class="fa-solid fa-graduation-cap mr-1.5"></i> Selecionar Alunos por Curso</h4>
+                    <p class="text-[11px] text-slate-400">Adicione um ou mais cursos abaixo para listar os alunos e incluí-los em lote.</p>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <select id="curso-selector-add" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
+                      <option value="">Escolha um curso...</option>
+                    </select>
+                    <button type="button" onclick="adicionarCursoFiltro('create')" class="px-3 py-1.5 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/40 text-xs font-semibold rounded-lg transition-colors">
+                      <i class="fa-solid fa-plus mr-1"></i> Adicionar Curso
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Tags dos cursos selecionados -->
+                <div id="cursos-tags-create" class="flex flex-wrap gap-2"></div>
+
+                <!-- Lista de alunos dos cursos selecionados com checkbox -->
+                <div id="alunos-por-curso-box-create" class="hidden space-y-2.5 pt-2 border-t border-slate-800/80">
+                  <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-semibold text-slate-300">Marque os alunos que deseja incluir:</span>
+                    <button type="button" onclick="incluirAlunosSelecionados('create', 'membros-list-create')" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg shadow-md shadow-emerald-600/20 transition-all">
+                      <i class="fa-solid fa-user-check mr-1"></i> Incluir Alunos Selecionados
+                    </button>
+                  </div>
+                  <div id="alunos-checklist-create" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto custom-scrollbar pr-1"></div>
+                </div>
+              </div>
+
+              <!-- LISTA DE INTEGRANTES INCLUÍDOS NO GRUPO (E INCLUSÃO MANUAL POR RA) -->
               <div class="border-t border-slate-800 pt-4">
-                <div class="flex items-center justify-between mb-2">
-                  <label class="text-xs font-semibold text-slate-200">Integrantes do Grupo (RA e Nome)</label>
-                  <button type="button" onclick="addMembroField('membros-list-create')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-indigo-400 text-xs font-medium rounded-lg border border-slate-700 transition-colors">
-                    <i class="fa-solid fa-plus mr-1"></i> Adicionar Aluno
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                  <div>
+                    <label class="text-xs font-semibold text-slate-200">Integrantes Vinculados ao Grupo *</label>
+                    <p class="text-[11px] text-slate-400">Apenas alunos com acesso cadastrado no sistema são aceitos (digite o RA para preencher automaticamente).</p>
+                  </div>
+                  <button type="button" onclick="addMembroField('membros-list-create')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-indigo-400 text-xs font-medium rounded-lg border border-slate-700 transition-colors">
+                    <i class="fa-solid fa-plus mr-1"></i> Adicionar Manualmente por RA
                   </button>
                 </div>
                 <div id="membros-list-create" class="space-y-2">
@@ -272,7 +307,7 @@
             <form onsubmit="handleCriarUsuario(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label class="block text-xs font-medium text-slate-300 mb-1">Perfil / Papel *</label>
-                <select id="user-new-role" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
+                <select id="user-new-role" onchange="toggleCampoCursoNovoUsuario()" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
                   <!-- Populated by role permissions -->
                 </select>
               </div>
@@ -280,6 +315,23 @@
                 <label class="block text-xs font-medium text-slate-300 mb-1">RA / Matrícula *</label>
                 <input type="text" id="user-new-ra" required placeholder="Ex: 20260123" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
               </div>
+
+              <!-- Campo Curso (exibido quando Perfil = Aluno) -->
+              <div id="div-user-new-curso" class="md:col-span-2 hidden">
+                <label class="block text-xs font-medium text-slate-300 mb-1">Curso do Aluno *</label>
+                <input type="text" id="user-new-curso" list="lista-cursos-sugeridos" placeholder="Selecione ou digite o curso (Ex: Ciência da Computação)" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
+                <datalist id="lista-cursos-sugeridos">
+                  <option value="Ciência da Computação"></option>
+                  <option value="Análise e Desenvolvimento de Sistemas"></option>
+                  <option value="Engenharia de Software"></option>
+                  <option value="Administração"></option>
+                  <option value="Direito"></option>
+                  <option value="Psicologia"></option>
+                  <option value="Enfermagem"></option>
+                  <option value="Pedagogia"></option>
+                </datalist>
+              </div>
+
               <div>
                 <label class="block text-xs font-medium text-slate-300 mb-1">Nome Completo *</label>
                 <input type="text" id="user-new-nome" required placeholder="Nome do usuário" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
@@ -324,6 +376,7 @@
                     <th class="py-3 px-4">Nome</th>
                     <th class="py-3 px-4">E-mail</th>
                     <th class="py-3 px-4">Perfil</th>
+                    <th class="py-3 px-4">Curso</th>
                     <th class="py-3 px-4 text-right">Ações</th>
                   </tr>
                 </thead>
@@ -484,9 +537,9 @@
 
         <div class="border-t border-slate-800 pt-3">
           <div class="flex items-center justify-between mb-2">
-            <label class="text-xs font-semibold text-slate-200">Integrantes do Grupo</label>
+            <label class="text-xs font-semibold text-slate-200">Integrantes do Grupo (Somente RAs com acesso de Aluno)</label>
             <button type="button" onclick="addMembroField('membros-list-edit')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-indigo-400 text-xs font-medium rounded-lg border border-slate-700">
-              <i class="fa-solid fa-plus mr-1"></i> Adicionar Aluno
+              <i class="fa-solid fa-plus mr-1"></i> Adicionar por RA
             </button>
           </div>
           <div id="membros-list-edit" class="space-y-2"></div>
@@ -531,6 +584,7 @@
     let currentUser = JSON.parse(localStorage.getItem("extensao_user") || "null");
     let allProjetos = [];
     let allUsuarios = [];
+    let cursosSelecionadosCreate = new Set();
 
     const JSON_EXEMPLOS = {
       projetos: JSON.stringify([
@@ -562,19 +616,20 @@
           nome: "João Silva",
           email: "joao.silva@faccamp.com",
           senha: "aluno123",
-          role: "aluno"
+          role: "aluno",
+          curso: "Ciência da Computação"
         }
       ], null, 2)
     };
 
     document.addEventListener("DOMContentLoaded", async () => {
-      addMembroField("membros-list-create");
       updateJsonExample();
       updateUIForUser();
-      await loadProjetos();
       if (currentUser && ["admin", "coordenador", "orientador"].includes(currentUser.role)) {
         await loadUsuarios();
       }
+      addMembroField("membros-list-create");
+      await loadProjetos();
     });
 
     function togglePasswordVisibility(inputId, iconId) {
@@ -738,6 +793,21 @@
       } else if (currentUser.role === "orientador") {
         sel.innerHTML = `<option value="aluno">Aluno</option>`;
       }
+      toggleCampoCursoNovoUsuario();
+    }
+
+    function toggleCampoCursoNovoUsuario() {
+      const role = document.getElementById("user-new-role").value;
+      const divCurso = document.getElementById("div-user-new-curso");
+      const inputCurso = document.getElementById("user-new-curso");
+      if (role === "aluno") {
+        divCurso.classList.remove("hidden");
+        inputCurso.required = true;
+      } else {
+        divCurso.classList.add("hidden");
+        inputCurso.required = false;
+        inputCurso.value = "";
+      }
     }
 
     function openLoginModal() {
@@ -781,10 +851,10 @@
         localStorage.setItem("extensao_user", JSON.stringify(currentUser));
         closeLoginModal();
         updateUIForUser();
-        await loadProjetos();
         if (["admin", "coordenador", "orientador"].includes(currentUser.role)) {
           await loadUsuarios();
         }
+        await loadProjetos();
       } catch (err) {
         errEl.textContent = "Erro de conexão com o servidor.";
         errEl.classList.remove("hidden");
@@ -915,32 +985,209 @@
       }).join("");
     }
 
+    // ==========================================
+    // SELEÇÃO DE ALUNOS POR CURSOS (MÚLTIPLOS CURSOS)
+    // ==========================================
+    function atualizarSeletorDeCursos() {
+      const select = document.getElementById("curso-selector-add");
+      if (!select) return;
+      const alunos = allUsuarios.filter(u => u.role === "aluno" && u.curso && u.curso.trim() !== "");
+      const cursosUnicos = [...new Set(alunos.map(a => a.curso.trim()))].sort();
+
+      select.innerHTML = `<option value="">${cursosUnicos.length ? "Escolha um curso..." : "Nenhum curso cadastrado ainda"}</option>` +
+        cursosUnicos.map(c => `<option value="${c}">${c}</option>`).join("");
+    }
+
+    function adicionarCursoFiltro(contexto) {
+      const select = document.getElementById("curso-selector-add");
+      const curso = select.value;
+      if (!curso) return;
+      cursosSelecionadosCreate.add(curso);
+      select.value = "";
+      renderCursosEAlunosFiltro(contexto);
+    }
+
+    function removerCursoFiltro(contexto, curso) {
+      cursosSelecionadosCreate.delete(curso);
+      renderCursosEAlunosFiltro(contexto);
+    }
+
+    function renderCursosEAlunosFiltro(contexto) {
+      const tagsContainer = document.getElementById(`cursos-tags-${contexto}`);
+      const box = document.getElementById(`alunos-por-curso-box-${contexto}`);
+      const checklist = document.getElementById(`alunos-checklist-${contexto}`);
+
+      const cursosArr = Array.from(cursosSelecionadosCreate);
+      if (cursosArr.length === 0) {
+        tagsContainer.innerHTML = "";
+        box.classList.add("hidden");
+        checklist.innerHTML = "";
+        return;
+      }
+
+      tagsContainer.innerHTML = cursosArr.map(c => `
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/40">
+          <span>${c}</span>
+          <button type="button" onclick="removerCursoFiltro('${contexto}', '${c.replace(/'/g, "\\'")}')" class="hover:text-white">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </span>
+      `).join("");
+
+      const alunosFiltrados = allUsuarios.filter(u =>
+        u.role === "aluno" && u.curso && cursosSelecionadosCreate.has(u.curso.trim())
+      );
+
+      box.classList.remove("hidden");
+
+      if (alunosFiltrados.length === 0) {
+        checklist.innerHTML = `<p class="col-span-full text-[11px] text-slate-400">Nenhum aluno encontrado para os cursos selecionados.</p>`;
+        return;
+      }
+
+      checklist.innerHTML = alunosFiltrados.map(a => `
+        <label class="flex items-center gap-2.5 bg-slate-950/90 hover:bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 cursor-pointer transition-colors">
+          <input type="checkbox" value="${a.ra}" data-nome="${a.nome}" class="aluno-curso-checkbox w-4 h-4 rounded border-slate-600 text-indigo-600 focus:ring-indigo-500 bg-slate-900" />
+          <div class="min-w-0 flex-1">
+            <div class="text-xs font-semibold text-slate-100 truncate">${a.nome}</div>
+            <div class="text-[10px] text-slate-400 truncate">RA: <span class="font-mono text-indigo-300">${a.ra}</span> • ${a.curso}</div>
+          </div>
+        </label>
+      `).join("");
+    }
+
+    function incluirAlunosSelecionados(contexto, targetContainerId) {
+      const checkboxes = document.querySelectorAll(`#alunos-checklist-${contexto} .aluno-curso-checkbox:checked`);
+      if (checkboxes.length === 0) {
+        alert("Marque pelo menos um aluno na caixa de seleção antes de incluir.");
+        return;
+      }
+
+      // Remove linhas vazias existentes antes de inserir em lote
+      const container = document.getElementById(targetContainerId);
+      container.querySelectorAll(".membro-row").forEach(row => {
+        const raVal = row.querySelector(".membro-ra").value.trim();
+        if (!raVal) row.remove();
+      });
+
+      const rasJaNaLista = new Set(
+        Array.from(container.querySelectorAll(".membro-ra")).map(inp => inp.value.trim().toLowerCase())
+      );
+
+      let adicionados = 0;
+      checkboxes.forEach(cb => {
+        const ra = cb.value.trim();
+        const nome = cb.dataset.nome;
+        if (!rasJaNaLista.has(ra.toLowerCase())) {
+          addMembroField(targetContainerId, ra, nome, "PENDENTE");
+          rasJaNaLista.add(ra.toLowerCase());
+          adicionados++;
+        }
+        cb.checked = false;
+      });
+
+      if (adicionados === 0) {
+        alert("Os alunos marcados já estão na lista de integrantes do grupo.");
+      }
+    }
+
+    // ==========================================
+    // INCLUSÃO MANUAL POR RA (BUSCA INSTANTÂNEA DE ALUNO COM ACESSO)
+    // ==========================================
     function addMembroField(containerId, ra = "", nome = "", status = "PENDENTE") {
       const container = document.getElementById(containerId);
       const row = document.createElement("div");
-      row.className = "flex items-center gap-2 membro-row";
+      row.className = "flex flex-col sm:flex-row sm:items-center gap-2 membro-row bg-slate-900/40 p-2 rounded-lg border border-slate-800/80";
       row.dataset.status = status;
+
       row.innerHTML = `
-        <input type="text" placeholder="RA do Aluno" value="${ra}" required class="membro-ra w-1/3 bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
-        <input type="text" placeholder="Nome do Aluno" value="${nome}" required class="membro-nome flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
-        <button type="button" onclick="this.parentElement.remove()" class="p-1.5 text-slate-500 hover:text-red-400">
-          <i class="fa-solid fa-trash-can text-xs"></i>
-        </button>
+        <input type="text" placeholder="Digite o RA do Aluno" value="${ra}" required oninput="validarAlunoPorRaInput(this)" class="membro-ra w-full sm:w-1/3 bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
+        <div class="flex-1 flex items-center gap-2">
+          <input type="text" placeholder="Nome preenchido automaticamente..." value="${nome}" readonly required class="membro-nome flex-1 bg-slate-950/70 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-300 cursor-not-allowed" />
+          <span class="membro-status-icon text-xs shrink-0"></span>
+          <button type="button" onclick="this.closest('.membro-row').remove()" class="p-1.5 text-slate-500 hover:text-red-400" title="Remover aluno">
+            <i class="fa-solid fa-trash-can text-xs"></i>
+          </button>
+        </div>
       `;
       container.appendChild(row);
+
+      if (ra) {
+        validarAlunoPorRaInput(row.querySelector(".membro-ra"));
+      }
+    }
+
+    function validarAlunoPorRaInput(raInput) {
+      const row = raInput.closest(".membro-row");
+      const nomeInput = row.querySelector(".membro-nome");
+      const iconSpan = row.querySelector(".membro-status-icon");
+      const raDigitado = raInput.value.trim().toLowerCase();
+
+      if (!raDigitado) {
+        nomeInput.value = "";
+        nomeInput.className = "membro-nome flex-1 bg-slate-950/70 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-300 cursor-not-allowed";
+        iconSpan.innerHTML = "";
+        row.dataset.valido = "false";
+        return;
+      }
+
+      const alunoEncontrado = allUsuarios.find(
+        u => u.role === "aluno" && u.ra.trim().toLowerCase() === raDigitado
+      );
+
+      if (alunoEncontrado) {
+        nomeInput.value = `${alunoEncontrado.nome}${alunoEncontrado.curso ? " (" + alunoEncontrado.curso + ")" : ""}`;
+        nomeInput.className = "membro-nome flex-1 bg-emerald-950/30 border border-emerald-700/60 rounded-lg px-3 py-1.5 text-xs text-emerald-300 font-medium cursor-not-allowed";
+        iconSpan.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400" title="Aluno com acesso validado"></i>`;
+        row.dataset.valido = "true";
+        row.dataset.nomeReal = alunoEncontrado.nome;
+      } else {
+        nomeInput.value = "RA não encontrado ou sem acesso de aluno";
+        nomeInput.className = "membro-nome flex-1 bg-red-950/30 border border-red-800/60 rounded-lg px-3 py-1.5 text-xs text-red-400 cursor-not-allowed";
+        iconSpan.innerHTML = `<i class="fa-solid fa-circle-xmark text-red-400" title="Apenas alunos cadastrados podem ser incluídos"></i>`;
+        row.dataset.valido = "false";
+        row.dataset.nomeReal = "";
+      }
     }
 
     function collectMembros(containerId) {
       const rows = document.querySelectorAll(`#${containerId} .membro-row`);
-      return Array.from(rows).map(r => ({
-        ra: r.querySelector(".membro-ra").value.trim(),
-        nome: r.querySelector(".membro-nome").value.trim(),
-        status_participacao: r.dataset.status || "PENDENTE"
-      })).filter(m => m.ra && m.nome);
+      const lista = [];
+      const rasUnicos = new Set();
+
+      for (const r of rows) {
+        const ra = r.querySelector(".membro-ra").value.trim();
+        if (!ra) continue;
+
+        if (r.dataset.valido !== "true") {
+          return { error: `O RA "${ra}" não pertence a um aluno cadastrado com acesso no sistema. Corrija ou remova a linha.` };
+        }
+
+        if (rasUnicos.has(ra.toLowerCase())) continue;
+        rasUnicos.add(ra.toLowerCase());
+
+        lista.push({
+          ra: ra,
+          nome: r.dataset.nomeReal || r.querySelector(".membro-nome").value.trim(),
+          status_participacao: r.dataset.status || "PENDENTE"
+        });
+      }
+
+      return { membros: lista };
     }
 
     async function handleCriarProjeto(e) {
       e.preventDefault();
+      const resultadoMembros = collectMembros("membros-list-create");
+      if (resultadoMembros.error) {
+        alert(resultadoMembros.error);
+        return;
+      }
+      if (resultadoMembros.membros.length === 0) {
+        alert("Inclua pelo menos 1 aluno cadastrado com acesso no sistema.");
+        return;
+      }
+
       const payload = {
         titulo: document.getElementById("proj-titulo").value,
         setor_externo: document.getElementById("proj-setor").value,
@@ -948,7 +1195,7 @@
         interdisciplinaridade: document.getElementById("proj-inter").value,
         grupo_nome: document.getElementById("proj-grupo").value,
         orientador_nome: document.getElementById("proj-orientador").value,
-        membros: collectMembros("membros-list-create")
+        membros: resultadoMembros.membros
       };
 
       const res = await fetch("/api/projetos", {
@@ -959,13 +1206,16 @@
 
       if (res.ok) {
         e.target.reset();
+        cursosSelecionadosCreate.clear();
+        renderCursosEAlunosFiltro("create");
         document.getElementById("membros-list-create").innerHTML = "";
         addMembroField("membros-list-create");
         document.getElementById("proj-orientador").value = currentUser.nome;
         await loadProjetos();
         switchTab("consultar");
       } else {
-        alert("Erro ao cadastrar projeto.");
+        const err = await res.json();
+        alert(err.error || "Erro ao cadastrar projeto.");
       }
     }
 
@@ -992,6 +1242,12 @@
 
     async function handleEditarProjeto(e) {
       e.preventDefault();
+      const resultadoMembros = collectMembros("membros-list-edit");
+      if (resultadoMembros.error) {
+        alert(resultadoMembros.error);
+        return;
+      }
+
       const id = document.getElementById("edit-proj-id").value;
       const payload = {
         actor_role: currentUser.role,
@@ -1001,7 +1257,7 @@
         interdisciplinaridade: document.getElementById("edit-proj-inter").value,
         grupo_nome: document.getElementById("edit-proj-grupo").value,
         orientador_nome: document.getElementById("edit-proj-orientador").value,
-        membros: collectMembros("membros-list-edit")
+        membros: resultadoMembros.membros
       };
 
       const res = await fetch(`/api/projetos/${id}`, {
@@ -1122,8 +1378,8 @@
         feedback.className = "text-xs font-medium text-emerald-400";
         feedback.textContent = data.message;
         document.getElementById("json-raw-input").value = "";
-        await loadProjetos();
         await loadUsuarios();
+        await loadProjetos();
       } catch (err) {
         feedback.className = "text-xs font-medium text-red-400";
         feedback.textContent = "Erro de conexão ao processar importação.";
@@ -1136,6 +1392,8 @@
     async function loadUsuarios() {
       const res = await fetch("/api/usuarios");
       allUsuarios = await res.json();
+      atualizarSeletorDeCursos();
+
       const tbody = document.getElementById("usuarios-table-body");
       tbody.innerHTML = allUsuarios.map(u => `
         <tr class="hover:bg-slate-900/50">
@@ -1143,6 +1401,7 @@
           <td class="py-2.5 px-4 font-medium text-slate-100">${u.nome}</td>
           <td class="py-2.5 px-4 text-slate-400">${u.email}</td>
           <td class="py-2.5 px-4 uppercase text-[10px] font-bold text-indigo-400">${u.role}</td>
+          <td class="py-2.5 px-4 text-slate-300">${u.curso || "—"}</td>
           <td class="py-2.5 px-4 text-right">
             ${u.role !== "admin" ? `<button onclick="deletarUsuario(${u.id})" class="text-red-400 hover:text-red-300 text-xs"><i class="fa-solid fa-trash"></i></button>` : '<span class="text-[10px] text-slate-600">Protegido</span>'}
           </td>
@@ -1152,19 +1411,27 @@
 
     async function handleCriarUsuario(e) {
       e.preventDefault();
+      const role = document.getElementById("user-new-role").value;
+      const curso = role === "aluno" ? document.getElementById("user-new-curso").value.trim() : "";
       const senha = document.getElementById("user-new-senha").value.trim();
+
       if (senha.length < 6 || senha.length > 18) {
         alert("A senha deve ter entre 6 e 18 caracteres ou dígitos.");
+        return;
+      }
+      if (role === "aluno" && !curso) {
+        alert("Informe o curso do aluno.");
         return;
       }
 
       const payload = {
         actor_role: currentUser.role,
-        role: document.getElementById("user-new-role").value,
+        role: role,
         ra: document.getElementById("user-new-ra").value,
         nome: document.getElementById("user-new-nome").value,
         email: document.getElementById("user-new-email").value,
-        senha: senha
+        senha: senha,
+        curso: curso
       };
 
       const res = await fetch("/api/usuarios", {
@@ -1178,8 +1445,10 @@
         return;
       }
       e.target.reset();
+      toggleCampoCursoNovoUsuario();
       avaliarForcaSenha("user-new-senha", "new-senha-strength-bar", "new-senha-strength-text");
       await loadUsuarios();
+      renderCursosEAlunosFiltro("create");
       alert("Conta criada com sucesso!");
     }
 
@@ -1187,6 +1456,7 @@
       if (!confirm("Remover esta conta de usuário?")) return;
       await fetch(`/api/usuarios/${id}`, { method: "DELETE" });
       await loadUsuarios();
+      renderCursosEAlunosFiltro("create");
     }
 
     // ==========================================
