@@ -75,21 +75,27 @@ def init_db():
             ra TEXT NOT NULL,
             nome TEXT NOT NULL,
             status_participacao TEXT DEFAULT 'PENDENTE' CHECK(status_participacao IN ('PENDENTE', 'CONFIRMADO', 'RECUSADO')),
+            justificativa_recusa TEXT DEFAULT '',
             FOREIGN KEY (grupo_id) REFERENCES grupos(id) ON DELETE CASCADE
         );
     """)
 
     # Migração segura para bancos já existentes
     cursor.execute("PRAGMA table_info(usuarios)")
-    colunas = [col["name"] for col in cursor.fetchall()]
-    if "curso" not in colunas:
+    colunas_user = [col["name"] for col in cursor.fetchall()]
+    if "curso" not in colunas_user:
         cursor.execute("ALTER TABLE usuarios ADD COLUMN curso TEXT DEFAULT ''")
-    if "primeiro_acesso" not in colunas:
+    if "primeiro_acesso" not in colunas_user:
         cursor.execute("ALTER TABLE usuarios ADD COLUMN primeiro_acesso INTEGER DEFAULT 0")
-    if "tentativas_falhas" not in colunas:
+    if "tentativas_falhas" not in colunas_user:
         cursor.execute("ALTER TABLE usuarios ADD COLUMN tentativas_falhas INTEGER DEFAULT 0")
-    if "bloqueado" not in colunas:
+    if "bloqueado" not in colunas_user:
         cursor.execute("ALTER TABLE usuarios ADD COLUMN bloqueado INTEGER DEFAULT 0")
+
+    cursor.execute("PRAGMA table_info(grupo_membros)")
+    colunas_membros = [col["name"] for col in cursor.fetchall()]
+    if "justificativa_recusa" not in colunas_membros:
+        cursor.execute("ALTER TABLE grupo_membros ADD COLUMN justificativa_recusa TEXT DEFAULT ''")
 
     # Insere APENAS o Administrador inicial caso ainda não exista
     cursor.execute("SELECT id FROM usuarios WHERE email = ?", ("admin@faccamp.com",))
@@ -307,7 +313,6 @@ def listar_usuarios():
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # Filtro estrito de visibilidade hierárquica direto no banco de dados
     if actor_role == "admin":
         cursor.execute(
             """SELECT id, ra, nome, email, role, COALESCE(curso, '') AS curso,
@@ -436,7 +441,11 @@ def listar_projetos():
         grupo_row = cursor.fetchone()
         if grupo_row:
             grupo = dict(grupo_row)
-            cursor.execute("SELECT id, ra, nome, status_participacao FROM grupo_membros WHERE grupo_id = ?", (grupo["id"],))
+            cursor.execute(
+                """SELECT id, ra, nome, status_participacao, COALESCE(justificativa_recusa, '') AS justificativa_recusa
+                   FROM grupo_membros WHERE grupo_id = ?""",
+                (grupo["id"],)
+            )
             grupo["membros"] = [dict(m) for m in cursor.fetchall()]
             p["grupo"] = grupo
         else:
@@ -493,7 +502,7 @@ def criar_projeto():
 
     for aluno_acc in membros_validados:
         cursor.execute(
-            "INSERT INTO grupo_membros (grupo_id, ra, nome, status_participacao) VALUES (?, ?, ?, 'PENDENTE')",
+            "INSERT INTO grupo_membros (grupo_id, ra, nome, status_participacao, justificativa_recusa) VALUES (?, ?, ?, 'PENDENTE', '')",
             (grupo_id, aluno_acc["ra"], aluno_acc["nome"])
         )
         enviar_notificacao_email(aluno_acc["email"], aluno_acc["nome"], titulo, grupo_nome, orientador_nome)
@@ -531,7 +540,8 @@ def editar_projeto(projeto_id):
             "ra": aluno_acc["ra"],
             "nome": aluno_acc["nome"],
             "email": aluno_acc["email"],
-            "status_participacao": m.get("status_participacao", "PENDENTE")
+            "status_participacao": m.get("status_participacao", "PENDENTE"),
+            "justificativa_recusa": m.get("justificativa_recusa", "")
         })
 
     if actor_role == "admin" and data.get("orientador_nome"):
@@ -553,16 +563,17 @@ def editar_projeto(projeto_id):
         grupo_id = grupo["id"]
         cursor.execute("UPDATE grupos SET nome = ? WHERE id = ?", (data["grupo_nome"], grupo_id))
 
-        cursor.execute("SELECT ra FROM grupo_membros WHERE grupo_id = ?", (grupo_id,))
-        ras_existentes = {row["ra"] for row in cursor.fetchall()}
+        cursor.execute("SELECT ra, COALESCE(justificativa_recusa, '') AS justificativa_recusa FROM grupo_membros WHERE grupo_id = ?", (grupo_id,))
+        existentes_map = {row["ra"]: row["justificativa_recusa"] for row in cursor.fetchall()}
 
         cursor.execute("DELETE FROM grupo_membros WHERE grupo_id = ?", (grupo_id,))
         for aluno_acc in membros_validados:
+            justificativa = existentes_map.get(aluno_acc["ra"], "") if aluno_acc["status_participacao"] == "RECUSADO" else ""
             cursor.execute(
-                "INSERT INTO grupo_membros (grupo_id, ra, nome, status_participacao) VALUES (?, ?, ?, ?)",
-                (grupo_id, aluno_acc["ra"], aluno_acc["nome"], aluno_acc["status_participacao"])
+                "INSERT INTO grupo_membros (grupo_id, ra, nome, status_participacao, justificativa_recusa) VALUES (?, ?, ?, ?, ?)",
+                (grupo_id, aluno_acc["ra"], aluno_acc["nome"], aluno_acc["status_participacao"], justificativa)
             )
-            if aluno_acc["ra"] not in ras_existentes:
+            if aluno_acc["ra"] not in existentes_map:
                 enviar_notificacao_email(aluno_acc["email"], aluno_acc["nome"], data["titulo"], data["grupo_nome"], data.get("orientador_nome", "Orientador"))
 
     conn.commit()
@@ -709,7 +720,7 @@ def carga_massiva_json():
                         aluno_acc = cursor.fetchone()
                         if aluno_acc:
                             cursor.execute(
-                                "INSERT INTO grupo_membros (grupo_id, ra, nome, status_participacao) VALUES (?, ?, ?, ?)",
+                                "INSERT INTO grupo_membros (grupo_id, ra, nome, status_participacao, justificativa_recusa) VALUES (?, ?, ?, ?, '')",
                                 (grupo_id, aluno_acc["ra"], aluno_acc["nome"], m_status)
                             )
                 inseridos += 1
@@ -725,18 +736,23 @@ def carga_massiva_json():
 
 
 # ==========================================
-# ROTAS DO ALUNO (ACEITAR/REJEITAR E EDITAR NOME PRÓPRIO - RA IMUTÁVEL)
+# ROTAS DO ALUNO (ACEITAR/REJEITAR COM JUSTIFICATIVA E EDITAR NOME PRÓPRIO)
 # ==========================================
 @app.route("/api/membros/<int:membro_id>/resposta", methods=["PATCH"])
 def responder_convite_aluno(membro_id):
     data = request.json
     status_participacao = data.get("status_participacao")
+    justificativa = str(data.get("justificativa", "")).strip() if status_participacao == "RECUSADO" else ""
+
     if status_participacao not in ["CONFIRMADO", "RECUSADO"]:
         return jsonify({"error": "Status inválido"}), 400
 
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("UPDATE grupo_membros SET status_participacao = ? WHERE id = ?", (status_participacao, membro_id))
+    cursor.execute(
+        "UPDATE grupo_membros SET status_participacao = ?, justificativa_recusa = ? WHERE id = ?",
+        (status_participacao, justificativa, membro_id)
+    )
     conn.commit()
     cursor.close()
     conn.close()
