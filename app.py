@@ -29,7 +29,7 @@ def get_db_connection():
 
 
 def init_db():
-    """Cria as tabelas SQL automaticamente e insere o Administrador inicial."""
+    """Cria as tabelas SQL automaticamente, aplica migração de curso e insere o Administrador inicial."""
     conn = get_db_connection()
     cursor = conn.cursor()
 
@@ -41,6 +41,7 @@ def init_db():
             email TEXT NOT NULL UNIQUE,
             senha TEXT NOT NULL,
             role TEXT NOT NULL CHECK(role IN ('admin', 'coordenador', 'orientador', 'aluno')),
+            curso TEXT DEFAULT '',
             criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
 
@@ -73,12 +74,18 @@ def init_db():
         );
     """)
 
+    # Migração segura: adiciona a coluna 'curso' caso o banco já existisse antes
+    cursor.execute("PRAGMA table_info(usuarios)")
+    colunas = [col["name"] for col in cursor.fetchall()]
+    if "curso" not in colunas:
+        cursor.execute("ALTER TABLE usuarios ADD COLUMN curso TEXT DEFAULT ''")
+
     # Insere APENAS o Administrador inicial caso ainda não exista
     cursor.execute("SELECT id FROM usuarios WHERE email = ?", ("admin@faccamp.com",))
     if not cursor.fetchone():
         cursor.execute(
-            "INSERT INTO usuarios (ra, nome, email, senha, role) VALUES (?, ?, ?, ?, ?)",
-            ("ADMIN01", "Administrador FACCAMP", "admin@faccamp.com", "adminhrv2026", "admin")
+            "INSERT INTO usuarios (ra, nome, email, senha, role, curso) VALUES (?, ?, ?, ?, ?, ?)",
+            ("ADMIN01", "Administrador FACCAMP", "admin@faccamp.com", "adminhrv2026", "admin", "")
         )
 
     conn.commit()
@@ -98,23 +105,20 @@ Orientador(a): {orientador}
 Acesse o sistema com seu RA ou E-mail para ACEITAR ou REJEITAR sua participação no projeto.
     """.strip()
 
-    if not SMTP_ENABLED:
-        print(f"\n[NOTIFICAÇÃO REGISTRADA] Para: {destinatario_email} | Assunto: {assunto}\n")
-        return
+    if SMTP_ENABLED:
+        try:
+            msg = MIMEMultipart()
+            msg["From"] = SMTP_USER
+            msg["To"] = destinatario_email
+            msg["Subject"] = assunto
+            msg.attach(MIMEText(corpo, "plain", "utf-8"))
 
-    try:
-        msg = MIMEMultipart()
-        msg["From"] = SMTP_USER
-        msg["To"] = destinatario_email
-        msg["Subject"] = assunto
-        msg.attach(MIMEText(corpo, "plain", "utf-8"))
-
-        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
-            server.starttls()
-            server.login(SMTP_USER, SMTP_PASSWORD)
-            server.send_message(msg)
-    except Exception as e:
-        print(f"[ERRO SMTP] Falha ao enviar e-mail para {destinatario_email}: {e}")
+            with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+                server.starttls()
+                server.login(SMTP_USER, SMTP_PASSWORD)
+                server.send_message(msg)
+        except Exception as e:
+            print(f"[ERRO SMTP] Falha ao enviar e-mail para {destinatario_email}: {e}")
 
 
 # Inicializa o banco automaticamente ao carregar a aplicação
@@ -141,7 +145,7 @@ def login():
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute(
-        "SELECT id, ra, nome, email, role FROM usuarios WHERE (LOWER(email) = ? OR LOWER(ra) = ?) AND senha = ?",
+        "SELECT id, ra, nome, email, role, curso FROM usuarios WHERE (LOWER(email) = ? OR LOWER(ra) = ?) AND senha = ?",
         (identifier, identifier, senha)
     )
     row = cursor.fetchone()
@@ -158,7 +162,7 @@ def login():
 def listar_usuarios():
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT id, ra, nome, email, role FROM usuarios ORDER BY id ASC")
+    cursor.execute("SELECT id, ra, nome, email, role, COALESCE(curso, '') AS curso FROM usuarios ORDER BY id ASC")
     users = [dict(row) for row in cursor.fetchall()]
     cursor.close()
     conn.close()
@@ -174,7 +178,10 @@ def criar_usuario():
     nome = data.get("nome", "").strip()
     email = data.get("email", "").strip()
     senha = data.get("senha", "").strip()
+    curso = data.get("curso", "").strip() if role == "aluno" else ""
 
+    if len(senha) < 6 or len(senha) > 18:
+        return jsonify({"error": "A senha deve ter entre 6 e 18 caracteres."}), 400
     if actor_role not in ["admin", "coordenador", "orientador"]:
         return jsonify({"error": "Acesso negado"}), 403
     if actor_role == "orientador" and role != "aluno":
@@ -183,13 +190,15 @@ def criar_usuario():
         return jsonify({"error": "Coordenadores só podem criar Orientadores e Alunos"}), 403
     if role == "admin":
         return jsonify({"error": "Não é permitido criar novos administradores"}), 403
+    if role == "aluno" and not curso:
+        return jsonify({"error": "Informe o curso ao cadastrar uma conta de Aluno."}), 400
 
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
         cursor.execute(
-            "INSERT INTO usuarios (ra, nome, email, senha, role) VALUES (?, ?, ?, ?, ?)",
-            (ra, nome, email, senha, role)
+            "INSERT INTO usuarios (ra, nome, email, senha, role, curso) VALUES (?, ?, ?, ?, ?, ?)",
+            (ra, nome, email, senha, role, curso)
         )
         conn.commit()
         new_id = cursor.lastrowid
@@ -200,7 +209,7 @@ def criar_usuario():
 
     cursor.close()
     conn.close()
-    return jsonify({"id": new_id, "ra": ra, "nome": nome, "email": email, "role": role}), 201
+    return jsonify({"id": new_id, "ra": ra, "nome": nome, "email": email, "role": role, "curso": curso}), 201
 
 
 @app.route("/api/usuarios/<int:user_id>", methods=["PUT"])
@@ -212,6 +221,7 @@ def editar_usuario(user_id):
     email = data.get("email", "").strip()
     senha = data.get("senha", "").strip()
     role = data.get("role")
+    curso = data.get("curso", "").strip() if role == "aluno" else ""
 
     if actor_role == "coordenador" and role == "coordenador":
         return jsonify({"error": "Coordenador não pode editar outro Coordenador"}), 403
@@ -220,13 +230,13 @@ def editar_usuario(user_id):
     cursor = conn.cursor()
     if senha:
         cursor.execute(
-            "UPDATE usuarios SET ra=?, nome=?, email=?, senha=?, role=? WHERE id=?",
-            (ra, nome, email, senha, role, user_id)
+            "UPDATE usuarios SET ra=?, nome=?, email=?, senha=?, role=?, curso=? WHERE id=?",
+            (ra, nome, email, senha, role, curso, user_id)
         )
     else:
         cursor.execute(
-            "UPDATE usuarios SET ra=?, nome=?, email=?, role=? WHERE id=?",
-            (ra, nome, email, role, user_id)
+            "UPDATE usuarios SET ra=?, nome=?, email=?, role=?, curso=? WHERE id=?",
+            (ra, nome, email, role, curso, user_id)
         )
     conn.commit()
     cursor.close()
@@ -287,6 +297,27 @@ def criar_projeto():
     conn = get_db_connection()
     cursor = conn.cursor()
 
+    # Valida se todos os integrantes possuem conta de 'aluno' no sistema
+    membros_validados = []
+    ras_vistos = set()
+    for m in membros:
+        ra = m.get("ra", "").strip()
+        if not ra or ra.lower() in ras_vistos:
+            continue
+        ras_vistos.add(ra.lower())
+        cursor.execute("SELECT ra, nome, email FROM usuarios WHERE LOWER(ra) = LOWER(?) AND role = 'aluno'", (ra,))
+        aluno_acc = cursor.fetchone()
+        if not aluno_acc:
+            cursor.close()
+            conn.close()
+            return jsonify({"error": f"O RA '{ra}' não pertence a nenhum aluno cadastrado com acesso no sistema."}), 400
+        membros_validados.append(dict(aluno_acc))
+
+    if not membros_validados:
+        cursor.close()
+        conn.close()
+        return jsonify({"error": "Inclua pelo menos 1 aluno cadastrado com acesso no sistema."}), 400
+
     cursor.execute(
         """INSERT INTO projetos (titulo, setor_externo, areas_atuacao, interdisciplinaridade, status, publicado, orientador_nome)
            VALUES (?, ?, ?, ?, 'NOVO', 0, ?)""",
@@ -297,17 +328,12 @@ def criar_projeto():
     cursor.execute("INSERT INTO grupos (projeto_id, nome) VALUES (?, ?)", (projeto_id, grupo_nome))
     grupo_id = cursor.lastrowid
 
-    for m in membros:
-        ra = m["ra"].strip()
-        nome = m["nome"].strip()
+    for aluno_acc in membros_validados:
         cursor.execute(
             "INSERT INTO grupo_membros (grupo_id, ra, nome, status_participacao) VALUES (?, ?, ?, 'PENDENTE')",
-            (grupo_id, ra, nome)
+            (grupo_id, aluno_acc["ra"], aluno_acc["nome"])
         )
-        cursor.execute("SELECT email, nome FROM usuarios WHERE ra = ? AND role = 'aluno'", (ra,))
-        aluno_acc = cursor.fetchone()
-        if aluno_acc:
-            enviar_notificacao_email(aluno_acc["email"], aluno_acc["nome"], titulo, grupo_nome, orientador_nome)
+        enviar_notificacao_email(aluno_acc["email"], aluno_acc["nome"], titulo, grupo_nome, orientador_nome)
 
     conn.commit()
     cursor.close()
@@ -324,6 +350,27 @@ def editar_projeto(projeto_id):
 
     conn = get_db_connection()
     cursor = conn.cursor()
+
+    # Valida se todos os integrantes possuem conta de 'aluno' no sistema
+    membros_validados = []
+    ras_vistos = set()
+    for m in data.get("membros", []):
+        ra = m.get("ra", "").strip()
+        if not ra or ra.lower() in ras_vistos:
+            continue
+        ras_vistos.add(ra.lower())
+        cursor.execute("SELECT ra, nome, email FROM usuarios WHERE LOWER(ra) = LOWER(?) AND role = 'aluno'", (ra,))
+        aluno_acc = cursor.fetchone()
+        if not aluno_acc:
+            cursor.close()
+            conn.close()
+            return jsonify({"error": f"O RA '{ra}' não pertence a nenhum aluno cadastrado com acesso no sistema."}), 400
+        membros_validados.append({
+            "ra": aluno_acc["ra"],
+            "nome": aluno_acc["nome"],
+            "email": aluno_acc["email"],
+            "status_participacao": m.get("status_participacao", "PENDENTE")
+        })
 
     if actor_role == "admin" and data.get("orientador_nome"):
         cursor.execute(
@@ -348,19 +395,13 @@ def editar_projeto(projeto_id):
         ras_existentes = {row["ra"] for row in cursor.fetchall()}
 
         cursor.execute("DELETE FROM grupo_membros WHERE grupo_id = ?", (grupo_id,))
-        for m in data.get("membros", []):
-            ra = m["ra"].strip()
-            nome = m["nome"].strip()
-            status_part = m.get("status_participacao", "PENDENTE")
+        for aluno_acc in membros_validados:
             cursor.execute(
                 "INSERT INTO grupo_membros (grupo_id, ra, nome, status_participacao) VALUES (?, ?, ?, ?)",
-                (grupo_id, ra, nome, status_part)
+                (grupo_id, aluno_acc["ra"], aluno_acc["nome"], aluno_acc["status_participacao"])
             )
-            if ra not in ras_existentes:
-                cursor.execute("SELECT email, nome FROM usuarios WHERE ra = ? AND role = 'aluno'", (ra,))
-                aluno_acc = cursor.fetchone()
-                if aluno_acc:
-                    enviar_notificacao_email(aluno_acc["email"], aluno_acc["nome"], data["titulo"], data["grupo_nome"], data.get("orientador_nome", "Orientador"))
+            if aluno_acc["ra"] not in ras_existentes:
+                enviar_notificacao_email(aluno_acc["email"], aluno_acc["nome"], data["titulo"], data["grupo_nome"], data.get("orientador_nome", "Orientador"))
 
     conn.commit()
     cursor.close()
@@ -450,18 +491,19 @@ def carga_massiva_json():
                 email = str(u.get("email", "")).strip()
                 senha = str(u.get("senha", "123456")).strip()
                 role = str(u.get("role", "orientador")).strip().lower()
+                curso = str(u.get("curso", "")).strip() if role == "aluno" else ""
 
                 if role not in ["coordenador", "orientador", "aluno"] or (actor_role == "coordenador" and role == "coordenador"):
                     ignorados += 1
                     continue
-                if not ra or not nome or not email:
+                if not ra or not nome or not email or len(senha) < 6 or len(senha) > 18:
                     ignorados += 1
                     continue
 
                 try:
                     cursor.execute(
-                        "INSERT INTO usuarios (ra, nome, email, senha, role) VALUES (?, ?, ?, ?, ?)",
-                        (ra, nome, email, senha, role)
+                        "INSERT INTO usuarios (ra, nome, email, senha, role, curso) VALUES (?, ?, ?, ?, ?, ?)",
+                        (ra, nome, email, senha, role, curso)
                     )
                     inseridos += 1
                 except sqlite3.IntegrityError:
@@ -496,15 +538,17 @@ def carga_massiva_json():
 
                 for m in membros:
                     m_ra = str(m.get("ra", "")).strip()
-                    m_nome = str(m.get("nome", "")).strip()
                     m_status = str(m.get("status_participacao", "PENDENTE")).strip().upper()
                     if m_status not in ["PENDENTE", "CONFIRMADO", "RECUSADO"]:
                         m_status = "PENDENTE"
-                    if m_ra and m_nome:
-                        cursor.execute(
-                            "INSERT INTO grupo_membros (grupo_id, ra, nome, status_participacao) VALUES (?, ?, ?, ?)",
-                            (grupo_id, m_ra, m_nome, m_status)
-                        )
+                    if m_ra:
+                        cursor.execute("SELECT ra, nome FROM usuarios WHERE LOWER(ra) = LOWER(?) AND role = 'aluno'", (m_ra,))
+                        aluno_acc = cursor.fetchone()
+                        if aluno_acc:
+                            cursor.execute(
+                                "INSERT INTO grupo_membros (grupo_id, ra, nome, status_participacao) VALUES (?, ?, ?, ?)",
+                                (grupo_id, aluno_acc["ra"], aluno_acc["nome"], m_status)
+                            )
                 inseridos += 1
         else:
             return jsonify({"error": "Tipo de acervo inválido"}), 400
