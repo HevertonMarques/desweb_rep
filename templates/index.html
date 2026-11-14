@@ -170,13 +170,17 @@
             </div>
           </div>
 
-          <!-- Barra de Busca + Filtro por Status -->
+          <!-- Barra de Busca + Filtro por Status + Exportar CSV -->
           <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-slate-950/60 p-4 rounded-xl border border-slate-800/80">
             <div>
               <h3 class="text-base font-bold text-slate-100">Projetos Extensionistas Registrados</h3>
               <p class="text-xs text-slate-400" id="consultar-subtitle">Consulta pública de trabalhos extensionistas publicados</p>
             </div>
             <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+              <button onclick="exportarProjetosCSV()" id="btn-exportar-csv" class="hidden px-3.5 py-2 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center gap-1.5" title="Baixar planilha CSV dos projetos listados">
+                <i class="fa-solid fa-file-csv"></i>
+                <span>Exportar CSV</span>
+              </button>
               <select id="filter-status-projetos" onchange="renderProjetos()" class="bg-slate-900 border border-slate-700/80 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
                 <option value="TODOS">Todos os Status</option>
                 <option value="NOVO">NOVO</option>
@@ -353,16 +357,21 @@
             </form>
           </div>
 
-          <!-- Lista de Usuários com Pesquisa por Nome ou RA, Desbloqueio e Redefinição de Senha -->
+          <!-- Lista de Usuários com Filtro por Curso, Pesquisa por Nome ou RA, Desbloqueio e Redefinição de Senha -->
           <div class="bg-slate-950/60 rounded-xl border border-slate-800/80 overflow-hidden">
-            <div class="p-4 border-b border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="p-4 border-b border-slate-800/80 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
               <div>
                 <h4 id="usuarios-list-title" class="text-xs font-bold text-slate-300 uppercase tracking-wider">Contas Cadastradas no Sistema</h4>
                 <p id="usuarios-list-subtitle" class="text-[11px] text-slate-400">Gerencie acessos e contas subordinadas ao seu perfil.</p>
               </div>
-              <div class="relative w-full sm:w-72">
-                <i class="fa-solid fa-magnifying-glass text-slate-500 text-xs absolute left-3 top-1/2 -translate-y-1/2"></i>
-                <input type="text" id="search-usuarios" onkeyup="renderUsuariosTable()" placeholder="Pesquisar por Nome ou RA..." class="w-full bg-slate-900 border border-slate-700 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500" />
+              <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <select id="filter-curso-usuarios" onchange="renderUsuariosTable()" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+                  <option value="TODOS">Todos os Cursos</option>
+                </select>
+                <div class="relative w-full sm:w-64">
+                  <i class="fa-solid fa-magnifying-glass text-slate-500 text-xs absolute left-3 top-1/2 -translate-y-1/2"></i>
+                  <input type="text" id="search-usuarios" onkeyup="renderUsuariosTable()" placeholder="Pesquisar por Nome ou RA..." class="w-full bg-slate-900 border border-slate-700 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500" />
+                </div>
               </div>
             </div>
             <div class="overflow-x-auto">
@@ -729,6 +738,7 @@
 
     document.addEventListener("DOMContentLoaded", async () => {
       popularDropdownCursosCadastro();
+      popularDropdownFiltroCursosUsuarios();
       atualizarSeletorDeCursos();
       updateJsonExample();
       updateUIForUser();
@@ -748,6 +758,13 @@
       const sel = document.getElementById("user-new-curso");
       if (!sel) return;
       sel.innerHTML = `<option value="" disabled selected>Selecione o curso do aluno...</option>` +
+        CURSOS_UNIFACCAMP.map(c => `<option value="${c}">${c}</option>`).join("");
+    }
+
+    function popularDropdownFiltroCursosUsuarios() {
+      const sel = document.getElementById("filter-curso-usuarios");
+      if (!sel) return;
+      sel.innerHTML = `<option value="TODOS">Todos os Cursos</option>` +
         CURSOS_UNIFACCAMP.map(c => `<option value="${c}">${c}</option>`).join("");
     }
 
@@ -846,6 +863,7 @@
       const btnLogin = document.getElementById("btn-open-login");
       const btnLogout = document.getElementById("btn-logout");
       const btnAlterarSenha = document.getElementById("btn-alterar-minha-senha");
+      const btnExportCsv = document.getElementById("btn-exportar-csv");
       const navMeusGrupos = document.getElementById("nav-meus-grupos");
       const navRegistrar = document.getElementById("nav-registrar-trabalho");
       const navContas = document.getElementById("nav-gerenciar-contas");
@@ -856,6 +874,7 @@
       navContas.classList.add("hidden");
       navCargaMassiva.classList.add("hidden");
       btnAlterarSenha.classList.add("hidden");
+      btnExportCsv.classList.add("hidden");
 
       if (!currentUser) {
         btnLogin.classList.remove("hidden");
@@ -889,6 +908,7 @@
       if (["admin", "coordenador", "orientador"].includes(currentUser.role)) {
         navRegistrar.classList.remove("hidden");
         navContas.classList.remove("hidden");
+        btnExportCsv.classList.remove("hidden");
         document.getElementById("proj-orientador").value = currentUser.nome;
         populateRoleOptions();
 
@@ -1020,7 +1040,6 @@
       inputNova.value = "";
       inputConfirmar.value = "";
 
-      // Garante que todos os 3 campos iniciem ocultos (password) e com ícone de olho normal
       inputAtual.type = "password";
       inputNova.type = "password";
       inputConfirmar.type = "password";
@@ -1120,11 +1139,9 @@
       }
     }
 
-    function renderProjetos() {
-      const grid = document.getElementById("projetos-cards-grid");
+    function getProjetosFiltrados() {
       const query = (document.getElementById("search-projetos").value || "").toLowerCase();
       const statusFilter = document.getElementById("filter-status-projetos").value;
-      const isManager = currentUser && ["admin", "coordenador", "orientador"].includes(currentUser.role);
 
       const visiveisPorPerfil = allProjetos.filter(p => {
         if (!currentUser && !p.publicado) return false;
@@ -1135,16 +1152,63 @@
         return true;
       });
 
-      document.getElementById("kpi-total").textContent = visiveisPorPerfil.length;
-      document.getElementById("kpi-andamento").textContent = visiveisPorPerfil.filter(p => p.status === "EM ANDAMENTO").length;
-      document.getElementById("kpi-concluidos").textContent = visiveisPorPerfil.filter(p => p.status === "CONCLUIDO").length;
-      document.getElementById("kpi-publicados").textContent = visiveisPorPerfil.filter(p => p.publicado).length;
-
       const filtrados = visiveisPorPerfil.filter(p => {
         if (statusFilter !== "TODOS" && p.status !== statusFilter) return false;
         const texto = `${p.titulo} ${p.areas_atuacao} ${p.setor_externo} ${p.orientador_nome} ${(p.grupo?.membros || []).map(m => m.nome).join(" ")}`.toLowerCase();
         return texto.includes(query);
       });
+
+      return { visiveisPorPerfil, filtrados };
+    }
+
+    function exportarProjetosCSV() {
+      const { filtrados } = getProjetosFiltrados();
+      if (filtrados.length === 0) {
+        alert("Não há projetos listados para exportar.");
+        return;
+      }
+
+      const headers = ["ID", "Título", "Setor Externo", "Áreas de Atuação", "Interdisciplinaridade", "Orientador", "Status", "Visibilidade", "Grupo", "Integrantes"];
+      const linhas = filtrados.map(p => {
+        const integrantesStr = (p.grupo?.membros || [])
+          .map(m => `${m.nome} (${m.ra} - ${m.status_participacao}${m.justificativa_recusa ? ": " + m.justificativa_recusa : ""})`)
+          .join(" | ");
+
+        return [
+          p.id,
+          p.titulo,
+          p.setor_externo,
+          p.areas_atuacao,
+          p.interdisciplinaridade,
+          p.orientador_nome,
+          p.status,
+          p.publicado ? "Público" : "Interno",
+          p.grupo?.nome || "",
+          integrantesStr
+        ].map(val => `"${String(val).replace(/"/g, '""')}"`).join(";");
+      });
+
+      const csvContent = "\uFEFF" + [headers.join(";"), ...linhas].join("\n");
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `relatorio_projetos_extensionistas_${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+
+    function renderProjetos() {
+      const grid = document.getElementById("projetos-cards-grid");
+      const isManager = currentUser && ["admin", "coordenador", "orientador"].includes(currentUser.role);
+      const { visiveisPorPerfil, filtrados } = getProjetosFiltrados();
+
+      document.getElementById("kpi-total").textContent = visiveisPorPerfil.length;
+      document.getElementById("kpi-andamento").textContent = visiveisPorPerfil.filter(p => p.status === "EM ANDAMENTO").length;
+      document.getElementById("kpi-concluidos").textContent = visiveisPorPerfil.filter(p => p.status === "CONCLUIDO").length;
+      document.getElementById("kpi-publicados").textContent = visiveisPorPerfil.filter(p => p.publicado).length;
 
       if (filtrados.length === 0) {
         grid.innerHTML = `<div class="col-span-full text-center py-10 text-xs text-slate-400 bg-slate-950/40 rounded-xl border border-slate-800/60">Nenhum projeto encontrado para os filtros aplicados.</div>`;
@@ -1164,11 +1228,19 @@
           const stIcon = m.status_participacao === "CONFIRMADO"
             ? `<span class="text-emerald-400" title="Confirmado"><i class="fa-solid fa-circle-check"></i></span>`
             : m.status_participacao === "RECUSADO"
-            ? `<span class="text-red-400" title="Recusado"><i class="fa-solid fa-circle-xmark"></i></span>`
+            ? `<span class="text-red-400" title="${m.justificativa_recusa ? "Recusado: " + m.justificativa_recusa : "Recusado"}"><i class="fa-solid fa-circle-xmark"></i></span>`
             : `<span class="text-amber-400" title="Pendente"><i class="fa-solid fa-clock"></i></span>`;
-          return `<li class="flex items-center justify-between text-[11px] text-slate-300 bg-slate-900/80 px-2.5 py-1 rounded-md border border-slate-800/80">
-            <span class="truncate">${m.nome} <span class="text-slate-500">(${m.ra})</span></span>
-            ${stIcon}
+
+          const motivoHtml = (isManager && m.status_participacao === "RECUSADO" && m.justificativa_recusa)
+            ? `<div class="text-[10px] text-red-400/90 mt-0.5 pl-1 border-l-2 border-red-500/50">Motivo: ${m.justificativa_recusa}</div>`
+            : "";
+
+          return `<li class="text-[11px] text-slate-300 bg-slate-900/80 px-2.5 py-1.5 rounded-md border border-slate-800/80">
+            <div class="flex items-center justify-between gap-2">
+              <span class="truncate">${m.nome} <span class="text-slate-500">(${m.ra})</span></span>
+              ${stIcon}
+            </div>
+            ${motivoHtml}
           </li>`;
         }).join("");
 
@@ -1637,7 +1709,7 @@
     }
 
     // ==========================================
-    // CONTAS E USUÁRIOS (FILTRO ESTRITO POR HIERARQUIA, PESQUISA, DESBLOQUEIO E REDEFINIÇÃO DE SENHA)
+    // CONTAS E USUÁRIOS (FILTRO ESTRITO POR HIERARQUIA, FILTRO POR CURSO, PESQUISA, DESBLOQUEIO E REDEFINIÇÃO DE SENHA)
     // ==========================================
     async function loadUsuarios() {
       if (!currentUser) return;
@@ -1651,6 +1723,7 @@
       const tbody = document.getElementById("usuarios-table-body");
       if (!tbody || !currentUser) return;
       const query = (document.getElementById("search-usuarios")?.value || "").toLowerCase().trim();
+      const cursoFiltro = document.getElementById("filter-curso-usuarios")?.value || "TODOS";
 
       const visiveisPorHierarquia = allUsuarios.filter(u => {
         if (currentUser.role === "admin") return true;
@@ -1659,9 +1732,10 @@
         return false;
       });
 
-      const filtrados = visiveisPorHierarquia.filter(u =>
-        u.nome.toLowerCase().includes(query) || u.ra.toLowerCase().includes(query)
-      );
+      const filtrados = visiveisPorHierarquia.filter(u => {
+        if (cursoFiltro !== "TODOS" && (u.curso || "").trim() !== cursoFiltro) return false;
+        return u.nome.toLowerCase().includes(query) || u.ra.toLowerCase().includes(query);
+      });
 
       if (filtrados.length === 0) {
         tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-xs text-slate-400">Nenhum usuário encontrado.</td></tr>`;
@@ -1799,7 +1873,7 @@
     }
 
     // ==========================================
-    // ALUNO: ACEITAR / REJEITAR E EDITAR NOME PRÓPRIO (RA IMUTÁVEL)
+    // ALUNO: ACEITAR / REJEITAR COM JUSTIFICATIVA E EDITAR NOME PRÓPRIO
     // ==========================================
     function renderAlunoGrupos() {
       const container = document.getElementById("pending-groups-container");
@@ -1834,6 +1908,7 @@
             <div class="text-[11px] text-slate-400">Grupo: <span class="text-indigo-400 font-medium">${projeto.grupo.nome}</span> • Orientador: ${projeto.orientador_nome}</div>
             <div class="text-[11px] text-slate-300 mt-1">Registrado como: <span class="font-semibold">${membro.nome}</span> (RA: <span class="font-mono">${membro.ra}</span>)</div>
             <div class="mt-1 text-[11px]">Status da sua participação: <span class="font-bold ${membro.status_participacao === "CONFIRMADO" ? "text-emerald-400" : membro.status_participacao === "RECUSADO" ? "text-red-400" : "text-amber-400"}">${membro.status_participacao}</span></div>
+            ${membro.status_participacao === "RECUSADO" && membro.justificativa_recusa ? `<div class="text-[11px] text-red-300 mt-0.5">Justificativa informada: ${membro.justificativa_recusa}</div>` : ""}
           </div>
           <div class="flex flex-wrap items-center gap-2">
             <button onclick="openEditAlunoSelfModal(${membro.id}, '${membro.nome.replace(/'/g, "\\'")}', '${membro.ra}')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold rounded-lg transition-colors">
@@ -1851,10 +1926,20 @@
     }
 
     async function responderConvite(membroId, status) {
+      let justificativa = "";
+      if (status === "RECUSADO") {
+        const motivo = prompt("Informe opcionalmente o motivo da recusa para o orientador (ex.: Choque de horário):");
+        if (motivo === null) return; // Cancelou o diálogo
+        justificativa = motivo.trim();
+      }
+
       await fetch(`/api/membros/${membroId}/resposta`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status_participacao: status })
+        body: JSON.stringify({
+          status_participacao: status,
+          justificativa: justificativa
+        })
       });
       await loadProjetos();
     }
