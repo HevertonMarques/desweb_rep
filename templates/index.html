@@ -246,7 +246,7 @@
                 <div class="flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <h4 class="text-xs font-bold text-indigo-300"><i class="fa-solid fa-graduation-cap mr-1.5"></i> Selecionar Alunos por Curso</h4>
-                    <p class="text-[11px] text-slate-400">Adicione um ou mais cursos abaixo para listar os alunos e incluí-los em lote.</p>
+                    <p class="text-[11px] text-slate-400">Adicione um ou mais cursos da UNIFACCAMP abaixo para listar os alunos e incluí-los em lote.</p>
                   </div>
                   <div class="flex items-center gap-2">
                     <select id="curso-selector-add" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
@@ -318,18 +318,10 @@
 
               <!-- Campo Curso (exibido quando Perfil = Aluno) -->
               <div id="div-user-new-curso" class="md:col-span-2 hidden">
-                <label class="block text-xs font-medium text-slate-300 mb-1">Curso do Aluno *</label>
-                <input type="text" id="user-new-curso" list="lista-cursos-sugeridos" placeholder="Selecione ou digite o curso (Ex: Ciência da Computação)" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
-                <datalist id="lista-cursos-sugeridos">
-                  <option value="Ciência da Computação"></option>
-                  <option value="Análise e Desenvolvimento de Sistemas"></option>
-                  <option value="Engenharia de Software"></option>
-                  <option value="Administração"></option>
-                  <option value="Direito"></option>
-                  <option value="Psicologia"></option>
-                  <option value="Enfermagem"></option>
-                  <option value="Pedagogia"></option>
-                </datalist>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Curso do Aluno (UNIFACCAMP) *</label>
+                <select id="user-new-curso" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
+                  <!-- Populado automaticamente com os cursos da UNIFACCAMP -->
+                </select>
               </div>
 
               <div>
@@ -586,6 +578,57 @@
     let allUsuarios = [];
     let cursosSelecionadosCreate = new Set();
 
+    const CURSOS_UNIFACCAMP = [
+      "Ciência da Computação",
+      "Administração",
+      "Análise e Desenvolvimento de Sistemas",
+      "Arquitetura e Urbanismo",
+      "Biomedicina",
+      "Ciências Biológicas",
+      "Ciências Contábeis",
+      "Comércio Exterior",
+      "Design Gráfico",
+      "Direito",
+      "Educação Física",
+      "Enfermagem",
+      "Engenharia Ambiental e Sanitária",
+      "Engenharia Civil",
+      "Engenharia de Controle e Automação",
+      "Engenharia de Produção",
+      "Engenharia Elétrica",
+      "Engenharia Mecânica",
+      "Estética e Cosmética",
+      "Farmácia",
+      "Fisioterapia",
+      "Gastronomia",
+      "Gestão Comercial",
+      "Gestão da Qualidade",
+      "Gestão da Tecnologia da Informação",
+      "Gestão de Recursos Humanos",
+      "Gestão Financeira",
+      "Gestão Hospitalar",
+      "Gestão Pública",
+      "História",
+      "Jogos Digitais",
+      "Letras (Português/Inglês)",
+      "Logística",
+      "Marketing",
+      "Matemática",
+      "Medicina Veterinária",
+      "Nutrição",
+      "Odontologia",
+      "Pedagogia",
+      "Processos Gerenciais",
+      "Psicologia",
+      "Publicidade e Propaganda",
+      "Química",
+      "Radiologia",
+      "Redes de Computadores",
+      "Segurança no Trabalho",
+      "Serviço Social",
+      "Sistemas de Informação"
+    ];
+
     const JSON_EXEMPLOS = {
       projetos: JSON.stringify([
         {
@@ -623,6 +666,8 @@
     };
 
     document.addEventListener("DOMContentLoaded", async () => {
+      popularDropdownCursosCadastro();
+      atualizarSeletorDeCursos();
       updateJsonExample();
       updateUIForUser();
       if (currentUser && ["admin", "coordenador", "orientador"].includes(currentUser.role)) {
@@ -631,6 +676,13 @@
       addMembroField("membros-list-create");
       await loadProjetos();
     });
+
+    function popularDropdownCursosCadastro() {
+      const sel = document.getElementById("user-new-curso");
+      if (!sel) return;
+      sel.innerHTML = `<option value="" disabled selected>Selecione o curso do aluno...</option>` +
+        CURSOS_UNIFACCAMP.map(c => `<option value="${c}">${c}</option>`).join("");
+    }
 
     function togglePasswordVisibility(inputId, iconId) {
       const input = document.getElementById(inputId);
@@ -799,14 +851,14 @@
     function toggleCampoCursoNovoUsuario() {
       const role = document.getElementById("user-new-role").value;
       const divCurso = document.getElementById("div-user-new-curso");
-      const inputCurso = document.getElementById("user-new-curso");
+      const selectCurso = document.getElementById("user-new-curso");
       if (role === "aluno") {
         divCurso.classList.remove("hidden");
-        inputCurso.required = true;
+        selectCurso.required = true;
       } else {
         divCurso.classList.add("hidden");
-        inputCurso.required = false;
-        inputCurso.value = "";
+        selectCurso.required = false;
+        selectCurso.value = "";
       }
     }
 
@@ -991,11 +1043,20 @@
     function atualizarSeletorDeCursos() {
       const select = document.getElementById("curso-selector-add");
       if (!select) return;
-      const alunos = allUsuarios.filter(u => u.role === "aluno" && u.curso && u.curso.trim() !== "");
-      const cursosUnicos = [...new Set(alunos.map(a => a.curso.trim()))].sort();
+      const alunos = allUsuarios.filter(u => u.role === "aluno");
 
-      select.innerHTML = `<option value="">${cursosUnicos.length ? "Escolha um curso..." : "Nenhum curso cadastrado ainda"}</option>` +
-        cursosUnicos.map(c => `<option value="${c}">${c}</option>`).join("");
+      // Combina a lista oficial da UNIFACCAMP com eventuais cursos extras importados via JSON
+      const extras = alunos
+        .map(a => (a.curso || "").trim())
+        .filter(c => c && !CURSOS_UNIFACCAMP.includes(c));
+      const todosCursos = [...CURSOS_UNIFACCAMP, ...new Set(extras)];
+
+      select.innerHTML = `<option value="">Escolha um curso...</option>` +
+        todosCursos.map(c => {
+          const qtd = alunos.filter(a => (a.curso || "").trim() === c).length;
+          const labelQtd = qtd > 0 ? ` (${qtd} aluno${qtd > 1 ? "s" : ""})` : "";
+          return `<option value="${c}">${c}${labelQtd}</option>`;
+        }).join("");
     }
 
     function adicionarCursoFiltro(contexto) {
@@ -1041,7 +1102,7 @@
       box.classList.remove("hidden");
 
       if (alunosFiltrados.length === 0) {
-        checklist.innerHTML = `<p class="col-span-full text-[11px] text-slate-400">Nenhum aluno encontrado para os cursos selecionados.</p>`;
+        checklist.innerHTML = `<p class="col-span-full text-[11px] text-slate-400">Nenhum aluno cadastrado ainda nos cursos selecionados.</p>`;
         return;
       }
 
@@ -1420,7 +1481,7 @@
         return;
       }
       if (role === "aluno" && !curso) {
-        alert("Informe o curso do aluno.");
+        alert("Selecione o curso do aluno.");
         return;
       }
 
