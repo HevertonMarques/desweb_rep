@@ -509,14 +509,19 @@
       <form onsubmit="handleAlterarSenha(event)" class="space-y-4">
         <div id="div-senha-atual">
           <label class="block text-xs font-medium text-slate-300 mb-1">Senha Atual *</label>
-          <input type="password" id="change-pass-atual" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3.5 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
+          <div class="relative">
+            <input type="password" id="change-pass-atual" class="w-full bg-slate-950 border border-slate-700 rounded-lg pl-3.5 pr-10 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
+            <button type="button" onclick="togglePasswordVisibility('change-pass-atual', 'icon-eye-change-atual')" class="absolute inset-y-0 right-0 px-3 flex items-center text-slate-400 hover:text-slate-200" title="Mostrar/Ocultar senha">
+              <i id="icon-eye-change-atual" class="fa-solid fa-eye text-xs"></i>
+            </button>
+          </div>
         </div>
 
         <div>
           <label class="block text-xs font-medium text-slate-300 mb-1">Nova Senha (6 a 18 caracteres) *</label>
           <div class="relative">
             <input type="password" id="change-pass-nova" required minlength="6" maxlength="18" oninput="avaliarForcaSenha('change-pass-nova', 'change-pass-bar', 'change-pass-text')" class="w-full bg-slate-950 border border-slate-700 rounded-lg pl-3.5 pr-10 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
-            <button type="button" onclick="togglePasswordVisibility('change-pass-nova', 'icon-eye-change-nova')" class="absolute inset-y-0 right-0 px-3 flex items-center text-slate-400 hover:text-slate-200">
+            <button type="button" onclick="togglePasswordVisibility('change-pass-nova', 'icon-eye-change-nova')" class="absolute inset-y-0 right-0 px-3 flex items-center text-slate-400 hover:text-slate-200" title="Mostrar/Ocultar senha">
               <i id="icon-eye-change-nova" class="fa-solid fa-eye text-xs"></i>
             </button>
           </div>
@@ -530,7 +535,12 @@
 
         <div>
           <label class="block text-xs font-medium text-slate-300 mb-1">Confirmar Nova Senha *</label>
-          <input type="password" id="change-pass-confirmar" required minlength="6" maxlength="18" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3.5 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
+          <div class="relative">
+            <input type="password" id="change-pass-confirmar" required minlength="6" maxlength="18" class="w-full bg-slate-950 border border-slate-700 rounded-lg pl-3.5 pr-10 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
+            <button type="button" onclick="togglePasswordVisibility('change-pass-confirmar', 'icon-eye-change-confirmar')" class="absolute inset-y-0 right-0 px-3 flex items-center text-slate-400 hover:text-slate-200" title="Mostrar/Ocultar senha">
+              <i id="icon-eye-change-confirmar" class="fa-solid fa-eye text-xs"></i>
+            </button>
+          </div>
         </div>
 
         <p id="change-pass-error" class="text-xs text-red-400 hidden"></p>
@@ -1001,12 +1011,23 @@
       const btnClose = document.getElementById("btn-close-change-pass");
       const divAtual = document.getElementById("div-senha-atual");
       const inputAtual = document.getElementById("change-pass-atual");
+      const inputNova = document.getElementById("change-pass-nova");
+      const inputConfirmar = document.getElementById("change-pass-confirmar");
       const errEl = document.getElementById("change-pass-error");
 
       errEl.classList.add("hidden");
-      document.getElementById("change-pass-atual").value = "";
-      document.getElementById("change-pass-nova").value = "";
-      document.getElementById("change-pass-confirmar").value = "";
+      inputAtual.value = "";
+      inputNova.value = "";
+      inputConfirmar.value = "";
+
+      // Garante que todos os 3 campos iniciem ocultos (password) e com ícone de olho normal
+      inputAtual.type = "password";
+      inputNova.type = "password";
+      inputConfirmar.type = "password";
+      document.getElementById("icon-eye-change-atual").className = "fa-solid fa-eye text-xs";
+      document.getElementById("icon-eye-change-nova").className = "fa-solid fa-eye text-xs";
+      document.getElementById("icon-eye-change-confirmar").className = "fa-solid fa-eye text-xs";
+
       avaliarForcaSenha("change-pass-nova", "change-pass-bar", "change-pass-text");
 
       if (forcarPrimeiroAcesso) {
@@ -1631,7 +1652,6 @@
       if (!tbody || !currentUser) return;
       const query = (document.getElementById("search-usuarios")?.value || "").toLowerCase().trim();
 
-      // Dupla garantia de visibilidade hierárquica também no frontend
       const visiveisPorHierarquia = allUsuarios.filter(u => {
         if (currentUser.role === "admin") return true;
         if (currentUser.role === "coordenador") return u.role === "orientador" || u.role === "aluno";
