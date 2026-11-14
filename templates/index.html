@@ -6,32 +6,13 @@
   <title>Módulo 2: Controle (Registro) - Projetos Extensionistas</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            brand: {
-              50: '#f0f3ff',
-              100: '#e0e7ff',
-              500: '#6366f1',
-              600: '#4f46e5',
-              700: '#4338ca',
-              900: '#312e81',
-            }
-          }
-        }
-      }
-    }
-  </script>
   <style>
     .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
     .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.3); border-radius: 3px; }
   </style>
 </head>
-<body class="bg-slate-900 text-slate-100 font-sans antialiased min-h-screen flex flex-col" id="app-body">
+<body class="bg-slate-900 text-slate-100 font-sans antialiased min-h-screen flex flex-col">
 
   <div class="flex flex-1 overflow-hidden h-screen">
 
@@ -57,7 +38,7 @@
         </button>
       </div>
 
-      <!-- Navigation according to Traceability Matrix -->
+      <!-- Navigation -->
       <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto custom-scrollbar">
         
         <button onclick="switchTab('consultar')" id="nav-consultar" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all bg-indigo-600 text-white shadow-lg shadow-indigo-600/20">
@@ -124,7 +105,7 @@
         </div>
 
         <!-- Account Auth Controls -->
-        <div class="flex items-center gap-2" id="auth-header-controls">
+        <div class="flex items-center gap-2">
           <button onclick="openLoginModal()" id="btn-open-login" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg shadow-lg shadow-indigo-600/20 transition-all flex items-center gap-2">
             <i class="fa-solid fa-right-to-bracket"></i>
             <span>Entrar na Conta</span>
@@ -144,7 +125,7 @@
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-950/60 p-4 rounded-xl border border-slate-800/80">
             <div>
               <h2 class="text-base font-bold text-slate-100">Projetos Extensionistas Registrados</h2>
-              <p class="text-xs text-slate-400">Consulta de trabalhos, áreas de atuação, setor externo, grupos e estado de andamento</p>
+              <p class="text-xs text-slate-400" id="consultar-subtitle">Consulta pública de trabalhos extensionistas publicados</p>
             </div>
             <input type="text" id="search-projetos" onkeyup="filterProjetos()" placeholder="Buscar por título, área ou aluno..." class="bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500 w-full sm:w-64">
           </div>
@@ -157,12 +138,12 @@
         <!-- VIEW 2: CONFIRMAR / RECUSAR PARTICIPAÇÃO E EDITAR DADOS PRÓPRIOS (Aluno) -->
         <div id="view-meus-grupos" class="space-y-6 hidden">
           <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80">
-            <h2 class="text-base font-bold text-slate-100 mb-1">Meus Grupos e Participação</h2>
-            <p class="text-xs text-slate-400">Confirme ou recuse sua vinculação aos trabalhos extensionistas e atualize seu Nome ou RA dentro do grupo.</p>
+            <h2 class="text-base font-bold text-slate-100 mb-1">Meus Grupos e Confirmação</h2>
+            <p class="text-xs text-slate-400">Aceite ou rejeite sua vinculação aos trabalhos extensionistas enviados pelos orientadores e atualize seu Nome ou RA.</p>
           </div>
 
           <div class="bg-slate-950/60 rounded-xl border border-slate-800/80 overflow-hidden p-4">
-            <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-3">Vinculações em Projetos</h3>
+            <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-3">Convites e Vinculações em Projetos</h3>
             <div id="pending-groups-container" class="space-y-3">
               <!-- Dynamically populated -->
             </div>
@@ -173,7 +154,7 @@
         <div id="view-registrar-trabalho" class="space-y-6 hidden">
           <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80">
             <h2 class="text-base font-bold text-slate-100 mb-1">Registrar Trabalho Extensionista, Grupo e Membros</h2>
-            <p class="text-xs text-slate-400">O projeto será automaticamente vinculado ao seu perfil de Orientador.</p>
+            <p class="text-xs text-slate-400">Ao incluir o RA de um aluno cadastrado, ele receberá uma notificação por e-mail e verá o convite ao fazer login.</p>
           </div>
 
           <form id="form-novo-projeto" onsubmit="handleSaveProjeto(event)" class="bg-slate-950/60 p-5 rounded-xl border border-slate-800/80 space-y-4">
@@ -215,12 +196,12 @@
                 </div>
 
                 <div>
-                  <label class="text-xs font-medium text-slate-300 block mb-1">Nome do Aluno (Membro)</label>
+                  <label class="text-xs font-medium text-slate-300 block mb-1">Nome do Aluno (Opcional se RA existir)</label>
                   <input type="text" id="input-nome-aluno" placeholder="Ex: Victor Hollanda" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
                 </div>
 
                 <div>
-                  <label class="text-xs font-medium text-slate-300 block mb-1">RA do Aluno (Membro)</label>
+                  <label class="text-xs font-medium text-slate-300 block mb-1">RA do Aluno (Membro) *</label>
                   <div class="flex gap-2">
                     <input type="text" id="input-ra-aluno" placeholder="Ex: 2026101" class="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
                     <button type="button" onclick="addAlunoMembro()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs rounded-lg font-medium border border-slate-700 transition-colors">
@@ -253,7 +234,7 @@
           <div class="flex items-center justify-between bg-slate-950/60 p-4 rounded-xl border border-slate-800/80">
             <div>
               <h2 class="text-base font-bold text-slate-100">CRUD de Professores</h2>
-              <p class="text-xs text-slate-400" id="crud-prof-subtitle">Gerenciamento do corpo docente e perfis permitidos</p>
+              <p class="text-xs text-slate-400">Gerenciamento do corpo docente conforme permissões hierárquicas</p>
             </div>
             <button onclick="openModalProf()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg transition-colors">
               <i class="fa-solid fa-user-plus mr-1"></i> Novo Professor
@@ -278,7 +259,7 @@
           </div>
         </div>
 
-        <!-- VIEW 5: GESTÃO HIERÁRQUICA DE CONTAS E ACESSOS (Admin / Coord / Orientador) -->
+        <!-- VIEW 5: GESTÃO HIERÁRQUICA DE CONTAS E ACESSOS -->
         <div id="view-gestao-contas" class="space-y-6 hidden">
           <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80">
             <h2 class="text-base font-bold text-slate-100 mb-1">Criação e Gestão de Acessos</h2>
@@ -286,7 +267,6 @@
           </div>
 
           <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Form Criar Conta -->
             <form onsubmit="handleCriarConta(event)" class="bg-slate-950/60 p-5 rounded-xl border border-slate-800/80 space-y-4 lg:col-span-1 h-fit">
               <h3 class="text-sm font-bold text-slate-200 flex items-center gap-2 border-b border-slate-800 pb-2">
                 <i class="fa-solid fa-user-shield text-indigo-400"></i>
@@ -296,7 +276,6 @@
               <div>
                 <label class="text-xs font-medium text-slate-300 block mb-1">Tipo de Perfil *</label>
                 <select id="conta-perfil" onchange="toggleCampoRA()" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
-                  <!-- Populated dynamically based on role hierarchy -->
                 </select>
               </div>
 
@@ -325,10 +304,9 @@
               </button>
             </form>
 
-            <!-- Lista de Contas Visíveis -->
             <div class="bg-slate-950/60 rounded-xl border border-slate-800/80 overflow-hidden lg:col-span-2">
               <div class="p-4 border-b border-slate-800">
-                <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Contas Cadastradas (Visíveis ao seu Perfil)</h3>
+                <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Contas Cadastradas (MySQL)</h3>
               </div>
               <div class="overflow-x-auto">
                 <table class="w-full text-left text-xs">
@@ -338,12 +316,10 @@
                       <th class="p-3">Nome</th>
                       <th class="p-3">E-mail</th>
                       <th class="p-3">Perfil</th>
-                      <th class="p-3">Senha</th>
                       <th class="p-3 text-right">Ação</th>
                     </tr>
                   </thead>
                   <tbody id="contas-table-body" class="divide-y divide-slate-800/60 text-slate-300">
-                    <!-- Dynamically populated -->
                   </tbody>
                 </table>
               </div>
@@ -425,19 +401,10 @@
           Entrar
         </button>
       </form>
-
-      <!-- Quick Hint Box for Prototype Testing -->
-      <div class="p-3 rounded-lg bg-slate-950 border border-slate-800/80 text-[11px] text-slate-400 space-y-1">
-        <div class="font-semibold text-slate-300 mb-1"><i class="fa-solid fa-circle-info text-indigo-400 mr-1"></i> Contas pré-cadastradas para teste:</div>
-        <div><strong class="text-slate-300">Admin:</strong> admin@faccamp.com | <strong class="text-slate-300">Senha:</strong> adminhrv2026</div>
-        <div><strong class="text-slate-300">Coordenador:</strong> andre.marcos@unifaccamp.edu.br (ou COORD01) | <strong class="text-slate-300">Senha:</strong> 123</div>
-        <div><strong class="text-slate-300">Orientador:</strong> roberto.santos@unifaccamp.edu.br (ou PROF02) | <strong class="text-slate-300">Senha:</strong> 123</div>
-        <div><strong class="text-slate-300">Aluno:</strong> 2026101 (ou victor@aluno.faccamp.com) | <strong class="text-slate-300">Senha:</strong> 123</div>
-      </div>
     </div>
   </div>
 
-  <!-- MODAL: EDITAR PROJETO, GRUPO E MEMBROS (Admin, Coordenador, Orientador) -->
+  <!-- MODAL: EDITAR PROJETO, GRUPO E MEMBROS -->
   <div id="modal-edit-projeto" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-slate-900 border border-slate-800 rounded-xl max-w-2xl w-full p-5 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -474,28 +441,19 @@
             <input type="text" id="edit-proj-grupo" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
           </div>
 
-          <!-- Orientador field: ONLY visible to Administrator -->
           <div id="edit-orientador-wrapper" class="hidden">
             <label class="text-xs font-medium text-slate-300 block mb-1">Orientador Responsável (Admin)</label>
             <select id="edit-proj-orientador" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
-              <!-- Populated with orientadores -->
             </select>
           </div>
         </div>
 
         <hr class="border-slate-800" />
 
-        <!-- Edit / Add Students inside Group -->
         <div class="space-y-2">
-          <div class="flex items-center justify-between">
-            <label class="text-xs font-bold text-slate-200">Membros do Grupo (Editar Nome / RA ou Adicionar)</label>
-          </div>
-          
-          <div id="edit-membros-container" class="space-y-2">
-            <!-- Dynamically populated inputs for each student's name and RA -->
-          </div>
+          <label class="text-xs font-bold text-slate-200 block">Membros do Grupo (Editar Nome / RA ou Adicionar)</label>
+          <div id="edit-membros-container" class="space-y-2"></div>
 
-          <!-- Add new student inside edit modal -->
           <div class="pt-2 flex flex-col sm:flex-row gap-2">
             <input type="text" id="edit-add-aluno-nome" placeholder="Nome do novo aluno" class="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
             <input type="text" id="edit-add-aluno-ra" placeholder="RA" class="w-full sm:w-32 bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
@@ -507,12 +465,8 @@
       </div>
 
       <div class="flex justify-end gap-2 pt-3 border-t border-slate-800">
-        <button onclick="closeEditProjetoModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-lg transition-colors">
-          Cancelar
-        </button>
-        <button onclick="saveEditedProjeto()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg transition-colors">
-          Salvar Alterações
-        </button>
+        <button onclick="closeEditProjetoModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-lg">Cancelar</button>
+        <button onclick="saveEditedProjeto()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg">Salvar Alterações</button>
       </div>
     </div>
   </div>
@@ -522,190 +476,132 @@
     <div class="bg-slate-900 border border-slate-800 rounded-xl max-w-md w-full p-5 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
         <h3 class="text-base font-bold text-slate-100">Editar Meus Dados no Grupo</h3>
-        <button onclick="closeAlunoEditModal()" class="text-slate-400 hover:text-white">
-          <i class="fa-solid fa-xmark text-lg"></i>
-        </button>
+        <button onclick="closeAlunoEditModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
 
       <div class="space-y-3">
-        <p class="text-xs text-slate-400">Altere seu Nome ou RA registrado neste grupo extensionista:</p>
         <div>
           <label class="text-xs font-medium text-slate-300 block mb-1">Meu Nome no Grupo *</label>
-          <input type="text" id="aluno-self-nome" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+          <input type="text" id="aluno-self-nome" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200">
         </div>
         <div>
           <label class="text-xs font-medium text-slate-300 block mb-1">Meu RA *</label>
-          <input type="text" id="aluno-self-ra" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+          <input type="text" id="aluno-self-ra" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200">
         </div>
       </div>
 
       <div class="flex justify-end gap-2 pt-2 border-t border-slate-800">
-        <button onclick="closeAlunoEditModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-lg">
-          Cancelar
-        </button>
-        <button onclick="saveAlunoSelfEdit()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg">
-          Salvar Meus Dados
-        </button>
+        <button onclick="closeAlunoEditModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-lg">Cancelar</button>
+        <button onclick="saveAlunoSelfEdit()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg">Salvar Meus Dados</button>
       </div>
     </div>
   </div>
 
-  <!-- MODAL: STATUS CHANGE (State Machine Enforcement) -->
+  <!-- MODAL: STATUS CHANGE (Apenas Admin, Coordenador, Orientador) -->
   <div id="modal-status" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-slate-900 border border-slate-800 rounded-xl max-w-md w-full p-5 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
         <h3 class="text-base font-bold text-slate-100">Transição de Status do Projeto</h3>
-        <button onclick="closeModalStatus()" class="text-slate-400 hover:text-white">
-          <i class="fa-solid fa-xmark text-lg"></i>
-        </button>
+        <button onclick="closeModalStatus()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
 
       <div class="space-y-3">
         <p class="text-xs text-slate-300" id="status-modal-info"></p>
-        
         <div>
           <label class="text-xs font-medium text-slate-300 block mb-1">Selecione o Novo Status *</label>
-          <select id="select-novo-status" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
-          </select>
-        </div>
-
-        <div id="status-restriction-warning" class="hidden p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-400">
-          <i class="fa-solid fa-circle-info mr-1"></i>
-          <span>Regra de Negócio: O Aluno só pode alterar para os status: CANCELADO, PENDENTE ou CONCLUÍDO.</span>
+          <select id="select-novo-status" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200"></select>
         </div>
       </div>
 
       <div class="flex justify-end gap-2 pt-2 border-t border-slate-800">
-        <button onclick="closeModalStatus()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-lg transition-colors">
-          Cancelar
-        </button>
-        <button onclick="confirmStatusTransition()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg transition-colors">
-          Confirmar Transição
-        </button>
+        <button onclick="closeModalStatus()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-lg">Cancelar</button>
+        <button onclick="confirmStatusTransition()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg">Confirmar Transição</button>
       </div>
     </div>
   </div>
 
-  <!-- MODAL: CADASTRO / EDIÇÃO PROFESSOR (CRUD) -->
+  <!-- MODAL: CADASTRO / EDIÇÃO PROFESSOR -->
   <div id="modal-prof" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-slate-900 border border-slate-800 rounded-xl max-w-md w-full p-5 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
         <h3 class="text-base font-bold text-slate-100" id="modal-prof-title">Cadastrar Professor</h3>
-        <button onclick="closeModalProf()" class="text-slate-400 hover:text-white">
-          <i class="fa-solid fa-xmark text-lg"></i>
-        </button>
+        <button onclick="closeModalProf()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
 
       <div class="space-y-3">
         <div>
           <label class="text-xs font-medium text-slate-300 block mb-1">RA / Matrícula do Professor *</label>
-          <input type="text" id="prof-ra" placeholder="Ex: PROF05" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+          <input type="text" id="prof-ra" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200">
         </div>
-
         <div>
           <label class="text-xs font-medium text-slate-300 block mb-1">Nome Completo *</label>
-          <input type="text" id="prof-nome" placeholder="Ex: Dr. Carlos Silva" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+          <input type="text" id="prof-nome" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200">
         </div>
-
         <div>
           <label class="text-xs font-medium text-slate-300 block mb-1">E-mail *</label>
-          <input type="email" id="prof-email" placeholder="carlos.silva@unifaccamp.edu.br" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+          <input type="email" id="prof-email" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200">
         </div>
-
         <div>
           <label class="text-xs font-medium text-slate-300 block mb-1">Senha de Acesso *</label>
-          <input type="text" id="prof-senha" placeholder="Senha do professor" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+          <input type="text" id="prof-senha" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200">
         </div>
-
         <div>
           <label class="text-xs font-medium text-slate-300 block mb-1">Perfil no Sistema *</label>
-          <select id="prof-perfil" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
-            <!-- Dynamically restricted: Coordenador only sees ORIENTADOR; Admin sees ORIENTADOR & COORDENADOR -->
-          </select>
+          <select id="prof-perfil" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200"></select>
         </div>
       </div>
 
       <div class="flex justify-end gap-2 pt-2 border-t border-slate-800">
-        <button onclick="closeModalProf()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-lg transition-colors">
-          Cancelar
-        </button>
-        <button onclick="saveProf()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg transition-colors">
-          Salvar Professor
-        </button>
+        <button onclick="closeModalProf()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-lg">Cancelar</button>
+        <button onclick="saveProf()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg">Salvar Professor</button>
       </div>
     </div>
   </div>
 
   <script>
-    // ==========================================
-    // ACCOUNTS & AUTHENTICATION STATE
-    // ==========================================
-    let currentUser = null; // null = Acesso Público (Visitante)
+    let currentUser = null;
+    let accountsData = [];
+    let projetosData = [];
 
-    // Unified Accounts Database (Admin, Coordenadores, Orientadores, Alunos)
-    let accountsData = [
-      { id: 1, ra: "ADMIN01", nome: "Administrador FACCAMP", email: "admin@faccamp.com", senha: "adminhrv2026", role: "admin" },
-      { id: 2, ra: "COORD01", nome: "Prof. André Marcos", email: "andre.marcos@unifaccamp.edu.br", senha: "123", role: "coordenador" },
-      { id: 3, ra: "PROF02", nome: "Prof. Roberto Santos", email: "roberto.santos@unifaccamp.edu.br", senha: "123", role: "orientador" },
-      { id: 4, ra: "PROF03", nome: "Dra. Mariana Costa", email: "mariana.costa@unifaccamp.edu.br", senha: "123", role: "orientador" },
-      { id: 5, ra: "2026101", nome: "Victor Hollanda", email: "victor@aluno.faccamp.com", senha: "123", role: "aluno" },
-      { id: 6, ra: "2026102", nome: "Lucas Almeida", email: "lucas@aluno.faccamp.com", senha: "123", role: "aluno" },
-      { id: 7, ra: "2026103", nome: "Beatriz Lima", email: "beatriz@aluno.faccamp.com", senha: "123", role: "aluno" }
-    ];
-
-    // Projects Data
-    let projetosData = [
-      {
-        id: 101,
-        titulo: "Portal Web de Apoio ao Centro Comunitário",
-        setorExterno: "Centro Comunitário Jardim Santa Lúcia",
-        areasAtuacao: "Desenvolvimento Web, Inclusão Digital",
-        interdisciplinaridade: "Ciência da Computação & Serviço Social",
-        status: "NOVO",
-        orientador: "Prof. Roberto Santos",
-        grupo: {
-          id: 1,
-          nome: "Time Alpha Extensionista",
-          membros: [
-            { ra: "2026101", nome: "Victor Hollanda", statusParticipacao: "PENDENTE" },
-            { ra: "2026102", nome: "Lucas Almeida", statusParticipacao: "CONFIRMADO" }
-          ]
-        }
-      },
-      {
-        id: 102,
-        titulo: "Sistema de Registro e Troca de Material Reciclável",
-        setorExterno: "Cooperativa de Reciclagem Campo Largo",
-        areasAtuacao: "Banco de Dados, Sustentabilidade",
-        interdisciplinaridade: "Tecnologia da Informação & Gestão Ambiental",
-        status: "DESENVOLVIMENTO",
-        orientador: "Dra. Mariana Costa",
-        grupo: {
-          id: 2,
-          nome: "EcoCode",
-          membros: [
-            { ra: "2026103", nome: "Beatriz Lima", statusParticipacao: "CONFIRMADO" }
-          ]
-        }
-      }
-    ];
-
-    // Temporary editing state variables
     let selectedProjectIdForStatus = null;
     let editingProjectId = null;
     let tempEditMembros = [];
     let tempMembrosNovos = [];
     let editingProfId = null;
-    let alunoEditingContext = { projId: null, originalRa: null };
+    let alunoEditingContext = { membroId: null };
 
     const ALL_STATUSES = [
       'NOVO', 'PENDENTE', 'DESENVOLVIMENTO', 'CANCELADO', 
       'CONCLUIDO', 'FINALIZADO', 'LIBERADO_APRESENTACAO', 'AVALIADO'
     ];
-    const ALUNO_ALLOWED_STATUSES = ['CANCELADO', 'PENDENTE', 'CONCLUIDO'];
+
+    function getCurrentActorRole() {
+      return currentUser ? currentUser.role : 'public';
+    }
 
     // ==========================================
-    // LOGIN & SESSION MANAGEMENT
+    // CARREGAMENTO DE DADOS DO BACKEND MYSQL
+    // ==========================================
+    async function loadAllData() {
+      try {
+        const [projRes, usersRes] = await Promise.all([
+          fetch('/api/projetos'),
+          fetch('/api/usuarios')
+        ]);
+        projetosData = await projRes.json();
+        accountsData = await usersRes.json();
+
+        renderProjetos();
+        renderProfessores();
+        renderMeusGruposAluno();
+        renderContasTable();
+      } catch (err) {
+        console.error('Erro ao conectar com o servidor Python:', err);
+      }
+    }
+
+    // ==========================================
+    // LOGIN & SESSÃO
     // ==========================================
     function openLoginModal() {
       document.getElementById('login-error-msg').classList.add('hidden');
@@ -718,39 +614,36 @@
       document.getElementById('modal-login').classList.add('hidden');
     }
 
-    function handleLogin(e) {
+    async function handleLogin(e) {
       e.preventDefault();
-      const identifier = document.getElementById('login-identifier').value.trim().toLowerCase();
-      const password = document.getElementById('login-password').value;
+      const identifier = document.getElementById('login-identifier').value.trim();
+      const senha = document.getElementById('login-password').value;
 
-      const foundUser = accountsData.find(acc => 
-        (acc.email.toLowerCase() === identifier || acc.ra.toLowerCase() === identifier) &&
-        acc.senha === password
-      );
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier, senha })
+      });
 
-      if (!foundUser) {
+      if (!res.ok) {
         document.getElementById('login-error-msg').classList.remove('hidden');
         return;
       }
 
-      currentUser = foundUser;
+      currentUser = await res.json();
       closeLoginModal();
-      applyRolePermissions();
+      await applyRolePermissions();
     }
 
-    function logout() {
+    async function logout() {
       currentUser = null;
-      applyRolePermissions();
-    }
-
-    function getCurrentActorRole() {
-      return currentUser ? currentUser.role : 'public';
+      await applyRolePermissions();
     }
 
     // ==========================================
-    // ROLE PERMISSIONS & UI NAVIGATION
+    // PERMISSÕES E VISIBILIDADE DE BOTÕES/ABAS
     // ==========================================
-    function applyRolePermissions() {
+    async function applyRolePermissions() {
       const role = getCurrentActorRole();
       const avatar = document.getElementById('user-avatar');
       const userName = document.getElementById('user-name');
@@ -765,7 +658,6 @@
       const navGestaoContas = document.getElementById('nav-gestao-contas');
       const navCargaMassiva = document.getElementById('nav-carga-massiva');
 
-      // Hide all restricted tabs first
       navGrupos.classList.add('hidden');
       navRegTrabalho.classList.add('hidden');
       navCrudProf.classList.add('hidden');
@@ -811,13 +703,16 @@
         }
       }
 
-      renderProjetos();
-      renderProfessores();
-      renderMeusGruposAluno();
-      renderContasTable();
+      await loadAllData();
     }
 
     function switchTab(tabId) {
+      const role = getCurrentActorRole();
+
+      if (role === 'public' && tabId !== 'consultar') return;
+      if (tabId === 'gestao-contas' && (role === 'aluno' || role === 'public')) return;
+      if (tabId === 'meus-grupos' && role !== 'aluno') return;
+
       const tabs = ['consultar', 'meus-grupos', 'registrar-trabalho', 'crud-professor', 'gestao-contas', 'carga-massiva'];
       const titles = {
         'consultar': 'Consultar Projetos Extensionistas',
@@ -851,41 +746,58 @@
     }
 
     // ==========================================
-    // RENDER PROJECTS & GRANULAR EDITING
+    // RENDERIZAÇÃO DE PROJETOS E BOTÃO PUBLICAR
     // ==========================================
     function renderProjetos() {
       const grid = document.getElementById('projetos-cards-grid');
       grid.innerHTML = '';
       const role = getCurrentActorRole();
 
-      projetosData.forEach(p => {
+      const listaExibida = (role === 'public') 
+        ? projetosData.filter(p => p.publicado) 
+        : projetosData;
+
+      if (listaExibida.length === 0) {
+        grid.innerHTML = `<div class="col-span-full text-center py-10 text-xs text-slate-500 bg-slate-950/40 rounded-xl border border-slate-800">Nenhum projeto publicado encontrado no momento.</div>`;
+        return;
+      }
+
+      listaExibida.forEach(p => {
         let statusBadgeColor = 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20';
         if (p.status === 'CONCLUIDO' || p.status === 'FINALIZADO') statusBadgeColor = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
         if (p.status === 'CANCELADO') statusBadgeColor = 'bg-red-500/10 text-red-400 border-red-500/20';
         if (p.status === 'PENDENTE') statusBadgeColor = 'bg-amber-500/10 text-amber-400 border-amber-500/20';
 
-        // Who can change status?
-        const canChangeStatus = (role === 'orientador' || role === 'coordenador' || role === 'aluno' || role === 'admin');
-        
-        // Who can edit Project / Group / Students info?
-        // Admin, Coordenador, and Orientador can edit project/group/students
-        const canEditProject = (role === 'admin' || role === 'coordenador' || role === 'orientador');
+        const canManage = (role === 'admin' || role === 'coordenador' || role === 'orientador');
 
         let actionButtonsHtml = '';
-        if (canEditProject) {
-          actionButtonsHtml += `<button onclick="openEditProjetoModal(${p.id})" class="text-xs px-2.5 py-1 bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 rounded-md border border-indigo-500/30 transition-colors"><i class="fa-solid fa-pen-to-square mr-1"></i> Editar</button>`;
-        }
-        if (canChangeStatus) {
-          actionButtonsHtml += `<button onclick="openModalStatus(${p.id})" class="text-xs px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-md border border-slate-700 transition-colors"><i class="fa-solid fa-arrows-rotate mr-1"></i> Status</button>`;
-        }
-        if (!canEditProject && !canChangeStatus) {
-          actionButtonsHtml = `<span class="text-[10px] text-slate-500"><i class="fa-solid fa-eye mr-1"></i> Somente Leitura</span>`;
+        if (canManage) {
+          const pubBtnLabel = p.publicado ? 'Despublicar' : 'Publicar';
+          const pubBtnStyle = p.publicado 
+            ? 'bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border-emerald-500/30' 
+            : 'bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border-amber-500/30';
+
+          actionButtonsHtml = `
+            <button onclick="togglePublicarProjeto(${p.id}, ${!p.publicado})" class="text-[11px] px-2 py-1 rounded-md border transition-colors ${pubBtnStyle}">
+              <i class="fa-solid fa-globe mr-1"></i>${pubBtnLabel}
+            </button>
+            <button onclick="openEditProjetoModal(${p.id})" class="text-[11px] px-2 py-1 bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 rounded-md border border-indigo-500/30 transition-colors">
+              <i class="fa-solid fa-pen-to-square mr-1"></i>Editar
+            </button>
+            <button onclick="openModalStatus(${p.id})" class="text-[11px] px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-md border border-slate-700 transition-colors">
+              <i class="fa-solid fa-arrows-rotate mr-1"></i>Status
+            </button>
+          `;
         }
 
-        let membrosBadges = p.grupo.membros.map(m => {
+        const publishedTag = p.publicado 
+          ? `<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"><i class="fa-solid fa-globe mr-1"></i>PUBLICADO</span>`
+          : `<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-800 text-slate-400 border border-slate-700">RASCUNHO</span>`;
+
+        let membrosBadges = (p.grupo && p.grupo.membros ? p.grupo.membros : []).map(m => {
           let icon = '<i class="fa-solid fa-clock text-amber-400 ml-1" title="Pendente"></i>';
-          if (m.statusParticipacao === 'CONFIRMADO') icon = '<i class="fa-solid fa-check text-emerald-400 ml-1" title="Confirmado"></i>';
-          if (m.statusParticipacao === 'RECUSADO') icon = '<i class="fa-solid fa-xmark text-red-400 ml-1" title="Recusado"></i>';
+          if (m.status_participacao === 'CONFIRMADO') icon = '<i class="fa-solid fa-check text-emerald-400 ml-1" title="Confirmado"></i>';
+          if (m.status_participacao === 'RECUSADO') icon = '<i class="fa-solid fa-xmark text-red-400 ml-1" title="Recusado"></i>';
 
           return `
             <span class="text-[10px] px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-300">
@@ -897,17 +809,20 @@
         grid.innerHTML += `
           <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80 flex flex-col justify-between space-y-3">
             <div>
-              <div class="flex items-center justify-between mb-2">
-                <span class="px-2 py-0.5 rounded text-[10px] font-semibold border ${statusBadgeColor}">${p.status}</span>
-                <span class="text-[11px] text-slate-400"><i class="fa-solid fa-user-tie mr-1"></i>${p.orientador}</span>
+              <div class="flex items-center justify-between gap-2 mb-2">
+                <div class="flex items-center gap-1.5">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-semibold border ${statusBadgeColor}">${p.status}</span>
+                  ${role !== 'public' ? publishedTag : ''}
+                </div>
+                <span class="text-[11px] text-slate-400 truncate"><i class="fa-solid fa-user-tie mr-1"></i>${p.orientador_nome}</span>
               </div>
               <h3 class="text-sm font-bold text-slate-100 mb-1">${p.titulo}</h3>
-              <p class="text-xs text-indigo-400 font-medium mb-2"><i class="fa-solid fa-building text-[10px] mr-1"></i>Setor: ${p.setorExterno}</p>
+              <p class="text-xs text-indigo-400 font-medium mb-2"><i class="fa-solid fa-building text-[10px] mr-1"></i>Setor: ${p.setor_externo}</p>
               
               <div class="space-y-1 text-[11px] text-slate-400 border-t border-slate-800/60 pt-2">
-                <div><strong class="text-slate-300">Áreas:</strong> ${p.areasAtuacao}</div>
+                <div><strong class="text-slate-300">Áreas:</strong> ${p.areas_atuacao}</div>
                 <div><strong class="text-slate-300">Interdisciplinaridade:</strong> ${p.interdisciplinaridade}</div>
-                <div><strong class="text-slate-300">Grupo:</strong> ${p.grupo.nome}</div>
+                <div><strong class="text-slate-300">Grupo:</strong> ${p.grupo ? p.grupo.nome : '-'}</div>
               </div>
 
               <div class="mt-2.5 flex flex-wrap gap-1">
@@ -915,19 +830,30 @@
               </div>
             </div>
 
-            <div class="pt-2 border-t border-slate-800/60 flex items-center justify-between gap-2">
-              <span class="text-[10px] text-slate-500">ID: #${p.id}</span>
-              <div class="flex items-center gap-1.5">
+            ${canManage ? `
+              <div class="pt-2 border-t border-slate-800/60 flex flex-wrap items-center justify-end gap-1.5">
                 ${actionButtonsHtml}
               </div>
-            </div>
+            ` : ''}
           </div>
         `;
       });
     }
 
+    async function togglePublicarProjeto(projId, novoEstado) {
+      const res = await fetch(`/api/projetos/${projId}/publicar`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ actor_role: getCurrentActorRole(), publicado: novoEstado })
+      });
+      if (res.ok) {
+        await loadAllData();
+        alert(novoEstado ? 'Projeto publicado com sucesso! Agora está visível no Acesso Público.' : 'Projeto removido da vitrine pública.');
+      }
+    }
+
     // ==========================================
-    // EDIT PROJECT & GROUP MODAL (Admin / Coord / Orientador)
+    // EDITAR PROJETO E GRUPO
     // ==========================================
     function openEditProjetoModal(projId) {
       const p = projetosData.find(proj => proj.id === projId);
@@ -937,12 +863,11 @@
       const role = getCurrentActorRole();
 
       document.getElementById('edit-proj-titulo').value = p.titulo;
-      document.getElementById('edit-proj-setor').value = p.setorExterno;
-      document.getElementById('edit-proj-areas').value = p.areasAtuacao;
+      document.getElementById('edit-proj-setor').value = p.setor_externo;
+      document.getElementById('edit-proj-areas').value = p.areas_atuacao;
       document.getElementById('edit-proj-inter').value = p.interdisciplinaridade;
-      document.getElementById('edit-proj-grupo').value = p.grupo.nome;
+      document.getElementById('edit-proj-grupo').value = p.grupo ? p.grupo.nome : '';
 
-      // Orientador field ONLY available for Admin (Orientador & Coordenador cannot assign/change another orientador)
       const orientadorWrapper = document.getElementById('edit-orientador-wrapper');
       const orientadorSelect = document.getElementById('edit-proj-orientador');
 
@@ -951,14 +876,13 @@
         orientadorSelect.innerHTML = '';
         const orientadores = accountsData.filter(acc => acc.role === 'orientador');
         orientadores.forEach(ori => {
-          orientadorSelect.innerHTML += `<option value="${ori.nome}" ${ori.nome === p.orientador ? 'selected' : ''}>${ori.nome}</option>`;
+          orientadorSelect.innerHTML += `<option value="${ori.nome}" ${ori.nome === p.orientador_nome ? 'selected' : ''}>${ori.nome}</option>`;
         });
       } else {
         orientadorWrapper.classList.add('hidden');
       }
 
-      // Clone members for editing
-      tempEditMembros = p.grupo.membros.map(m => ({ ...m }));
+      tempEditMembros = p.grupo && p.grupo.membros ? p.grupo.membros.map(m => ({ ...m })) : [];
       renderEditMembrosInputs();
 
       document.getElementById('modal-edit-projeto').classList.remove('hidden');
@@ -980,8 +904,8 @@
         <div class="flex flex-col sm:flex-row items-center gap-2 bg-slate-950 p-2 rounded-lg border border-slate-800">
           <input type="text" value="${m.nome}" onchange="updateTempEditMembro(${idx}, 'nome', this.value)" placeholder="Nome do Aluno" class="flex-1 w-full bg-slate-900 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-slate-200">
           <input type="text" value="${m.ra}" onchange="updateTempEditMembro(${idx}, 'ra', this.value)" placeholder="RA" class="w-full sm:w-28 bg-slate-900 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-slate-200">
-          <span class="text-[10px] px-2 py-1 rounded bg-slate-900 text-slate-400 border border-slate-800 shrink-0">${m.statusParticipacao}</span>
-          <button type="button" onclick="removeTempEditMembro(${idx})" class="text-red-400 hover:text-red-300 px-2 py-1" title="Remover Aluno">
+          <span class="text-[10px] px-2 py-1 rounded bg-slate-900 text-slate-400 border border-slate-800 shrink-0">${m.status_participacao}</span>
+          <button type="button" onclick="removeTempEditMembro(${idx})" class="text-red-400 hover:text-red-300 px-2 py-1">
             <i class="fa-solid fa-trash text-xs"></i>
           </button>
         </div>
@@ -1000,50 +924,51 @@
     function addMembroInEditModal() {
       const nomeInput = document.getElementById('edit-add-aluno-nome');
       const raInput = document.getElementById('edit-add-aluno-ra');
-      const nome = nomeInput.value.trim();
+      let nome = nomeInput.value.trim();
       const ra = raInput.value.trim();
 
-      if (!nome || !ra) return alert('Informe o Nome e o RA do aluno.');
+      if (!ra) return alert('Informe o RA do aluno.');
+      if (!nome) {
+        const foundAcc = accountsData.find(a => a.ra === ra && a.role === 'aluno');
+        nome = foundAcc ? foundAcc.nome : `Aluno RA ${ra}`;
+      }
 
-      tempEditMembros.push({ ra, nome, statusParticipacao: 'PENDENTE' });
+      tempEditMembros.push({ ra, nome, status_participacao: 'PENDENTE' });
       nomeInput.value = '';
       raInput.value = '';
       renderEditMembrosInputs();
     }
 
-    function saveEditedProjeto() {
-      const p = projetosData.find(proj => proj.id === editingProjectId);
-      if (!p) return;
-
-      const titulo = document.getElementById('edit-proj-titulo').value.trim();
-      const setor = document.getElementById('edit-proj-setor').value.trim();
-      const areas = document.getElementById('edit-proj-areas').value.trim();
-      const inter = document.getElementById('edit-proj-inter').value.trim();
-      const grupoNome = document.getElementById('edit-proj-grupo').value.trim();
-
-      if (!titulo || !setor || !areas || !inter || !grupoNome) {
-        return alert('Preencha todos os campos obrigatórios do projeto e grupo.');
-      }
-
-      p.titulo = titulo;
-      p.setorExterno = setor;
-      p.areasAtuacao = areas;
-      p.interdisciplinaridade = inter;
-      p.grupo.nome = grupoNome;
-      p.grupo.membros = [...tempEditMembros];
+    async function saveEditedProjeto() {
+      const payload = {
+        actor_role: getCurrentActorRole(),
+        titulo: document.getElementById('edit-proj-titulo').value.trim(),
+        setor_externo: document.getElementById('edit-proj-setor').value.trim(),
+        areas_atuacao: document.getElementById('edit-proj-areas').value.trim(),
+        interdisciplinaridade: document.getElementById('edit-proj-inter').value.trim(),
+        grupo_nome: document.getElementById('edit-proj-grupo').value.trim(),
+        membros: tempEditMembros
+      };
 
       if (getCurrentActorRole() === 'admin') {
-        p.orientador = document.getElementById('edit-proj-orientador').value;
+        payload.orientador_nome = document.getElementById('edit-proj-orientador').value;
       }
 
-      renderProjetos();
-      renderMeusGruposAluno();
-      closeEditProjetoModal();
-      alert('Informações do projeto e grupo atualizadas com sucesso!');
+      const res = await fetch(`/api/projetos/${editingProjectId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (res.ok) {
+        closeEditProjetoModal();
+        await loadAllData();
+        alert('Projeto e grupo atualizados no banco de dados!');
+      }
     }
 
     // ==========================================
-    // ALUNO: CONFIRM / DECLINE & EDIT OWN NAME/RA
+    // ALUNO: ACEITAR / REJEITAR E EDITAR DADOS PRÓPRIOS
     // ==========================================
     function renderMeusGruposAluno() {
       const container = document.getElementById('pending-groups-container');
@@ -1055,44 +980,45 @@
       let foundAny = false;
 
       projetosData.forEach(p => {
+        if (!p.grupo || !p.grupo.membros) return;
         p.grupo.membros.forEach(membro => {
           if (membro.ra === currentUser.ra) {
             foundAny = true;
-            if (membro.statusParticipacao === 'PENDENTE') countPending++;
+            if (membro.status_participacao === 'PENDENTE') countPending++;
 
             let statusBadge = '';
-            if (membro.statusParticipacao === 'CONFIRMADO') {
-              statusBadge = '<span class="text-emerald-400 font-semibold">Confirmado</span>';
-            } else if (membro.statusParticipacao === 'RECUSADO') {
-              statusBadge = '<span class="text-red-400 font-semibold">Recusado</span>';
+            if (membro.status_participacao === 'CONFIRMADO') {
+              statusBadge = '<span class="text-emerald-400 font-semibold">Aceito / Confirmado</span>';
+            } else if (membro.status_participacao === 'RECUSADO') {
+              statusBadge = '<span class="text-red-400 font-semibold">Rejeitado</span>';
             } else {
-              statusBadge = '<span class="text-amber-400 font-semibold">Pendente de Confirmação</span>';
+              statusBadge = '<span class="text-amber-400 font-semibold">Pendente de Resposta</span>';
             }
 
             container.innerHTML += `
               <div class="flex flex-col lg:flex-row lg:items-center justify-between p-4 bg-slate-900 rounded-lg border border-slate-800 gap-4">
                 <div class="space-y-1">
                   <div class="text-xs font-bold text-slate-200">${p.titulo} <span class="text-indigo-400">(Grupo: ${p.grupo.nome})</span></div>
-                  <div class="text-[11px] text-slate-400">Orientador: ${p.orientador} • Status do Vínculo: ${statusBadge}</div>
+                  <div class="text-[11px] text-slate-400">Orientador: ${p.orientador_nome} • Status do Projeto: <strong class="text-slate-300">${p.status}</strong> • Seu Vínculo: ${statusBadge}</div>
                   <div class="text-[11px] text-slate-300 bg-slate-950/60 px-2.5 py-1 rounded inline-block border border-slate-800">
                     Meu Registro no Grupo: <strong>${membro.nome}</strong> (RA: <strong>${membro.ra}</strong>)
                   </div>
                 </div>
 
                 <div class="flex flex-wrap items-center gap-2">
-                  <button onclick="openAlunoEditModal(${p.id}, '${membro.ra}')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-indigo-300 border border-slate-700 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5">
+                  <button onclick="openAlunoEditModal(${membro.id}, '${membro.nome}', '${membro.ra}')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-indigo-300 border border-slate-700 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5">
                     <i class="fa-solid fa-user-pen"></i> Editar Meu Nome/RA
                   </button>
 
-                  ${membro.statusParticipacao !== 'CONFIRMADO' ? `
-                    <button onclick="responderParticipacao(${p.id}, '${membro.ra}', 'CONFIRMADO')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5">
-                      <i class="fa-solid fa-check"></i> Confirmar
+                  ${membro.status_participacao !== 'CONFIRMADO' ? `
+                    <button onclick="responderParticipacao(${membro.id}, 'CONFIRMADO')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5">
+                      <i class="fa-solid fa-check"></i> Aceitar Projeto
                     </button>
                   ` : ''}
 
-                  ${membro.statusParticipacao !== 'RECUSADO' ? `
-                    <button onclick="responderParticipacao(${p.id}, '${membro.ra}', 'RECUSADO')" class="px-3 py-1.5 bg-red-600/20 hover:bg-red-600/40 text-red-400 border border-red-500/30 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5">
-                      <i class="fa-solid fa-xmark"></i> Recusar
+                  ${membro.status_participacao !== 'RECUSADO' ? `
+                    <button onclick="responderParticipacao(${membro.id}, 'RECUSADO')" class="px-3 py-1.5 bg-red-600/20 hover:bg-red-600/40 text-red-400 border border-red-500/30 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5">
+                      <i class="fa-solid fa-xmark"></i> Rejeitar Projeto
                     </button>
                   ` : ''}
                 </div>
@@ -1103,37 +1029,28 @@
       });
 
       if (!foundAny) {
-        container.innerHTML = `<div class="text-xs text-slate-500 italic p-2">Você ainda não foi vinculado a nenhum grupo extensionista.</div>`;
+        container.innerHTML = `<div class="text-xs text-slate-500 italic p-2">Você ainda não foi vinculado a nenhum projeto extensionista.</div>`;
       }
 
       document.getElementById('badge-pending-count').innerText = countPending;
     }
 
-    function responderParticipacao(projetoId, ra, novoStatus) {
-      const p = projetosData.find(proj => proj.id === projetoId);
-      if (p) {
-        const m = p.grupo.membros.find(membro => membro.ra === ra);
-        if (m) {
-          m.statusParticipacao = novoStatus;
-          const msg = novoStatus === 'CONFIRMADO' 
-            ? `Participação no grupo "${p.grupo.nome}" confirmada com sucesso!`
-            : `Você recusou a participação no grupo "${p.grupo.nome}".`;
-          alert(msg);
-          renderMeusGruposAluno();
-          renderProjetos();
-        }
+    async function responderParticipacao(membroId, novoStatus) {
+      const res = await fetch(`/api/membros/${membroId}/resposta`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status_participacao: novoStatus })
+      });
+      if (res.ok) {
+        await loadAllData();
+        alert(novoStatus === 'CONFIRMADO' ? 'Você aceitou participar do projeto!' : 'Você rejeitou a participação no projeto.');
       }
     }
 
-    function openAlunoEditModal(projId, ra) {
-      const p = projetosData.find(proj => proj.id === projId);
-      if (!p) return;
-      const m = p.grupo.membros.find(membro => membro.ra === ra);
-      if (!m) return;
-
-      alunoEditingContext = { projId, originalRa: ra };
-      document.getElementById('aluno-self-nome').value = m.nome;
-      document.getElementById('aluno-self-ra').value = m.ra;
+    function openAlunoEditModal(membroId, nome, ra) {
+      alunoEditingContext = { membroId };
+      document.getElementById('aluno-self-nome').value = nome;
+      document.getElementById('aluno-self-ra').value = ra;
       document.getElementById('modal-aluno-edit-self').classList.remove('hidden');
     }
 
@@ -1141,38 +1058,31 @@
       document.getElementById('modal-aluno-edit-self').classList.add('hidden');
     }
 
-    function saveAlunoSelfEdit() {
-      const { projId, originalRa } = alunoEditingContext;
-      const p = projetosData.find(proj => proj.id === projId);
-      if (!p) return;
-
-      const m = p.grupo.membros.find(membro => membro.ra === originalRa);
+    async function saveAlunoSelfEdit() {
       const novoNome = document.getElementById('aluno-self-nome').value.trim();
       const novoRa = document.getElementById('aluno-self-ra').value.trim();
 
       if (!novoNome || !novoRa) return alert('Preencha seu Nome e RA.');
 
-      if (m) {
-        m.nome = novoNome;
-        m.ra = novoRa;
-      }
+      const res = await fetch(`/api/membros/${alunoEditingContext.membroId}/aluno-self`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: currentUser.id, nome: novoNome, ra: novoRa })
+      });
 
-      // Update logged user's session RA & Name so they remain linked to their record
-      if (currentUser && currentUser.ra === originalRa) {
+      if (res.ok) {
         currentUser.nome = novoNome;
         currentUser.ra = novoRa;
         document.getElementById('user-name').innerText = novoNome;
         document.getElementById('user-role-badge').innerText = `Aluno • RA: ${novoRa}`;
+        closeAlunoEditModal();
+        await loadAllData();
+        alert('Seus dados foram atualizados!');
       }
-
-      closeAlunoEditModal();
-      renderMeusGruposAluno();
-      renderProjetos();
-      alert('Seus dados no grupo foram atualizados!');
     }
 
     // ==========================================
-    // ORIENTADOR: REGISTER NEW PROJECT (NO OTHER ORIENTADOR OPTION)
+    // ORIENTADOR: REGISTRAR NOVO PROJETO
     // ==========================================
     function addAlunoMembro() {
       const nomeInput = document.getElementById('input-nome-aluno');
@@ -1182,17 +1092,15 @@
 
       if (!ra) return alert('Por favor, digite o RA do aluno.');
 
-      // Auto-fill name from accountsData if registered and left blank
       let finalNome = nome;
       if (!finalNome) {
         const foundAcc = accountsData.find(a => a.ra === ra && a.role === 'aluno');
         finalNome = foundAcc ? foundAcc.nome : `Aluno RA ${ra}`;
       }
 
-      tempMembrosNovos.push({ ra: ra, nome: finalNome, statusParticipacao: 'PENDENTE' });
+      tempMembrosNovos.push({ ra: ra, nome: finalNome });
       nomeInput.value = '';
       raInput.value = '';
-
       renderMembrosNovos();
     }
 
@@ -1216,57 +1124,48 @@
       renderMembrosNovos();
     }
 
-    function handleSaveProjeto(e) {
+    async function handleSaveProjeto(e) {
       e.preventDefault();
+      if (tempMembrosNovos.length === 0) return alert('Adicione pelo menos um aluno ao grupo.');
 
-      const titulo = document.getElementById('input-titulo').value.trim();
-      const setor = document.getElementById('input-setorexterno').value.trim();
-      const areas = document.getElementById('input-areas').value.trim();
-      const inter = document.getElementById('input-interdisciplinaridade').value.trim();
-      const grupoNome = document.getElementById('input-nome-grupo').value.trim();
-
-      if (tempMembrosNovos.length === 0) {
-        return alert('Adicione pelo menos um aluno (membro) ao grupo.');
-      }
-
-      const newProj = {
-        id: Date.now(),
-        titulo: titulo,
-        setorExterno: setor,
-        areasAtuacao: areas,
-        interdisciplinaridade: inter,
-        status: 'NOVO',
-        orientador: currentUser.nome, // Automatically locked to logged-in Orientador
-        grupo: {
-          id: Date.now(),
-          nome: grupoNome,
-          membros: [...tempMembrosNovos]
-        }
+      const payload = {
+        titulo: document.getElementById('input-titulo').value.trim(),
+        setor_externo: document.getElementById('input-setorexterno').value.trim(),
+        areas_atuacao: document.getElementById('input-areas').value.trim(),
+        interdisciplinaridade: document.getElementById('input-interdisciplinaridade').value.trim(),
+        grupo_nome: document.getElementById('input-nome-grupo').value.trim(),
+        orientador_nome: currentUser.nome,
+        membros: tempMembrosNovos
       };
 
-      projetosData.unshift(newProj);
-      tempMembrosNovos = [];
-      document.getElementById('form-novo-projeto').reset();
-      renderMembrosNovos();
-      renderProjetos();
-      alert('Trabalho Extensionista e Grupo registrados com sucesso (Status: NOVO)!');
-      switchTab('consultar');
+      const res = await fetch('/api/projetos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (res.ok) {
+        tempMembrosNovos = [];
+        document.getElementById('form-novo-projeto').reset();
+        renderMembrosNovos();
+        await loadAllData();
+        alert('Trabalho Extensionista registrado com sucesso e notificações enviadas aos alunos!');
+        switchTab('consultar');
+      }
     }
 
     // ==========================================
-    // CRUD PROFESSORES (Coordenador & Admin)
+    // CRUD PROFESSORES & GESTÃO DE CONTAS
     // ==========================================
     function renderProfessores() {
       const tbody = document.getElementById('professores-table-body');
       tbody.innerHTML = '';
       const role = getCurrentActorRole();
 
-      // Filter teachers list: Coordenador sees Orientadores (and can edit them, cannot create/edit Coordenadores); Admin sees all
       const profs = accountsData.filter(acc => acc.role === 'orientador' || acc.role === 'coordenador');
 
       profs.forEach(p => {
         const isCoord = p.role === 'coordenador';
-        // Coordenador cannot edit or delete other Coordenadores; Admin can edit/delete all
         const canModify = (role === 'admin') || (role === 'coordenador' && !isCoord);
 
         tbody.innerHTML += `
@@ -1277,8 +1176,8 @@
             <td class="p-3.5"><span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">${p.role.toUpperCase()}</span></td>
             <td class="p-3.5 text-right space-x-2">
               ${canModify ? `
-                <button onclick="openModalProf(${p.id})" class="text-indigo-400 hover:text-indigo-300 transition-colors" title="Editar Professor"><i class="fa-solid fa-pen"></i></button>
-                <button onclick="deleteProf(${p.id})" class="text-slate-500 hover:text-red-400 transition-colors" title="Excluir Professor"><i class="fa-solid fa-trash"></i></button>
+                <button onclick="openModalProf(${p.id})" class="text-indigo-400 hover:text-indigo-300"><i class="fa-solid fa-pen"></i></button>
+                <button onclick="deleteConta(${p.id})" class="text-slate-500 hover:text-red-400"><i class="fa-solid fa-trash"></i></button>
               ` : `<span class="text-[10px] text-slate-500">Protegido</span>`}
             </td>
           </tr>
@@ -1290,10 +1189,7 @@
       editingProfId = profId;
       const role = getCurrentActorRole();
       const perfilSelect = document.getElementById('prof-perfil');
-      perfilSelect.innerHTML = '';
-
-      // Rule: Coordenador CANNOT include other Coordenadores; ONLY Admin can include Coordenadores
-      perfilSelect.innerHTML += `<option value="orientador">ORIENTADOR</option>`;
+      perfilSelect.innerHTML = `<option value="orientador">ORIENTADOR</option>`;
       if (role === 'admin') {
         perfilSelect.innerHTML += `<option value="coordenador">COORDENADOR</option>`;
       }
@@ -1304,16 +1200,15 @@
         document.getElementById('prof-ra').value = prof.ra;
         document.getElementById('prof-nome').value = prof.nome;
         document.getElementById('prof-email').value = prof.email;
-        document.getElementById('prof-senha').value = prof.senha;
+        document.getElementById('prof-senha').value = '';
         perfilSelect.value = prof.role;
       } else {
         document.getElementById('modal-prof-title').innerText = 'Cadastrar Professor';
         document.getElementById('prof-ra').value = '';
         document.getElementById('prof-nome').value = '';
         document.getElementById('prof-email').value = '';
-        document.getElementById('prof-senha').value = '123';
+        document.getElementById('prof-senha').value = '';
       }
-
       document.getElementById('modal-prof').classList.remove('hidden');
     }
 
@@ -1322,47 +1217,38 @@
       editingProfId = null;
     }
 
-    function saveProf() {
-      const ra = document.getElementById('prof-ra').value.trim();
-      const nome = document.getElementById('prof-nome').value.trim();
-      const email = document.getElementById('prof-email').value.trim();
-      const senha = document.getElementById('prof-senha').value.trim();
-      const perfil = document.getElementById('prof-perfil').value;
+    async function saveProf() {
+      const payload = {
+        actor_role: getCurrentActorRole(),
+        ra: document.getElementById('prof-ra').value.trim(),
+        nome: document.getElementById('prof-nome').value.trim(),
+        email: document.getElementById('prof-email').value.trim(),
+        senha: document.getElementById('prof-senha').value.trim(),
+        role: document.getElementById('prof-perfil').value
+      };
 
-      if (!ra || !nome || !email || !senha) return alert('Preencha todos os campos obrigatórios.');
-
-      // Double check security constraint
-      if (perfil === 'coordenador' && getCurrentActorRole() !== 'admin') {
-        return alert('Apenas o Administrador pode cadastrar ou promover Coordenadores.');
+      if (!payload.ra || !payload.nome || !payload.email || (!editingProfId && !payload.senha)) {
+        return alert('Preencha todos os campos obrigatórios.');
       }
 
-      if (editingProfId) {
-        const prof = accountsData.find(a => a.id === editingProfId);
-        if (prof) {
-          prof.ra = ra;
-          prof.nome = nome;
-          prof.email = email;
-          prof.senha = senha;
-          prof.role = perfil;
-        }
+      const url = editingProfId ? `/api/usuarios/${editingProfId}` : '/api/usuarios';
+      const method = editingProfId ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (res.ok) {
+        closeModalProf();
+        await loadAllData();
       } else {
-        accountsData.push({ id: Date.now(), ra, nome, email, senha, role: perfil });
+        const err = await res.json();
+        alert(err.error || 'Erro ao salvar professor.');
       }
-
-      renderProfessores();
-      renderContasTable();
-      closeModalProf();
     }
 
-    function deleteProf(id) {
-      accountsData = accountsData.filter(p => p.id !== id);
-      renderProfessores();
-      renderContasTable();
-    }
-
-    // ==========================================
-    // GESTÃO HIERÁRQUICA DE CONTAS (Admin -> Coord/Ori/Aluno | Coord -> Ori/Aluno | Ori -> Aluno)
-    // ==========================================
     function setupGestaoContasUI() {
       const role = getCurrentActorRole();
       const select = document.getElementById('conta-perfil');
@@ -1384,9 +1270,7 @@
         `;
       } else if (role === 'orientador') {
         desc.innerText = 'Permissão de Orientador: Crie acessos para Alunos.';
-        select.innerHTML = `
-          <option value="aluno">Aluno</option>
-        `;
+        select.innerHTML = `<option value="aluno">Aluno</option>`;
       }
       toggleCampoRA();
     }
@@ -1394,53 +1278,38 @@
     function toggleCampoRA() {
       const perfil = document.getElementById('conta-perfil').value;
       const label = document.getElementById('label-conta-ra');
-      const input = document.getElementById('conta-ra');
-
-      if (perfil === 'aluno') {
-        label.innerText = 'RA do Aluno *';
-        input.placeholder = 'Ex: 2026105';
-      } else {
-        label.innerText = 'RA / Matrícula do Professor *';
-        input.placeholder = 'Ex: PROF05';
-      }
+      label.innerText = perfil === 'aluno' ? 'RA do Aluno *' : 'RA / Matrícula do Professor *';
     }
 
-    function handleCriarConta(e) {
+    async function handleCriarConta(e) {
       e.preventDefault();
       const actorRole = getCurrentActorRole();
-      const perfil = document.getElementById('conta-perfil').value;
-      const nome = document.getElementById('conta-nome').value.trim();
-      const ra = document.getElementById('conta-ra').value.trim();
-      const email = document.getElementById('conta-email').value.trim();
-      const senha = document.getElementById('conta-senha').value.trim();
+      if (actorRole === 'aluno' || actorRole === 'public') return;
 
-      // Enforce hierarchical security
-      if (actorRole === 'orientador' && perfil !== 'aluno') {
-        return alert('Orientadores só podem criar contas de Alunos.');
-      }
-      if (actorRole === 'coordenador' && (perfil === 'coordenador' || perfil === 'admin')) {
-        return alert('Coordenadores só podem criar contas de Orientadores e Alunos.');
-      }
+      const payload = {
+        actor_role: actorRole,
+        role: document.getElementById('conta-perfil').value,
+        nome: document.getElementById('conta-nome').value.trim(),
+        ra: document.getElementById('conta-ra').value.trim(),
+        email: document.getElementById('conta-email').value.trim(),
+        senha: document.getElementById('conta-senha').value.trim()
+      };
 
-      const duplicate = accountsData.some(a => a.email.toLowerCase() === email.toLowerCase() || a.ra.toLowerCase() === ra.toLowerCase());
-      if (duplicate) {
-        return alert('Já existe uma conta cadastrada com este E-mail ou RA.');
-      }
-
-      accountsData.push({
-        id: Date.now(),
-        ra,
-        nome,
-        email,
-        senha,
-        role: perfil
+      const res = await fetch('/api/usuarios', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
       });
 
-      e.target.reset();
-      toggleCampoRA();
-      renderContasTable();
-      renderProfessores();
-      alert(`Conta de ${perfil.toUpperCase()} criada com sucesso para ${nome}!`);
+      if (res.ok) {
+        e.target.reset();
+        toggleCampoRA();
+        await loadAllData();
+        alert(`Conta de ${payload.role.toUpperCase()} criada com sucesso!`);
+      } else {
+        const err = await res.json();
+        alert(err.error || 'Erro ao criar conta.');
+      }
     }
 
     function renderContasTable() {
@@ -1466,45 +1335,35 @@
             <td class="p-3 font-bold text-slate-200">${acc.nome}</td>
             <td class="p-3 text-slate-400">${acc.email}</td>
             <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">${acc.role.toUpperCase()}</span></td>
-            <td class="p-3 font-mono text-slate-400">${acc.senha}</td>
             <td class="p-3 text-right">
-              <button onclick="deleteConta(${acc.id})" class="text-slate-500 hover:text-red-400 transition-colors" title="Remover Acesso"><i class="fa-solid fa-trash"></i></button>
+              <button onclick="deleteConta(${acc.id})" class="text-slate-500 hover:text-red-400"><i class="fa-solid fa-trash"></i></button>
             </td>
           </tr>
         `;
       });
     }
 
-    function deleteConta(id) {
-      accountsData = accountsData.filter(a => a.id !== id);
-      renderContasTable();
-      renderProfessores();
+    async function deleteConta(id) {
+      await fetch(`/api/usuarios/${id}`, { method: 'DELETE' });
+      await loadAllData();
     }
 
     // ==========================================
-    // STATUS TRANSITION MODAL
+    // STATUS MODAL (APENAS ADMIN, COORD, ORIENTADOR)
     // ==========================================
     function openModalStatus(projId) {
+      const role = getCurrentActorRole();
+      if (role === 'aluno' || role === 'public') return;
+
       selectedProjectIdForStatus = projId;
       const p = projetosData.find(proj => proj.id === projId);
       if (!p) return;
 
       document.getElementById('status-modal-info').innerText = `Projeto: "${p.titulo}" | Status Atual: ${p.status}`;
-      
       const select = document.getElementById('select-novo-status');
-      const warning = document.getElementById('status-restriction-warning');
       select.innerHTML = '';
 
-      let availableStatuses = ALL_STATUSES;
-
-      if (getCurrentActorRole() === 'aluno') {
-        availableStatuses = ALUNO_ALLOWED_STATUSES;
-        warning.classList.remove('hidden');
-      } else {
-        warning.classList.add('hidden');
-      }
-
-      availableStatuses.forEach(s => {
+      ALL_STATUSES.forEach(s => {
         select.innerHTML += `<option value="${s}" ${s === p.status ? 'selected' : ''}>${s}</option>`;
       });
 
@@ -1515,22 +1374,25 @@
       document.getElementById('modal-status').classList.add('hidden');
     }
 
-    function confirmStatusTransition() {
+    async function confirmStatusTransition() {
       const newStatus = document.getElementById('select-novo-status').value;
-      const p = projetosData.find(proj => proj.id === selectedProjectIdForStatus);
-      
-      if (p) {
-        p.status = newStatus;
-        renderProjetos();
+      const res = await fetch(`/api/projetos/${selectedProjectIdForStatus}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ actor_role: getCurrentActorRole(), status: newStatus })
+      });
+
+      if (res.ok) {
         closeModalStatus();
+        await loadAllData();
       }
     }
 
     // ==========================================
-    // UTILITIES
+    // UTILITÁRIOS
     // ==========================================
     function simularCargaMassiva(tipo) {
-      alert(`Carga massiva de ${tipo} executada com sucesso! Registros processados e gravados.`);
+      alert(`Carga massiva de ${tipo} executada com sucesso!`);
     }
 
     function filterProjetos() {
@@ -1542,13 +1404,10 @@
     }
 
     function toggleSidebar() {
-      const sidebar = document.getElementById('sidebar');
-      const backdrop = document.getElementById('sidebar-backdrop');
-      sidebar.classList.toggle('-translate-x-full');
-      backdrop.classList.toggle('hidden');
+      document.getElementById('sidebar').classList.toggle('-translate-x-full');
+      document.getElementById('sidebar-backdrop').classList.toggle('hidden');
     }
 
-    // Initial load: Público sem necessidade de conta
     window.onload = () => {
       applyRolePermissions();
     };
