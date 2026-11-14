@@ -72,20 +72,27 @@
         </nav>
       </div>
 
-      <!-- Active Actor Profile Indicator -->
-      <div class="p-3 border-t border-slate-800/80 flex items-center justify-between gap-2 min-w-0">
-        <div class="flex items-center gap-2.5 min-w-0 flex-1">
-          <div class="relative shrink-0">
-            <div id="user-avatar" class="w-9 h-9 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-xs font-bold text-white shadow-md">
-              AP
+      <!-- Active Actor Profile Indicator + Botão Alterar Minha Senha -->
+      <div class="p-3 border-t border-slate-800/80 space-y-2.5">
+        <div class="flex items-center justify-between gap-2 min-w-0">
+          <div class="flex items-center gap-2.5 min-w-0 flex-1">
+            <div class="relative shrink-0">
+              <div id="user-avatar" class="w-9 h-9 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-xs font-bold text-white shadow-md">
+                AP
+              </div>
+              <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-slate-950"></span>
             </div>
-            <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-slate-950"></span>
-          </div>
-          <div class="min-w-0 flex-1">
-            <div id="user-name" class="text-xs font-semibold text-slate-200 truncate">Visitante</div>
-            <div id="user-role-badge" class="text-[10px] text-slate-400 font-medium truncate">Ator: Acesso Público</div>
+            <div class="min-w-0 flex-1">
+              <div id="user-name" class="text-xs font-semibold text-slate-200 truncate">Visitante</div>
+              <div id="user-role-badge" class="text-[10px] text-slate-400 font-medium truncate">Ator: Acesso Público</div>
+            </div>
           </div>
         </div>
+
+        <button onclick="openChangePasswordModal(false)" id="btn-alterar-minha-senha" class="hidden w-full py-1.5 px-3 bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 rounded-lg text-[11px] font-medium transition-colors flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-key text-indigo-400"></i>
+          <span>Alterar Minha Senha</span>
+        </button>
       </div>
     </aside>
 
@@ -190,7 +197,7 @@
         <div id="view-meus-grupos" class="space-y-6 hidden">
           <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80">
             <h3 class="text-base font-bold text-slate-100 mb-1">Meus Grupos e Confirmação</h3>
-            <p class="text-xs text-slate-400">Aceite ou rejeite sua vinculação nos projetos extensionistas em que seu RA foi incluído, ou corrija seus dados cadastrais.</p>
+            <p class="text-xs text-slate-400">Aceite ou rejeite sua vinculação nos projetos extensionistas em que seu RA foi incluído, ou corrija seu nome cadastrado (o RA é fixo da instituição).</p>
           </div>
 
           <div class="bg-slate-950/60 rounded-xl border border-slate-800/80 overflow-hidden p-4">
@@ -298,11 +305,11 @@
           </div>
         </div>
 
-        <!-- VIEW 4: CRIAR ACESSOS / CONTAS (MANUAL) -->
+        <!-- VIEW 4: CRIAR ACESSOS / CONTAS E GERENCIAR USUÁRIOS -->
         <div id="view-gerenciar-contas" class="space-y-6 hidden">
           <div class="bg-slate-950/60 p-5 rounded-xl border border-slate-800/80 max-w-3xl">
-            <h3 class="text-base font-bold text-slate-100 mb-1">Criar Nova Conta de Acesso (Manual)</h3>
-            <p class="text-xs text-slate-400 mb-4">Cadastre usuários individualmente respeitando a hierarquia de permissões.</p>
+            <h3 class="text-base font-bold text-slate-100 mb-1">Criar Nova Conta de Acesso</h3>
+            <p class="text-xs text-slate-400 mb-4">Todas as contas criadas iniciam automaticamente com a senha provisória <span class="font-mono font-bold text-indigo-400">123456</span> e exigem troca obrigatória no primeiro acesso.</p>
 
             <form onsubmit="handleCriarUsuario(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -332,21 +339,12 @@
                 <label class="block text-xs font-medium text-slate-300 mb-1">E-mail *</label>
                 <input type="email" id="user-new-email" required placeholder="exemplo@hotmail.com" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
               </div>
-              <div class="md:col-span-2">
-                <label class="block text-xs font-medium text-slate-300 mb-1">Senha de Acesso (6 a 18 caracteres) *</label>
-                <div class="relative">
-                  <input type="password" id="user-new-senha" required minlength="6" maxlength="18" oninput="avaliarForcaSenha('user-new-senha', 'new-senha-strength-bar', 'new-senha-strength-text')" class="w-full bg-slate-900 border border-slate-700 rounded-lg pl-3 pr-10 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
-                  <button type="button" onclick="togglePasswordVisibility('user-new-senha', 'icon-eye-new')" class="absolute inset-y-0 right-0 px-3 flex items-center text-slate-400 hover:text-slate-200" title="Mostrar/Ocultar senha">
-                    <i id="icon-eye-new" class="fa-solid fa-eye text-xs"></i>
-                  </button>
-                </div>
-                <div class="mt-1.5 space-y-1">
-                  <div class="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
-                    <div id="new-senha-strength-bar" class="h-full w-0 transition-all duration-300"></div>
-                  </div>
-                  <p id="new-senha-strength-text" class="text-[11px] text-slate-400">De 6 a 18 caracteres ou dígitos.</p>
-                </div>
+
+              <div class="md:col-span-2 bg-slate-900/80 border border-slate-800 rounded-lg px-3.5 py-2.5 flex items-center justify-between">
+                <span class="text-xs text-slate-300"><i class="fa-solid fa-shield-halved text-indigo-400 mr-1.5"></i> Senha Inicial Provisória Padrão:</span>
+                <span class="font-mono text-xs font-bold text-indigo-300 bg-indigo-500/15 px-2.5 py-0.5 rounded border border-indigo-500/30">123456</span>
               </div>
+
               <div class="md:col-span-2 flex justify-end">
                 <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg shadow-lg shadow-indigo-600/20 transition-all">
                   <i class="fa-solid fa-user-plus mr-1.5"></i> Criar Conta
@@ -355,10 +353,17 @@
             </form>
           </div>
 
-          <!-- Lista de Usuários -->
+          <!-- Lista de Usuários com Pesquisa por Nome ou RA, Desbloqueio e Redefinição de Senha -->
           <div class="bg-slate-950/60 rounded-xl border border-slate-800/80 overflow-hidden">
-            <div class="p-4 border-b border-slate-800/80">
-              <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Contas Cadastradas no Sistema</h4>
+            <div class="p-4 border-b border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Contas Cadastradas no Sistema</h4>
+                <p class="text-[11px] text-slate-400">Gerencie acessos bloqueados e redefina senhas provisórias.</p>
+              </div>
+              <div class="relative w-full sm:w-72">
+                <i class="fa-solid fa-magnifying-glass text-slate-500 text-xs absolute left-3 top-1/2 -translate-y-1/2"></i>
+                <input type="text" id="search-usuarios" onkeyup="renderUsuariosTable()" placeholder="Pesquisar por Nome ou RA..." class="w-full bg-slate-900 border border-slate-700 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500" />
+              </div>
             </div>
             <div class="overflow-x-auto">
               <table class="w-full text-left border-collapse">
@@ -366,9 +371,8 @@
                   <tr class="border-b border-slate-800 text-[11px] font-semibold text-slate-400 uppercase bg-slate-950/40">
                     <th class="py-3 px-4">RA</th>
                     <th class="py-3 px-4">Nome</th>
-                    <th class="py-3 px-4">E-mail</th>
-                    <th class="py-3 px-4">Perfil</th>
-                    <th class="py-3 px-4">Curso</th>
+                    <th class="py-3 px-4">Perfil / Curso</th>
+                    <th class="py-3 px-4">Status de Acesso</th>
                     <th class="py-3 px-4 text-right">Ações</th>
                   </tr>
                 </thead>
@@ -385,7 +389,7 @@
           <div class="bg-slate-950/60 p-5 rounded-xl border border-slate-800/80 max-w-4xl space-y-5">
             <div>
               <h3 class="text-base font-bold text-slate-100 mb-1">Importação de Acervo em Lote (JSON)</h3>
-              <p class="text-xs text-slate-400">Importe múltiplos projetos ou professores/usuários de uma só vez. Esta opção complementa o cadastro manual.</p>
+              <p class="text-xs text-slate-400">Importe múltiplos projetos ou professores/usuários de uma só vez. As contas importadas iniciam com senha provisória <span class="font-mono text-indigo-400">123456</span>.</p>
             </div>
 
             <!-- Seleção do Tipo de Acervo -->
@@ -489,6 +493,55 @@
     </div>
   </div>
 
+  <!-- MODAL: TROCA DE SENHA (OBRIGATÓRIA NO 1º ACESSO E OPCIONAL A QUALQUER MOMENTO) -->
+  <div id="change-password-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-6 shadow-2xl">
+      <div class="flex items-center justify-between mb-3">
+        <div>
+          <h3 id="change-pass-title" class="text-base font-bold text-slate-100">Alterar Minha Senha</h3>
+          <p id="change-pass-subtitle" class="text-[11px] text-slate-400">Defina uma nova senha pessoal (6 a 18 caracteres).</p>
+        </div>
+        <button id="btn-close-change-pass" onclick="closeChangePasswordModal()" class="text-slate-400 hover:text-white p-1">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form onsubmit="handleAlterarSenha(event)" class="space-y-4">
+        <div id="div-senha-atual">
+          <label class="block text-xs font-medium text-slate-300 mb-1">Senha Atual *</label>
+          <input type="password" id="change-pass-atual" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3.5 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Nova Senha (6 a 18 caracteres) *</label>
+          <div class="relative">
+            <input type="password" id="change-pass-nova" required minlength="6" maxlength="18" oninput="avaliarForcaSenha('change-pass-nova', 'change-pass-bar', 'change-pass-text')" class="w-full bg-slate-950 border border-slate-700 rounded-lg pl-3.5 pr-10 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
+            <button type="button" onclick="togglePasswordVisibility('change-pass-nova', 'icon-eye-change-nova')" class="absolute inset-y-0 right-0 px-3 flex items-center text-slate-400 hover:text-slate-200">
+              <i id="icon-eye-change-nova" class="fa-solid fa-eye text-xs"></i>
+            </button>
+          </div>
+          <div class="mt-1.5 space-y-1">
+            <div class="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
+              <div id="change-pass-bar" class="h-full w-0 transition-all duration-300"></div>
+            </div>
+            <p id="change-pass-text" class="text-[11px] text-slate-400">Não pode ser 123456.</p>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Confirmar Nova Senha *</label>
+          <input type="password" id="change-pass-confirmar" required minlength="6" maxlength="18" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3.5 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
+        </div>
+
+        <p id="change-pass-error" class="text-xs text-red-400 hidden"></p>
+
+        <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg shadow-lg shadow-indigo-600/20 transition-all">
+          Salvar Nova Senha
+        </button>
+      </form>
+    </div>
+  </div>
+
   <!-- MODAL: EDITAR PROJETO -->
   <div id="edit-projeto-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
     <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 shadow-2xl my-8">
@@ -545,7 +598,7 @@
     </div>
   </div>
 
-  <!-- MODAL: ALUNO EDITAR SEUS PRÓPRIOS DADOS -->
+  <!-- MODAL: ALUNO EDITAR SEUS PRÓPRIOS DADOS (RA BLOQUEADO PARA EDIÇÃO) -->
   <div id="edit-aluno-self-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-6 shadow-2xl">
       <div class="flex items-center justify-between mb-4">
@@ -557,16 +610,16 @@
       <form onsubmit="handleSalvarAlunoSelf(event)" class="space-y-4">
         <input type="hidden" id="edit-self-membro-id" />
         <div>
-          <label class="block text-xs font-medium text-slate-300 mb-1">Meu Nome Completo</label>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Meu Nome Completo *</label>
           <input type="text" id="edit-self-nome" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3.5 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
         </div>
         <div>
-          <label class="block text-xs font-medium text-slate-300 mb-1">Meu RA / Matrícula</label>
-          <input type="text" id="edit-self-ra" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3.5 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
+          <label class="block text-xs font-medium text-slate-400 mb-1">Meu RA / Matrícula <span class="text-[10px] text-amber-400">(Fixo da Instituição)</span></label>
+          <input type="text" id="edit-self-ra" readonly class="w-full bg-slate-950/50 border border-slate-800 rounded-lg px-3.5 py-2 text-xs font-mono text-slate-400 cursor-not-allowed" />
         </div>
         <div class="flex justify-end gap-2 pt-2">
           <button type="button" onclick="closeEditAlunoSelfModal()" class="px-4 py-2 bg-slate-800 text-slate-300 text-xs font-semibold rounded-lg">Cancelar</button>
-          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg">Salvar Dados</button>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg">Salvar Nome</button>
         </div>
       </form>
     </div>
@@ -577,6 +630,7 @@
     let allProjetos = [];
     let allUsuarios = [];
     let cursosSelecionadosCreate = new Set();
+    let isForcarTrocaSenha = false;
 
     const CURSOS_UNIFACCAMP = [
       "Ciência da Computação",
@@ -651,14 +705,12 @@
           ra: "PROF101",
           nome: "Prof. André Marcos",
           email: "andre.marcos@faccamp.com",
-          senha: "prof123",
           role: "orientador"
         },
         {
           ra: "2026001",
           nome: "João Silva",
           email: "joao.silva@faccamp.com",
-          senha: "aluno123",
           role: "aluno",
           curso: "Ciência da Computação"
         }
@@ -670,6 +722,11 @@
       atualizarSeletorDeCursos();
       updateJsonExample();
       updateUIForUser();
+
+      if (currentUser && currentUser.primeiro_acesso && currentUser.role !== "admin") {
+        openChangePasswordModal(true);
+      }
+
       if (currentUser && ["admin", "coordenador", "orientador"].includes(currentUser.role)) {
         await loadUsuarios();
       }
@@ -778,6 +835,7 @@
     function updateUIForUser() {
       const btnLogin = document.getElementById("btn-open-login");
       const btnLogout = document.getElementById("btn-logout");
+      const btnAlterarSenha = document.getElementById("btn-alterar-minha-senha");
       const navMeusGrupos = document.getElementById("nav-meus-grupos");
       const navRegistrar = document.getElementById("nav-registrar-trabalho");
       const navContas = document.getElementById("nav-gerenciar-contas");
@@ -787,6 +845,7 @@
       navRegistrar.classList.add("hidden");
       navContas.classList.add("hidden");
       navCargaMassiva.classList.add("hidden");
+      btnAlterarSenha.classList.add("hidden");
 
       if (!currentUser) {
         btnLogin.classList.remove("hidden");
@@ -801,6 +860,7 @@
 
       btnLogin.classList.add("hidden");
       btnLogout.classList.remove("hidden");
+      btnAlterarSenha.classList.remove("hidden");
       document.getElementById("user-name").textContent = currentUser.nome;
       const roleLabels = {
         admin: "Administrador",
@@ -862,6 +922,9 @@
       }
     }
 
+    // ==========================================
+    // LOGIN E TROCA DE SENHA (1º ACESSO E VOLUNTÁRIA)
+    // ==========================================
     function openLoginModal() {
       document.getElementById("login-error").classList.add("hidden");
       document.getElementById("login-senha").value = "";
@@ -903,12 +966,106 @@
         localStorage.setItem("extensao_user", JSON.stringify(currentUser));
         closeLoginModal();
         updateUIForUser();
+
         if (["admin", "coordenador", "orientador"].includes(currentUser.role)) {
           await loadUsuarios();
         }
         await loadProjetos();
+
+        // Se for o primeiro acesso de Aluno, Coordenador ou Orientador, exige troca imediata da senha provisória
+        if (currentUser.primeiro_acesso && currentUser.role !== "admin") {
+          openChangePasswordModal(true);
+        }
       } catch (err) {
         errEl.textContent = "Erro de conexão com o servidor.";
+        errEl.classList.remove("hidden");
+      }
+    }
+
+    function openChangePasswordModal(forcarPrimeiroAcesso = false) {
+      isForcarTrocaSenha = forcarPrimeiroAcesso;
+      const titleEl = document.getElementById("change-pass-title");
+      const subEl = document.getElementById("change-pass-subtitle");
+      const btnClose = document.getElementById("btn-close-change-pass");
+      const divAtual = document.getElementById("div-senha-atual");
+      const inputAtual = document.getElementById("change-pass-atual");
+      const errEl = document.getElementById("change-pass-error");
+
+      errEl.classList.add("hidden");
+      document.getElementById("change-pass-atual").value = "";
+      document.getElementById("change-pass-nova").value = "";
+      document.getElementById("change-pass-confirmar").value = "";
+      avaliarForcaSenha("change-pass-nova", "change-pass-bar", "change-pass-text");
+
+      if (forcarPrimeiroAcesso) {
+        titleEl.textContent = "Primeiro Acesso — Defina Sua Senha";
+        subEl.textContent = "Por segurança, substitua a senha provisória (123456) antes de continuar.";
+        btnClose.classList.add("hidden");
+        divAtual.classList.add("hidden");
+        inputAtual.required = false;
+      } else {
+        titleEl.textContent = "Alterar Minha Senha";
+        subEl.textContent = "Escolha uma nova senha pessoal (6 a 18 caracteres).";
+        btnClose.classList.remove("hidden");
+        divAtual.classList.remove("hidden");
+        inputAtual.required = true;
+      }
+
+      document.getElementById("change-password-modal").classList.remove("hidden");
+    }
+
+    function closeChangePasswordModal() {
+      if (isForcarTrocaSenha) return;
+      document.getElementById("change-password-modal").classList.add("hidden");
+    }
+
+    async function handleAlterarSenha(e) {
+      e.preventDefault();
+      const senhaAtual = document.getElementById("change-pass-atual").value.trim();
+      const novaSenha = document.getElementById("change-pass-nova").value.trim();
+      const confirmar = document.getElementById("change-pass-confirmar").value.trim();
+      const errEl = document.getElementById("change-pass-error");
+
+      if (novaSenha.length < 6 || novaSenha.length > 18) {
+        errEl.textContent = "A nova senha deve ter entre 6 e 18 caracteres.";
+        errEl.classList.remove("hidden");
+        return;
+      }
+      if (novaSenha === "123456") {
+        errEl.textContent = "A nova senha não pode ser igual à senha provisória (123456).";
+        errEl.classList.remove("hidden");
+        return;
+      }
+      if (novaSenha !== confirmar) {
+        errEl.textContent = "A confirmação da senha não confere.";
+        errEl.classList.remove("hidden");
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/usuarios/${currentUser.id}/alterar-senha`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            senha_atual: senhaAtual,
+            nova_senha: novaSenha,
+            forcar_primeiro_acesso: isForcarTrocaSenha
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          errEl.textContent = data.error || "Erro ao alterar senha.";
+          errEl.classList.remove("hidden");
+          return;
+        }
+
+        currentUser.primeiro_acesso = false;
+        localStorage.setItem("extensao_user", JSON.stringify(currentUser));
+        isForcarTrocaSenha = false;
+        document.getElementById("change-password-modal").classList.add("hidden");
+        alert("Senha atualizada com sucesso!");
+      } catch (err) {
+        errEl.textContent = "Erro de conexão ao alterar senha.";
         errEl.classList.remove("hidden");
       }
     }
@@ -1045,7 +1202,6 @@
       if (!select) return;
       const alunos = allUsuarios.filter(u => u.role === "aluno");
 
-      // Combina a lista oficial da UNIFACCAMP com eventuais cursos extras importados via JSON
       const extras = alunos
         .map(a => (a.curso || "").trim())
         .filter(c => c && !CURSOS_UNIFACCAMP.includes(c));
@@ -1124,7 +1280,6 @@
         return;
       }
 
-      // Remove linhas vazias existentes antes de inserir em lote
       const container = document.getElementById(targetContainerId);
       container.querySelectorAll(".membro-row").forEach(row => {
         const raVal = row.querySelector(".membro-ra").value.trim();
@@ -1448,38 +1603,112 @@
     }
 
     // ==========================================
-    // CONTAS E USUÁRIOS
+    // CONTAS E USUÁRIOS (PESQUISA, DESBLOQUEIO E REDEFINIÇÃO DE SENHA)
     // ==========================================
     async function loadUsuarios() {
       const res = await fetch("/api/usuarios");
       allUsuarios = await res.json();
       atualizarSeletorDeCursos();
+      renderUsuariosTable();
+    }
 
+    function renderUsuariosTable() {
       const tbody = document.getElementById("usuarios-table-body");
-      tbody.innerHTML = allUsuarios.map(u => `
-        <tr class="hover:bg-slate-900/50">
-          <td class="py-2.5 px-4 font-mono text-slate-300">${u.ra}</td>
-          <td class="py-2.5 px-4 font-medium text-slate-100">${u.nome}</td>
-          <td class="py-2.5 px-4 text-slate-400">${u.email}</td>
-          <td class="py-2.5 px-4 uppercase text-[10px] font-bold text-indigo-400">${u.role}</td>
-          <td class="py-2.5 px-4 text-slate-300">${u.curso || "—"}</td>
-          <td class="py-2.5 px-4 text-right">
-            ${u.role !== "admin" ? `<button onclick="deletarUsuario(${u.id})" class="text-red-400 hover:text-red-300 text-xs"><i class="fa-solid fa-trash"></i></button>` : '<span class="text-[10px] text-slate-600">Protegido</span>'}
-          </td>
-        </tr>
-      `).join("");
+      if (!tbody) return;
+      const query = (document.getElementById("search-usuarios")?.value || "").toLowerCase().trim();
+
+      const filtrados = allUsuarios.filter(u =>
+        u.nome.toLowerCase().includes(query) || u.ra.toLowerCase().includes(query)
+      );
+
+      if (filtrados.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-xs text-slate-400">Nenhum usuário encontrado para "${query}".</td></tr>`;
+        return;
+      }
+
+      const canUnlock = currentUser && ["admin", "coordenador"].includes(currentUser.role);
+      const isAdmin = currentUser && currentUser.role === "admin";
+
+      tbody.innerHTML = filtrados.map(u => {
+        const statusBadge = u.bloqueado
+          ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-red-500/20 text-red-400 border border-red-500/40"><i class="fa-solid fa-lock"></i> BLOQUEADO</span>`
+          : u.primeiro_acesso
+          ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/30"><i class="fa-solid fa-clock"></i> Senha Provisória</span>`
+          : `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"><i class="fa-solid fa-check"></i> Ativo</span>`;
+
+        const btnDesbloquear = (u.bloqueado && canUnlock)
+          ? `<button onclick="desbloquearUsuario(${u.id}, '${u.nome.replace(/'/g, "\\'")}')" class="px-2.5 py-1 bg-amber-600 hover:bg-amber-500 text-white text-[11px] font-semibold rounded-lg transition-colors" title="Desbloquear acesso do usuário"><i class="fa-solid fa-unlock mr-1"></i> Desbloquear</button>`
+          : "";
+
+        const btnRedefinirSenha = (isAdmin && u.role !== "admin")
+          ? `<button onclick="redefinirSenhaUsuario(${u.id}, '${u.nome.replace(/'/g, "\\'")}')" class="px-2.5 py-1 bg-slate-800 hover:bg-indigo-600 text-slate-200 hover:text-white border border-slate-700 text-[11px] font-semibold rounded-lg transition-colors" title="Voltar senha para a provisória (123456)"><i class="fa-solid fa-rotate-left mr-1"></i> Redefinir Senha</button>`
+          : "";
+
+        const btnExcluir = (u.role !== "admin")
+          ? `<button onclick="deletarUsuario(${u.id})" class="p-1.5 text-red-400 hover:text-red-300 hover:bg-red-950/50 rounded-lg transition-colors" title="Excluir conta"><i class="fa-solid fa-trash"></i></button>`
+          : `<span class="text-[10px] text-slate-600">Protegido</span>`;
+
+        return `
+          <tr class="hover:bg-slate-900/50 ${u.bloqueado ? "bg-red-950/15" : ""}">
+            <td class="py-2.5 px-4 font-mono text-slate-300">${u.ra}</td>
+            <td class="py-2.5 px-4">
+              <div class="font-medium text-slate-100">${u.nome}</div>
+              <div class="text-[11px] text-slate-400">${u.email}</div>
+            </td>
+            <td class="py-2.5 px-4">
+              <div class="uppercase text-[10px] font-bold text-indigo-400">${u.role}</div>
+              <div class="text-[11px] text-slate-300">${u.curso || "—"}</div>
+            </td>
+            <td class="py-2.5 px-4">${statusBadge}</td>
+            <td class="py-2.5 px-4 text-right">
+              <div class="inline-flex flex-wrap items-center justify-end gap-1.5">
+                ${btnDesbloquear}
+                ${btnRedefinirSenha}
+                ${btnExcluir}
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    async function desbloquearUsuario(id, nome) {
+      if (!confirm(`Desbloquear o acesso de "${nome}"?`)) return;
+      const res = await fetch(`/api/usuarios/${id}/desbloquear`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ actor_role: currentUser.role })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Erro ao desbloquear usuário.");
+        return;
+      }
+      await loadUsuarios();
+      alert(data.message);
+    }
+
+    async function redefinirSenhaUsuario(id, nome) {
+      if (!confirm(`Redefinir a senha de "${nome}" para a provisória padrão (123456)?`)) return;
+      const res = await fetch(`/api/usuarios/${id}/redefinir-senha`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ actor_role: currentUser.role })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Erro ao redefinir senha.");
+        return;
+      }
+      await loadUsuarios();
+      alert(data.message);
     }
 
     async function handleCriarUsuario(e) {
       e.preventDefault();
       const role = document.getElementById("user-new-role").value;
       const curso = role === "aluno" ? document.getElementById("user-new-curso").value.trim() : "";
-      const senha = document.getElementById("user-new-senha").value.trim();
 
-      if (senha.length < 6 || senha.length > 18) {
-        alert("A senha deve ter entre 6 e 18 caracteres ou dígitos.");
-        return;
-      }
       if (role === "aluno" && !curso) {
         alert("Selecione o curso do aluno.");
         return;
@@ -1491,7 +1720,6 @@
         ra: document.getElementById("user-new-ra").value,
         nome: document.getElementById("user-new-nome").value,
         email: document.getElementById("user-new-email").value,
-        senha: senha,
         curso: curso
       };
 
@@ -1507,10 +1735,9 @@
       }
       e.target.reset();
       toggleCampoCursoNovoUsuario();
-      avaliarForcaSenha("user-new-senha", "new-senha-strength-bar", "new-senha-strength-text");
       await loadUsuarios();
       renderCursosEAlunosFiltro("create");
-      alert("Conta criada com sucesso!");
+      alert("Conta criada com sucesso! Senha provisória inicial: 123456");
     }
 
     async function deletarUsuario(id) {
@@ -1521,7 +1748,7 @@
     }
 
     // ==========================================
-    // ALUNO: ACEITAR / REJEITAR E EDITAR DADOS PRÓPRIOS
+    // ALUNO: ACEITAR / REJEITAR E EDITAR NOME PRÓPRIO (RA IMUTÁVEL)
     // ==========================================
     function renderAlunoGrupos() {
       const container = document.getElementById("pending-groups-container");
@@ -1559,7 +1786,7 @@
           </div>
           <div class="flex flex-wrap items-center gap-2">
             <button onclick="openEditAlunoSelfModal(${membro.id}, '${membro.nome.replace(/'/g, "\\'")}', '${membro.ra}')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold rounded-lg transition-colors">
-              <i class="fa-solid fa-user-pen mr-1"></i> Editar Meus Dados
+              <i class="fa-solid fa-user-pen mr-1"></i> Editar Meu Nome
             </button>
             <button onclick="responderConvite(${membro.id}, 'CONFIRMADO')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg transition-colors">
               <i class="fa-solid fa-check mr-1"></i> Aceitar
@@ -1596,27 +1823,24 @@
       e.preventDefault();
       const membroId = document.getElementById("edit-self-membro-id").value;
       const novoNome = document.getElementById("edit-self-nome").value.trim();
-      const novoRa = document.getElementById("edit-self-ra").value.trim();
 
       const res = await fetch(`/api/membros/${membroId}/aluno-self`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           user_id: currentUser.id,
-          nome: novoNome,
-          ra: novoRa
+          nome: novoNome
         })
       });
 
       if (res.ok) {
         currentUser.nome = novoNome;
-        currentUser.ra = novoRa;
         localStorage.setItem("extensao_user", JSON.stringify(currentUser));
         updateUIForUser();
         closeEditAlunoSelfModal();
         await loadProjetos();
       } else {
-        alert("Erro ao atualizar seus dados.");
+        alert("Erro ao atualizar seu nome.");
       }
     }
   </script>
