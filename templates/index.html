@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Módulo 2: Controle — Sistema de Projetos Extensionistas</title>
+  <title>Módulo 2: Controle — Sistema de Projetos Extensionistas UNIFACCAMP</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
   <style>
@@ -25,14 +25,18 @@
     <!-- Sidebar Navigation -->
     <aside id="sidebar" class="fixed md:static inset-y-0 left-0 z-40 w-64 bg-slate-950 border-r border-slate-800/80 flex flex-col justify-between transform -translate-x-full md:translate-x-0 transition-transform duration-200 ease-in-out shrink-0">
       <div>
-        <!-- Brand Header -->
-        <div class="h-16 flex items-center gap-3 px-5 border-b border-slate-800/80">
-          <div class="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-600/30 shrink-0">
-            <i class="fa-solid fa-diagram-project text-white text-sm"></i>
+        <!-- Brand Header com Logo UNIFACCAMP em cima e Módulo 2: Controle abaixo -->
+        <div class="px-5 pt-5 pb-4 border-b border-slate-800/80 flex flex-col items-center text-center">
+          <div class="w-full flex items-center justify-center mb-3 bg-white/95 rounded-xl p-2.5 shadow-md">
+            <img src="/static/logo_faccamp.png" alt="Logo UNIFACCAMP" class="max-h-12 w-auto object-contain" onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');" />
+            <div class="hidden flex items-center gap-2 text-slate-900 font-extrabold tracking-tight text-base">
+              <i class="fa-solid fa-graduation-cap text-indigo-700 text-xl"></i>
+              <span>UNIFACCAMP</span>
+            </div>
           </div>
-          <div class="min-w-0">
-            <h1 class="text-sm font-bold text-slate-100 truncate">Módulo 2: Controle</h1>
-            <p class="text-[11px] text-slate-400 truncate">Registro Extensionista</p>
+          <div class="w-full">
+            <h1 class="text-sm font-bold text-slate-100">Módulo 2: Controle</h1>
+            <p class="text-[11px] text-slate-400">Registro Extensionista</p>
           </div>
         </div>
 
@@ -116,7 +120,7 @@
         <!-- VIEW 1: CONSULTAR PROJETOS -->
         <div id="view-consultar" class="space-y-6">
 
-          <!-- 1. Cards de Resumo (Indicadores KPI) -->
+          <!-- Cards de Resumo (Indicadores KPI) -->
           <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <div class="bg-slate-950/70 border border-slate-800/80 rounded-xl p-3.5 flex items-center justify-between">
               <div>
@@ -159,7 +163,7 @@
             </div>
           </div>
 
-          <!-- 2. Barra de Busca + Filtro por Status -->
+          <!-- Barra de Busca + Filtro por Status -->
           <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-slate-950/60 p-4 rounded-xl border border-slate-800/80">
             <div>
               <h3 class="text-base font-bold text-slate-100">Projetos Extensionistas Registrados</h3>
@@ -282,11 +286,22 @@
               </div>
               <div>
                 <label class="block text-xs font-medium text-slate-300 mb-1">E-mail *</label>
-                <input type="email" id="user-new-email" required placeholder="usuario@faccamp.com" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
+                <input type="email" id="user-new-email" required placeholder="exemplo@hotmail.com" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
               </div>
               <div class="md:col-span-2">
-                <label class="block text-xs font-medium text-slate-300 mb-1">Senha de Acesso *</label>
-                <input type="password" id="user-new-senha" required placeholder="Defina uma senha" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
+                <label class="block text-xs font-medium text-slate-300 mb-1">Senha de Acesso (6 a 18 caracteres) *</label>
+                <div class="relative">
+                  <input type="password" id="user-new-senha" required minlength="6" maxlength="18" oninput="avaliarForcaSenha('user-new-senha', 'new-senha-strength-bar', 'new-senha-strength-text')" class="w-full bg-slate-900 border border-slate-700 rounded-lg pl-3 pr-10 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
+                  <button type="button" onclick="togglePasswordVisibility('user-new-senha', 'icon-eye-new')" class="absolute inset-y-0 right-0 px-3 flex items-center text-slate-400 hover:text-slate-200" title="Mostrar/Ocultar senha">
+                    <i id="icon-eye-new" class="fa-solid fa-eye text-xs"></i>
+                  </button>
+                </div>
+                <div class="mt-1.5 space-y-1">
+                  <div class="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
+                    <div id="new-senha-strength-bar" class="h-full w-0 transition-all duration-300"></div>
+                  </div>
+                  <p id="new-senha-strength-text" class="text-[11px] text-slate-400">De 6 a 18 caracteres ou dígitos.</p>
+                </div>
               </div>
               <div class="md:col-span-2 flex justify-end">
                 <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg shadow-lg shadow-indigo-600/20 transition-all">
@@ -375,29 +390,57 @@
     </main>
   </div>
 
-  <!-- MODAL: LOGIN -->
-  <div id="login-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-6 shadow-2xl">
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="text-base font-bold text-slate-100">Acessar o Sistema</h3>
-        <button onclick="closeLoginModal()" class="text-slate-400 hover:text-white">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
+  <!-- TELA EXCLUSIVA DE LOGIN (APARECE SOZINHA COM LOGO GRANDE DA UNIFACCAMP NO TOPO) -->
+  <div id="login-modal" class="fixed inset-0 bg-slate-950 z-50 hidden flex flex-col items-center justify-center p-4 overflow-y-auto">
+    <div class="w-full max-w-sm flex flex-col items-center">
+      <!-- Logo UNIFACCAMP bem grande acima da caixa de login -->
+      <div class="w-full bg-white rounded-2xl p-5 mb-6 shadow-2xl flex flex-col items-center justify-center">
+        <img src="/static/logo_faccamp.png" alt="Logo UNIFACCAMP" class="max-h-24 w-auto object-contain" onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');" />
+        <div class="hidden flex items-center gap-3 text-slate-900 font-black tracking-tight text-2xl py-2">
+          <i class="fa-solid fa-graduation-cap text-indigo-700 text-3xl"></i>
+          <span>UNIFACCAMP</span>
+        </div>
       </div>
-      <form onsubmit="handleLogin(event)" class="space-y-4">
-        <div>
-          <label class="block text-xs font-medium text-slate-300 mb-1">E-mail ou RA</label>
-          <input type="text" id="login-identifier" required placeholder="admin@faccamp.com ou seu RA" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3.5 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
+
+      <!-- Caixa de Login -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full p-6 shadow-2xl">
+        <div class="flex items-center justify-between mb-5">
+          <div>
+            <h3 class="text-base font-bold text-slate-100">Acessar o Sistema</h3>
+            <p class="text-[11px] text-slate-400">Módulo 2: Controle Extensionista</p>
+          </div>
+          <button onclick="closeLoginModal()" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800" title="Voltar para consulta pública">
+            <i class="fa-solid fa-xmark text-base"></i>
+          </button>
         </div>
-        <div>
-          <label class="block text-xs font-medium text-slate-300 mb-1">Senha</label>
-          <input type="password" id="login-senha" required placeholder="••••••••" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3.5 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
-        </div>
-        <p id="login-error" class="text-xs text-red-400 hidden"></p>
-        <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg shadow-lg shadow-indigo-600/20 transition-all">
-          Entrar
-        </button>
-      </form>
+
+        <form onsubmit="handleLogin(event)" class="space-y-4">
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">E-mail ou RA</label>
+            <input type="text" id="login-identifier" required placeholder="exemplo@hotmail.com ou seu RA" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3.5 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Senha</label>
+            <div class="relative">
+              <input type="password" id="login-senha" required minlength="6" maxlength="18" oninput="avaliarForcaSenha('login-senha', 'login-senha-strength-bar', 'login-senha-strength-text')" class="w-full bg-slate-950 border border-slate-700 rounded-lg pl-3.5 pr-10 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
+              <button type="button" onclick="togglePasswordVisibility('login-senha', 'icon-eye-login')" class="absolute inset-y-0 right-0 px-3 flex items-center text-slate-400 hover:text-slate-200" title="Mostrar/Ocultar senha">
+                <i id="icon-eye-login" class="fa-solid fa-eye text-xs"></i>
+              </button>
+            </div>
+            <!-- Indicador de força da senha -->
+            <div class="mt-1.5 space-y-1">
+              <div class="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
+                <div id="login-senha-strength-bar" class="h-full w-0 transition-all duration-300"></div>
+              </div>
+              <p id="login-senha-strength-text" class="text-[11px] text-slate-400">De 6 a 18 caracteres ou dígitos.</p>
+            </div>
+          </div>
+          <p id="login-error" class="text-xs text-red-400 hidden"></p>
+          <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg shadow-lg shadow-indigo-600/20 transition-all">
+            Entrar
+          </button>
+        </form>
+      </div>
     </div>
   </div>
 
@@ -534,6 +577,58 @@
       }
     });
 
+    function togglePasswordVisibility(inputId, iconId) {
+      const input = document.getElementById(inputId);
+      const icon = document.getElementById(iconId);
+      if (input.type === "password") {
+        input.type = "text";
+        icon.classList.remove("fa-eye");
+        icon.classList.add("fa-eye-slash");
+      } else {
+        input.type = "password";
+        icon.classList.remove("fa-eye-slash");
+        icon.classList.add("fa-eye");
+      }
+    }
+
+    function avaliarForcaSenha(inputId, barId, textId) {
+      const val = document.getElementById(inputId).value;
+      const bar = document.getElementById(barId);
+      const text = document.getElementById(textId);
+
+      if (val.length === 0) {
+        bar.className = "h-full w-0 transition-all duration-300";
+        text.className = "text-[11px] text-slate-400";
+        text.textContent = "De 6 a 18 caracteres ou dígitos.";
+        return;
+      }
+
+      if (val.length < 6) {
+        bar.className = "h-full w-1/4 bg-red-500 transition-all duration-300";
+        text.className = "text-[11px] font-medium text-red-400";
+        text.textContent = `Senha fraca — mínimo de 6 caracteres (${val.length}/18).`;
+        return;
+      }
+
+      const temLetras = /[a-zA-Z]/.test(val);
+      const temNumeros = /[0-9]/.test(val);
+      const temMaiusculaOuSimbolo = /[A-Z]/.test(val) || /[^a-zA-Z0-9]/.test(val);
+
+      if (val.length >= 10 && temLetras && temNumeros && temMaiusculaOuSimbolo) {
+        bar.className = "h-full w-full bg-emerald-500 transition-all duration-300";
+        text.className = "text-[11px] font-medium text-emerald-400";
+        text.textContent = `Força da senha: Ótima (${val.length}/18)`;
+      } else if ((temLetras && temNumeros) || val.length >= 8) {
+        bar.className = "h-full w-2/3 bg-amber-400 transition-all duration-300";
+        text.className = "text-[11px] font-medium text-amber-400";
+        text.textContent = `Força da senha: Boa (${val.length}/18)`;
+      } else {
+        bar.className = "h-full w-1/3 bg-red-500 transition-all duration-300";
+        text.className = "text-[11px] font-medium text-red-400";
+        text.textContent = `Força da senha: Fraca (${val.length}/18)`;
+      }
+    }
+
     function toggleSidebar() {
       const sb = document.getElementById("sidebar");
       const bd = document.getElementById("sidebar-backdrop");
@@ -647,6 +742,10 @@
 
     function openLoginModal() {
       document.getElementById("login-error").classList.add("hidden");
+      document.getElementById("login-senha").value = "";
+      document.getElementById("login-senha").type = "password";
+      document.getElementById("icon-eye-login").className = "fa-solid fa-eye text-xs";
+      avaliarForcaSenha("login-senha", "login-senha-strength-bar", "login-senha-strength-text");
       document.getElementById("login-modal").classList.remove("hidden");
     }
 
@@ -659,6 +758,12 @@
       const identifier = document.getElementById("login-identifier").value;
       const senha = document.getElementById("login-senha").value;
       const errEl = document.getElementById("login-error");
+
+      if (senha.length < 6 || senha.length > 18) {
+        errEl.textContent = "A senha deve ter entre 6 e 18 caracteres.";
+        errEl.classList.remove("hidden");
+        return;
+      }
 
       try {
         const res = await fetch("/api/login", {
@@ -708,7 +813,6 @@
       const statusFilter = document.getElementById("filter-status-projetos").value;
       const isManager = currentUser && ["admin", "coordenador", "orientador"].includes(currentUser.role);
 
-      // Projetos visíveis conforme perfil (antes do filtro de texto/status) para os KPIs
       const visiveisPorPerfil = allProjetos.filter(p => {
         if (!currentUser && !p.publicado) return false;
         if (currentUser && currentUser.role === "aluno" && !p.publicado) {
@@ -718,13 +822,11 @@
         return true;
       });
 
-      // Atualiza os 4 cards KPI
       document.getElementById("kpi-total").textContent = visiveisPorPerfil.length;
       document.getElementById("kpi-andamento").textContent = visiveisPorPerfil.filter(p => p.status === "EM ANDAMENTO").length;
       document.getElementById("kpi-concluidos").textContent = visiveisPorPerfil.filter(p => p.status === "CONCLUIDO").length;
       document.getElementById("kpi-publicados").textContent = visiveisPorPerfil.filter(p => p.publicado).length;
 
-      // Aplica filtro de status e busca textual
       const filtrados = visiveisPorPerfil.filter(p => {
         if (statusFilter !== "TODOS" && p.status !== statusFilter) return false;
         const texto = `${p.titulo} ${p.areas_atuacao} ${p.setor_externo} ${p.orientador_nome} ${(p.grupo?.membros || []).map(m => m.nome).join(" ")}`.toLowerCase();
@@ -1050,13 +1152,19 @@
 
     async function handleCriarUsuario(e) {
       e.preventDefault();
+      const senha = document.getElementById("user-new-senha").value.trim();
+      if (senha.length < 6 || senha.length > 18) {
+        alert("A senha deve ter entre 6 e 18 caracteres ou dígitos.");
+        return;
+      }
+
       const payload = {
         actor_role: currentUser.role,
         role: document.getElementById("user-new-role").value,
         ra: document.getElementById("user-new-ra").value,
         nome: document.getElementById("user-new-nome").value,
         email: document.getElementById("user-new-email").value,
-        senha: document.getElementById("user-new-senha").value
+        senha: senha
       };
 
       const res = await fetch("/api/usuarios", {
@@ -1070,6 +1178,7 @@
         return;
       }
       e.target.reset();
+      avaliarForcaSenha("user-new-senha", "new-senha-strength-bar", "new-senha-strength-text");
       await loadUsuarios();
       alert("Conta criada com sucesso!");
     }
