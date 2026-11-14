@@ -517,11 +517,21 @@ def criar_projeto():
 def editar_projeto(projeto_id):
     data = request.json
     actor_role = data.get("actor_role")
+    actor_nome = data.get("actor_nome", "").strip()
+
     if actor_role not in ["admin", "coordenador", "orientador"]:
         return jsonify({"error": "Sem permissão para editar projeto"}), 403
 
     conn = get_db_connection()
     cursor = conn.cursor()
+
+    if actor_role == "orientador":
+        cursor.execute("SELECT orientador_nome FROM projetos WHERE id = ?", (projeto_id,))
+        proj = cursor.fetchone()
+        if not proj or actor_nome.lower() not in proj["orientador_nome"].lower():
+            cursor.close()
+            conn.close()
+            return jsonify({"error": "Apenas o orientador responsável por este projeto pode editá-lo."}), 403
 
     membros_validados = []
     ras_vistos = set()
@@ -544,18 +554,12 @@ def editar_projeto(projeto_id):
             "justificativa_recusa": m.get("justificativa_recusa", "")
         })
 
-    if actor_role == "admin" and data.get("orientador_nome"):
-        cursor.execute(
-            """UPDATE projetos SET titulo=?, setor_externo=?, areas_atuacao=?, interdisciplinaridade=?, orientador_nome=?
-               WHERE id=?""",
-            (data["titulo"], data["setor_externo"], data["areas_atuacao"], data["interdisciplinaridade"], data["orientador_nome"], projeto_id)
-        )
-    else:
-        cursor.execute(
-            """UPDATE projetos SET titulo=?, setor_externo=?, areas_atuacao=?, interdisciplinaridade=?
-               WHERE id=?""",
-            (data["titulo"], data["setor_externo"], data["areas_atuacao"], data["interdisciplinaridade"], projeto_id)
-        )
+    novo_orientador = data.get("orientador_nome", actor_nome).strip()
+    cursor.execute(
+        """UPDATE projetos SET titulo=?, setor_externo=?, areas_atuacao=?, interdisciplinaridade=?, orientador_nome=?
+           WHERE id=?""",
+        (data["titulo"], data["setor_externo"], data["areas_atuacao"], data["interdisciplinaridade"], novo_orientador, projeto_id)
+    )
 
     cursor.execute("SELECT id FROM grupos WHERE projeto_id = ?", (projeto_id,))
     grupo = cursor.fetchone()
@@ -573,8 +577,6 @@ def editar_projeto(projeto_id):
                 "INSERT INTO grupo_membros (grupo_id, ra, nome, status_participacao, justificativa_recusa) VALUES (?, ?, ?, ?, ?)",
                 (grupo_id, aluno_acc["ra"], aluno_acc["nome"], aluno_acc["status_participacao"], justificativa)
             )
-            if aluno_acc["ra"] not in existentes_map:
-                enviar_notificacao_email(aluno_acc["email"], aluno_acc["nome"], data["titulo"], data["grupo_nome"], data.get("orientador_nome", "Orientador"))
 
     conn.commit()
     cursor.close()
@@ -586,6 +588,7 @@ def editar_projeto(projeto_id):
 def alterar_status_projeto(projeto_id):
     data = request.json
     actor_role = data.get("actor_role")
+    actor_nome = data.get("actor_nome", "").strip()
     novo_status = data.get("status")
 
     if actor_role in ["aluno", "public"]:
@@ -593,7 +596,18 @@ def alterar_status_projeto(projeto_id):
 
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("UPDATE projetos SET status = ? WHERE id = ?", (novo_status, projeto_id))
+    
+    if actor_role in ["admin", "coordenador"]:
+        cursor.execute("UPDATE projetos SET status = ? WHERE id = ?", (novo_status, projeto_id))
+    else:
+        cursor.execute("SELECT orientador_nome FROM projetos WHERE id = ?", (projeto_id,))
+        proj = cursor.fetchone()
+        if not proj or actor_nome.lower() not in proj["orientador_nome"].lower():
+            cursor.close()
+            conn.close()
+            return jsonify({"error": "Você não tem permissão para alterar este projeto, pois não consta como orientador responsável."}), 403
+        cursor.execute("UPDATE projetos SET status = ? WHERE id = ?", (novo_status, projeto_id))
+
     conn.commit()
     cursor.close()
     conn.close()
@@ -604,6 +618,7 @@ def alterar_status_projeto(projeto_id):
 def publicar_projeto(projeto_id):
     data = request.json
     actor_role = data.get("actor_role")
+    actor_nome = data.get("actor_nome", "").strip()
     publicado = 1 if data.get("publicado", True) else 0
 
     if actor_role not in ["admin", "coordenador", "orientador"]:
@@ -611,7 +626,18 @@ def publicar_projeto(projeto_id):
 
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("UPDATE projetos SET publicado = ? WHERE id = ?", (publicado, projeto_id))
+
+    if actor_role in ["admin", "coordenador"]:
+        cursor.execute("UPDATE projetos SET publicado = ? WHERE id = ?", (publicado, projeto_id))
+    else:
+        cursor.execute("SELECT orientador_nome FROM projetos WHERE id = ?", (projeto_id,))
+        proj = cursor.fetchone()
+        if not proj or actor_nome.lower() not in proj["orientador_nome"].lower():
+            cursor.close()
+            conn.close()
+            return jsonify({"error": "Você não tem permissão para publicar este projeto."}), 403
+        cursor.execute("UPDATE projetos SET publicado = ? WHERE id = ?", (publicado, projeto_id))
+
     conn.commit()
     cursor.close()
     conn.close()
@@ -622,12 +648,22 @@ def publicar_projeto(projeto_id):
 def deletar_projeto(projeto_id):
     data = request.json or {}
     actor_role = data.get("actor_role")
+    actor_nome = data.get("actor_nome", "").strip()
 
     if actor_role not in ["admin", "coordenador", "orientador"]:
         return jsonify({"error": "Sem permissão para excluir projeto"}), 403
 
     conn = get_db_connection()
     cursor = conn.cursor()
+
+    if actor_role == "orientador":
+        cursor.execute("SELECT orientador_nome FROM projetos WHERE id = ?", (projeto_id,))
+        proj = cursor.fetchone()
+        if not proj or actor_nome.lower() not in proj["orientador_nome"].lower():
+            cursor.close()
+            conn.close()
+            return jsonify({"error": "Apenas o orientador responsável por este projeto pode excluí-lo."}), 403
+
     cursor.execute("DELETE FROM projetos WHERE id = ?", (projeto_id,))
     conn.commit()
     cursor.close()
