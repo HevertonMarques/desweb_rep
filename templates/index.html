@@ -3,82 +3,71 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Módulo 2: Controle (Registro) - Projetos Extensionistas</title>
+  <title>Módulo 2: Controle — Sistema de Projetos Extensionistas</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; }
     .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
-    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.3); border-radius: 3px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #0f172a; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 9999px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #475569; }
   </style>
 </head>
-<body class="bg-slate-900 text-slate-100 font-sans antialiased min-h-screen flex flex-col">
+<body class="bg-slate-950 text-slate-100 antialiased selection:bg-indigo-500 selection:text-white">
 
-  <div class="flex flex-1 overflow-hidden h-screen">
+  <div class="flex h-screen overflow-hidden">
 
-    <!-- Mobile Overlay -->
-    <div id="sidebar-backdrop" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-40 hidden md:hidden"></div>
+    <!-- Mobile Sidebar Backdrop -->
+    <div id="sidebar-backdrop" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-950/80 z-30 hidden md:hidden backdrop-blur-xs"></div>
 
-    <!-- Sidebar Component -->
-    <aside id="sidebar" class="fixed md:static inset-y-0 left-0 z-50 w-72 bg-slate-950 border-r border-slate-800/80 flex flex-col transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out shrink-0">
-      
-      <!-- App Header -->
-      <div class="p-4 border-b border-slate-800/80 flex items-center justify-between">
-        <div class="flex items-center gap-3 min-w-0">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-400 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20 shrink-0">
-            <i class="fa-solid fa-diagram-project text-lg"></i>
+    <!-- Sidebar Navigation -->
+    <aside id="sidebar" class="fixed md:static inset-y-0 left-0 z-40 w-64 bg-slate-950 border-r border-slate-800/80 flex flex-col justify-between transform -translate-x-full md:translate-x-0 transition-transform duration-200 ease-in-out shrink-0">
+      <div>
+        <!-- Brand Header -->
+        <div class="h-16 flex items-center gap-3 px-5 border-b border-slate-800/80">
+          <div class="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-600/30 shrink-0">
+            <i class="fa-solid fa-diagram-project text-white text-sm"></i>
           </div>
           <div class="min-w-0">
-            <span class="font-bold text-slate-100 text-base block truncate">Módulo 2: Controle</span>
-            <span class="text-xs text-slate-400 block truncate">Registro Extensionista</span>
+            <h1 class="text-sm font-bold text-slate-100 truncate">Módulo 2: Controle</h1>
+            <p class="text-[11px] text-slate-400 truncate">Registro Extensionista</p>
           </div>
         </div>
-        <button onclick="toggleSidebar()" class="md:hidden text-slate-400 hover:text-white p-2">
-          <i class="fa-solid fa-xmark text-lg"></i>
-        </button>
+
+        <!-- Navigation Menu -->
+        <nav class="p-3 space-y-1">
+          <button onclick="switchTab('consultar')" id="nav-consultar" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-indigo-600 text-white shadow-md shadow-indigo-600/20 transition-all">
+            <i class="fa-solid fa-magnifying-glass w-4 text-center"></i>
+            <span>Consultar Projetos</span>
+          </button>
+
+          <button onclick="switchTab('meus-grupos')" id="nav-meus-grupos" class="hidden w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-900 transition-all">
+            <span class="flex items-center gap-3">
+              <i class="fa-solid fa-user-check w-4 text-center"></i>
+              <span>Confirmação de Grupos</span>
+            </span>
+            <span id="badge-convites" class="hidden px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">0</span>
+          </button>
+
+          <button onclick="switchTab('registrar-trabalho')" id="nav-registrar-trabalho" class="hidden w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-900 transition-all">
+            <i class="fa-solid fa-folder-plus w-4 text-center"></i>
+            <span>Registrar Trabalho/Grupo</span>
+          </button>
+
+          <button onclick="switchTab('gerenciar-contas')" id="nav-gerenciar-contas" class="hidden w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-900 transition-all">
+            <i class="fa-solid fa-users-gear w-4 text-center"></i>
+            <span>Criar Acessos / Contas</span>
+          </button>
+        </nav>
       </div>
-
-      <!-- Navigation -->
-      <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto custom-scrollbar">
-        
-        <button onclick="switchTab('consultar')" id="nav-consultar" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all bg-indigo-600 text-white shadow-lg shadow-indigo-600/20">
-          <i class="fa-solid fa-magnifying-glass w-5 text-center"></i>
-          <span class="truncate">Consultar Projetos</span>
-        </button>
-
-        <button onclick="switchTab('meus-grupos')" id="nav-meus-grupos" class="hidden w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-slate-400 hover:text-slate-200 hover:bg-slate-900">
-          <i class="fa-solid fa-users-check w-5 text-center"></i>
-          <span class="truncate">Confirmação de Grupos</span>
-          <span id="badge-pending-count" class="ml-auto bg-amber-500/20 text-amber-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-500/30">0</span>
-        </button>
-
-        <button onclick="switchTab('registrar-trabalho')" id="nav-registrar-trabalho" class="hidden w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-slate-400 hover:text-slate-200 hover:bg-slate-900">
-          <i class="fa-solid fa-folder-plus w-5 text-center"></i>
-          <span class="truncate">Registrar Trabalho/Grupo</span>
-        </button>
-
-        <button onclick="switchTab('crud-professor')" id="nav-crud-professor" class="hidden w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-slate-400 hover:text-slate-200 hover:bg-slate-900">
-          <i class="fa-solid fa-user-tie w-5 text-center"></i>
-          <span class="truncate">CRUD de Professores</span>
-        </button>
-
-        <button onclick="switchTab('gestao-contas')" id="nav-gestao-contas" class="hidden w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-slate-400 hover:text-slate-200 hover:bg-slate-900">
-          <i class="fa-solid fa-key w-5 text-center"></i>
-          <span class="truncate">Criar Acessos / Contas</span>
-        </button>
-
-        <button onclick="switchTab('carga-massiva')" id="nav-carga-massiva" class="hidden w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-slate-400 hover:text-slate-200 hover:bg-slate-900">
-          <i class="fa-solid fa-file-import w-5 text-center"></i>
-          <span class="truncate">Carga Massiva</span>
-        </button>
-
-      </nav>
 
       <!-- Active Actor Profile Indicator -->
       <div class="p-3 border-t border-slate-800/80 flex items-center justify-between gap-2 min-w-0">
         <div class="flex items-center gap-2.5 min-w-0 flex-1">
           <div class="relative shrink-0">
-            <div id="user-avatar" class="w-9 h-9 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-xs">
+            <div id="user-avatar" class="w-9 h-9 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-xs font-bold text-white shadow-md">
               AP
             </div>
             <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-slate-950"></span>
@@ -89,19 +78,18 @@
           </div>
         </div>
       </div>
-
     </aside>
 
     <!-- Main Content Area -->
     <main class="flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-900">
-      
+
       <!-- Top Navbar Header -->
-      <header class="h-16 border-b border-slate-800/80 px-4 md:px-6 flex items-center justify-between gap-4 shrink-0 bg-slate-950/40 backdrop-blur-md">
+      <header class="h-16 border-b border-slate-800/80 px-4 md:px-6 flex items-center justify-between gap-4 shrink-0 bg-slate-950/60 backdrop-blur-md">
         <div class="flex items-center gap-3 min-w-0">
           <button onclick="toggleSidebar()" class="md:hidden p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800">
             <i class="fa-solid fa-bars text-lg"></i>
           </button>
-          <h1 id="page-title" class="text-base md:text-lg font-bold text-slate-100 truncate">Consultar Projetos Extensionistas</h1>
+          <h2 id="page-title" class="text-base md:text-lg font-bold text-slate-100 truncate">Consultar Projetos Extensionistas</h2>
         </div>
 
         <!-- Account Auth Controls -->
@@ -124,279 +112,178 @@
         <div id="view-consultar" class="space-y-6">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-950/60 p-4 rounded-xl border border-slate-800/80">
             <div>
-              <h2 class="text-base font-bold text-slate-100">Projetos Extensionistas Registrados</h2>
+              <h3 class="text-base font-bold text-slate-100">Projetos Extensionistas Registrados</h3>
               <p class="text-xs text-slate-400" id="consultar-subtitle">Consulta pública de trabalhos extensionistas publicados</p>
             </div>
-            <input type="text" id="search-projetos" onkeyup="filterProjetos()" placeholder="Buscar por título, área ou aluno..." class="bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500 w-full sm:w-64">
+            <input type="text" id="search-projetos" onkeyup="renderProjetos()" placeholder="Buscar por título, área ou aluno..." class="w-full sm:w-72 bg-slate-900 border border-slate-700/80 rounded-lg px-3.5 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500" />
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="projetos-cards-grid">
+          <div id="projetos-cards-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <!-- Dynamically populated -->
           </div>
         </div>
 
-        <!-- VIEW 2: CONFIRMAR / RECUSAR PARTICIPAÇÃO E EDITAR DADOS PRÓPRIOS (Aluno) -->
+        <!-- VIEW 2: CONFIRMAÇÃO DE GRUPOS (ALUNO) -->
         <div id="view-meus-grupos" class="space-y-6 hidden">
           <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80">
-            <h2 class="text-base font-bold text-slate-100 mb-1">Meus Grupos e Confirmação</h2>
-            <p class="text-xs text-slate-400">Aceite ou rejeite sua vinculação aos trabalhos extensionistas enviados pelos orientadores e atualize seu Nome ou RA.</p>
+            <h3 class="text-base font-bold text-slate-100 mb-1">Meus Grupos e Confirmação</h3>
+            <p class="text-xs text-slate-400">Aceite ou rejeite sua vinculação nos projetos extensionistas em que seu RA foi incluído.</p>
           </div>
 
           <div class="bg-slate-950/60 rounded-xl border border-slate-800/80 overflow-hidden p-4">
-            <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-3">Convites e Vinculações em Projetos</h3>
+            <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-3">Convites e Vinculações em Projetos</h4>
             <div id="pending-groups-container" class="space-y-3">
               <!-- Dynamically populated -->
             </div>
           </div>
         </div>
 
-        <!-- VIEW 3: REGISTRAR TRABALHO, GRUPO E MEMBROS (Orientador) -->
+        <!-- VIEW 3: REGISTRAR TRABALHO / GRUPO (ADMIN, COORDENADOR, ORIENTADOR) -->
         <div id="view-registrar-trabalho" class="space-y-6 hidden">
-          <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80">
-            <h2 class="text-base font-bold text-slate-100 mb-1">Registrar Trabalho Extensionista, Grupo e Membros</h2>
-            <p class="text-xs text-slate-400">Ao incluir o RA de um aluno cadastrado, ele receberá uma notificação por e-mail e verá o convite ao fazer login.</p>
-          </div>
+          <div class="bg-slate-950/60 p-5 rounded-xl border border-slate-800/80 max-w-3xl">
+            <h3 class="text-base font-bold text-slate-100 mb-1">Cadastrar Novo Projeto Extensionista</h3>
+            <p class="text-xs text-slate-400 mb-5">Preencha os dados do projeto, o nome do grupo e os RAs dos alunos integrantes.</p>
 
-          <form id="form-novo-projeto" onsubmit="handleSaveProjeto(event)" class="bg-slate-950/60 p-5 rounded-xl border border-slate-800/80 space-y-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label class="text-xs font-medium text-slate-300 block mb-1">Título do Trabalho Extensionista *</label>
-                <input type="text" id="input-titulo" required placeholder="Ex: Sistema Web para Associação Comunitária" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
-              </div>
-
-              <div>
-                <label class="text-xs font-medium text-slate-300 block mb-1">Setor Externo Atendido *</label>
-                <input type="text" id="input-setorexterno" required placeholder="Ex: ONG Ação Social / Bairro Casarão" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
-              </div>
-
-              <div>
-                <label class="text-xs font-medium text-slate-300 block mb-1">Áreas de Atuação *</label>
-                <input type="text" id="input-areas" required placeholder="Ex: Tecnologia da Informação, Inclusão Digital" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
-              </div>
-
-              <div>
-                <label class="text-xs font-medium text-slate-300 block mb-1">Interdisciplinaridade *</label>
-                <input type="text" id="input-interdisciplinaridade" required placeholder="Ex: Ciência da Computação + Gestão Pública" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
-              </div>
-            </div>
-
-            <hr class="border-slate-800/80 my-4" />
-
-            <!-- Group & Members Addition -->
-            <div class="space-y-3">
-              <h3 class="text-xs font-bold text-slate-200 flex items-center gap-2">
-                <i class="fa-solid fa-users text-indigo-400"></i>
-                <span>Definição do Grupo e Membros (Alunos)</span>
-              </h3>
-
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <form onsubmit="handleCriarProjeto(event)" class="space-y-4">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label class="text-xs font-medium text-slate-300 block mb-1">Nome do Grupo / Time *</label>
-                  <input type="text" id="input-nome-grupo" required placeholder="Ex: Grupo Alpha Devs" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+                  <label class="block text-xs font-medium text-slate-300 mb-1">Título do Projeto *</label>
+                  <input type="text" id="proj-titulo" required placeholder="Ex: Inclusão Digital Comunitária" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
                 </div>
-
                 <div>
-                  <label class="text-xs font-medium text-slate-300 block mb-1">Nome do Aluno (Opcional se RA existir)</label>
-                  <input type="text" id="input-nome-aluno" placeholder="Ex: Victor Hollanda" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
-                </div>
-
-                <div>
-                  <label class="text-xs font-medium text-slate-300 block mb-1">RA do Aluno (Membro) *</label>
-                  <div class="flex gap-2">
-                    <input type="text" id="input-ra-aluno" placeholder="Ex: 2026101" class="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
-                    <button type="button" onclick="addAlunoMembro()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs rounded-lg font-medium border border-slate-700 transition-colors">
-                      Adicionar
-                    </button>
-                  </div>
+                  <label class="block text-xs font-medium text-slate-300 mb-1">Setor Externo / Parceiro *</label>
+                  <input type="text" id="proj-setor" required placeholder="Ex: Associação de Bairro / Escola Municipal" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
                 </div>
               </div>
 
-              <!-- Registered Members list -->
-              <div class="bg-slate-900/50 p-3 rounded-lg border border-slate-800">
-                <span class="text-[11px] text-slate-400 font-medium block mb-2">Membros Adicionados ao Grupo:</span>
-                <div id="membros-list-container" class="flex flex-wrap gap-2">
-                  <span class="text-xs text-slate-500 italic">Nenhum aluno adicionado ainda.</span>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-medium text-slate-300 mb-1">Áreas de Atuação *</label>
+                  <input type="text" id="proj-areas" required placeholder="Ex: Tecnologia, Educação, Gestão" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-300 mb-1">Interdisciplinaridade *</label>
+                  <input type="text" id="proj-inter" required placeholder="Ex: Engenharia de Software + Administração" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
                 </div>
               </div>
-            </div>
 
-            <div class="pt-3 flex justify-end">
-              <button type="submit" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg shadow-lg shadow-indigo-600/20 transition-all flex items-center gap-2">
-                <i class="fa-solid fa-floppy-disk"></i>
-                <span>Salvar e Registrar Projeto (Status NOVO)</span>
-              </button>
-            </div>
-          </form>
-        </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-medium text-slate-300 mb-1">Nome do Grupo *</label>
+                  <input type="text" id="proj-grupo" required placeholder="Ex: Equipe Alfa Extensionista" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-300 mb-1">Orientador Responsável *</label>
+                  <input type="text" id="proj-orientador" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
+                </div>
+              </div>
 
-        <!-- VIEW 4: CRUD DE PROFESSOR (Coordenador / Administrador) -->
-        <div id="view-crud-professor" class="space-y-6 hidden">
-          <div class="flex items-center justify-between bg-slate-950/60 p-4 rounded-xl border border-slate-800/80">
-            <div>
-              <h2 class="text-base font-bold text-slate-100">CRUD de Professores</h2>
-              <p class="text-xs text-slate-400">Gerenciamento do corpo docente conforme permissões hierárquicas</p>
-            </div>
-            <button onclick="openModalProf()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg transition-colors">
-              <i class="fa-solid fa-user-plus mr-1"></i> Novo Professor
-            </button>
-          </div>
+              <!-- Membros do Grupo -->
+              <div class="border-t border-slate-800 pt-4">
+                <div class="flex items-center justify-between mb-2">
+                  <label class="text-xs font-semibold text-slate-200">Integrantes do Grupo (RA e Nome)</label>
+                  <button type="button" onclick="addMembroField('membros-list-create')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-indigo-400 text-xs font-medium rounded-lg border border-slate-700 transition-colors">
+                    <i class="fa-solid fa-plus mr-1"></i> Adicionar Aluno
+                  </button>
+                </div>
+                <div id="membros-list-create" class="space-y-2">
+                  <!-- Dynamic rows -->
+                </div>
+              </div>
 
-          <div class="bg-slate-950/60 rounded-xl border border-slate-800/80 overflow-hidden">
-            <table class="w-full text-left text-xs">
-              <thead class="bg-slate-900 text-slate-400 border-b border-slate-800">
-                <tr>
-                  <th class="p-3.5">RA / ID</th>
-                  <th class="p-3.5">Nome</th>
-                  <th class="p-3.5">E-mail</th>
-                  <th class="p-3.5">Perfil</th>
-                  <th class="p-3.5 text-right">Ações</th>
-                </tr>
-              </thead>
-              <tbody id="professores-table-body" class="divide-y divide-slate-800/60 text-slate-300">
-                <!-- Dynamically populated -->
-              </tbody>
-            </table>
+              <div class="pt-2 flex justify-end">
+                <button type="submit" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg shadow-lg shadow-indigo-600/20 transition-all">
+                  <i class="fa-solid fa-floppy-disk mr-1.5"></i> Salvar Projeto Extensionista
+                </button>
+              </div>
+            </form>
           </div>
         </div>
 
-        <!-- VIEW 5: GESTÃO HIERÁRQUICA DE CONTAS E ACESSOS -->
-        <div id="view-gestao-contas" class="space-y-6 hidden">
-          <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80">
-            <h2 class="text-base font-bold text-slate-100 mb-1">Criação e Gestão de Acessos</h2>
-            <p class="text-xs text-slate-400" id="gestao-contas-desc">Cadastre credenciais de acesso (RA/E-mail e Senha) conforme seu nível de permissão.</p>
-          </div>
+        <!-- VIEW 4: CRIAR ACESSOS / CONTAS -->
+        <div id="view-gerenciar-contas" class="space-y-6 hidden">
+          <div class="bg-slate-950/60 p-5 rounded-xl border border-slate-800/80 max-w-3xl">
+            <h3 class="text-base font-bold text-slate-100 mb-1">Criar Nova Conta de Acesso</h3>
+            <p class="text-xs text-slate-400 mb-4" id="conta-role-hint">Cadastre usuários respeitando a hierarquia de permissões.</p>
 
-          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <form onsubmit="handleCriarConta(event)" class="bg-slate-950/60 p-5 rounded-xl border border-slate-800/80 space-y-4 lg:col-span-1 h-fit">
-              <h3 class="text-sm font-bold text-slate-200 flex items-center gap-2 border-b border-slate-800 pb-2">
-                <i class="fa-solid fa-user-shield text-indigo-400"></i>
-                <span>Novo Acesso no Sistema</span>
-              </h3>
-
+            <form onsubmit="handleCriarUsuario(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label class="text-xs font-medium text-slate-300 block mb-1">Tipo de Perfil *</label>
-                <select id="conta-perfil" onchange="toggleCampoRA()" required class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+                <label class="block text-xs font-medium text-slate-300 mb-1">Perfil / Papel *</label>
+                <select id="user-new-role" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
+                  <!-- Populated by role permissions -->
                 </select>
               </div>
-
               <div>
-                <label class="text-xs font-medium text-slate-300 block mb-1">Nome Completo *</label>
-                <input type="text" id="conta-nome" required placeholder="Ex: João Silva" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+                <label class="block text-xs font-medium text-slate-300 mb-1">RA / Matrícula *</label>
+                <input type="text" id="user-new-ra" required placeholder="Ex: 20260123" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
               </div>
-
               <div>
-                <label class="text-xs font-medium text-slate-300 block mb-1" id="label-conta-ra">RA / Matrícula *</label>
-                <input type="text" id="conta-ra" required placeholder="Ex: 2026105 ou PROF04" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+                <label class="block text-xs font-medium text-slate-300 mb-1">Nome Completo *</label>
+                <input type="text" id="user-new-nome" required placeholder="Nome do usuário" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
               </div>
-
               <div>
-                <label class="text-xs font-medium text-slate-300 block mb-1">E-mail de Acesso *</label>
-                <input type="email" id="conta-email" required placeholder="usuario@faccamp.com" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+                <label class="block text-xs font-medium text-slate-300 mb-1">E-mail *</label>
+                <input type="email" id="user-new-email" required placeholder="usuario@faccamp.com" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
               </div>
-
-              <div>
-                <label class="text-xs font-medium text-slate-300 block mb-1">Senha de Acesso *</label>
-                <input type="text" id="conta-senha" required placeholder="Defina uma senha" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+              <div class="md:col-span-2">
+                <label class="block text-xs font-medium text-slate-300 mb-1">Senha de Acesso *</label>
+                <input type="password" id="user-new-senha" required placeholder="Defina uma senha" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
               </div>
-
-              <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg shadow-lg shadow-indigo-600/20 transition-colors">
-                Criar Credencial de Acesso
-              </button>
+              <div class="md:col-span-2 flex justify-end">
+                <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg shadow-lg shadow-indigo-600/20 transition-all">
+                  <i class="fa-solid fa-user-plus mr-1.5"></i> Criar Conta
+                </button>
+              </div>
             </form>
-
-            <div class="bg-slate-950/60 rounded-xl border border-slate-800/80 overflow-hidden lg:col-span-2">
-              <div class="p-4 border-b border-slate-800">
-                <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Contas Cadastradas (MySQL)</h3>
-              </div>
-              <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs">
-                  <thead class="bg-slate-900 text-slate-400 border-b border-slate-800">
-                    <tr>
-                      <th class="p-3">RA / Matrícula</th>
-                      <th class="p-3">Nome</th>
-                      <th class="p-3">E-mail</th>
-                      <th class="p-3">Perfil</th>
-                      <th class="p-3 text-right">Ação</th>
-                    </tr>
-                  </thead>
-                  <tbody id="contas-table-body" class="divide-y divide-slate-800/60 text-slate-300">
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- VIEW 6: CARGA MASSIVA (Administrador) -->
-        <div id="view-carga-massiva" class="space-y-6 hidden">
-          <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80">
-            <h2 class="text-base font-bold text-slate-100 mb-1">Carga Massiva de Registros</h2>
-            <p class="text-xs text-slate-400">Funcionalidade exclusiva do Administrador: Importação em lote de Professores ou Projetos</p>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="bg-slate-950/60 p-5 rounded-xl border border-slate-800/80 space-y-4">
-              <h3 class="text-sm font-bold text-slate-200 flex items-center gap-2">
-                <i class="fa-solid fa-file-csv text-emerald-400"></i>
-                <span>Carga Massiva de Professores</span>
-              </h3>
-              <p class="text-xs text-slate-400">Envie um arquivo CSV/JSON contendo os campos: `ra, nome, email, perfil, senha`.</p>
-              <input type="file" id="file-mass-prof" class="block w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-indigo-400 hover:file:bg-slate-700">
-              <button onclick="simularCargaMassiva('professores')" class="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg transition-colors">
-                Processar Arquivo de Professores
-              </button>
+          <!-- Lista de Usuários -->
+          <div class="bg-slate-950/60 rounded-xl border border-slate-800/80 overflow-hidden">
+            <div class="p-4 border-b border-slate-800/80">
+              <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Contas Cadastradas no Sistema</h4>
             </div>
-
-            <div class="bg-slate-950/60 p-5 rounded-xl border border-slate-800/80 space-y-4">
-              <h3 class="text-sm font-bold text-slate-200 flex items-center gap-2">
-                <i class="fa-solid fa-file-csv text-indigo-400"></i>
-                <span>Carga Massiva de Projetos</span>
-              </h3>
-              <p class="text-xs text-slate-400">Envie um arquivo CSV/JSON contendo os campos dos trabalhos extensionistas.</p>
-              <input type="file" id="file-mass-proj" class="block w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-indigo-400 hover:file:bg-slate-700">
-              <button onclick="simularCargaMassiva('projetos')" class="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg transition-colors">
-                Processar Arquivo de Projetos
-              </button>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="border-b border-slate-800 text-[11px] font-semibold text-slate-400 uppercase bg-slate-950/40">
+                    <th class="py-3 px-4">RA</th>
+                    <th class="py-3 px-4">Nome</th>
+                    <th class="py-3 px-4">E-mail</th>
+                    <th class="py-3 px-4">Perfil</th>
+                    <th class="py-3 px-4 text-right">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="usuarios-table-body" class="divide-y divide-slate-800/60 text-xs">
+                  <!-- Dynamically populated -->
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
 
       </div>
-
     </main>
-
   </div>
 
-  <!-- MODAL: LOGIN DE CONTA -->
-  <div id="modal-login" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-slate-900 border border-slate-800 rounded-xl max-w-md w-full p-6 space-y-5 shadow-2xl">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-        <div class="flex items-center gap-2.5">
-          <div class="w-8 h-8 rounded-lg bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
-            <i class="fa-solid fa-lock"></i>
-          </div>
-          <h3 class="text-base font-bold text-slate-100">Acesso ao Sistema</h3>
-        </div>
+  <!-- MODAL: LOGIN -->
+  <div id="login-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-6 shadow-2xl">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-base font-bold text-slate-100">Acessar o Sistema</h3>
         <button onclick="closeLoginModal()" class="text-slate-400 hover:text-white">
-          <i class="fa-solid fa-xmark text-lg"></i>
+          <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
-
       <form onsubmit="handleLogin(event)" class="space-y-4">
         <div>
-          <label class="text-xs font-medium text-slate-300 block mb-1">RA ou E-mail *</label>
-          <input type="text" id="login-identifier" required placeholder="Digite seu RA ou E-mail" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+          <label class="block text-xs font-medium text-slate-300 mb-1">E-mail ou RA</label>
+          <input type="text" id="login-identifier" required placeholder="admin@faccamp.com ou seu RA" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3.5 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
         </div>
-
         <div>
-          <label class="text-xs font-medium text-slate-300 block mb-1">Senha *</label>
-          <input type="password" id="login-password" required placeholder="Digite sua senha" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+          <label class="block text-xs font-medium text-slate-300 mb-1">Senha</label>
+          <input type="password" id="login-senha" required placeholder="••••••••" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3.5 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
         </div>
-
-        <div id="login-error-msg" class="hidden p-2.5 rounded-lg bg-red-500/10 border border-red-500/30 text-xs text-red-400">
-          Credenciais inválidas. Verifique seu RA/E-mail e senha.
-        </div>
-
+        <p id="login-error" class="text-xs text-red-400 hidden"></p>
         <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg shadow-lg shadow-indigo-600/20 transition-all">
           Entrar
         </button>
@@ -404,1013 +291,584 @@
     </div>
   </div>
 
-  <!-- MODAL: EDITAR PROJETO, GRUPO E MEMBROS -->
-  <div id="modal-edit-projeto" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-slate-900 border border-slate-800 rounded-xl max-w-2xl w-full p-5 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-        <h3 class="text-base font-bold text-slate-100">Editar Trabalho Extensionista e Grupo</h3>
+  <!-- MODAL: EDITAR PROJETO -->
+  <div id="edit-projeto-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 shadow-2xl my-8">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-base font-bold text-slate-100">Editar Projeto Extensionista</h3>
         <button onclick="closeEditProjetoModal()" class="text-slate-400 hover:text-white">
-          <i class="fa-solid fa-xmark text-lg"></i>
+          <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
-
-      <div class="space-y-4">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <form onsubmit="handleEditarProjeto(event)" class="space-y-4">
+        <input type="hidden" id="edit-proj-id" />
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label class="text-xs font-medium text-slate-300 block mb-1">Título do Trabalho *</label>
-            <input type="text" id="edit-proj-titulo" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+            <label class="block text-xs font-medium text-slate-300 mb-1">Título do Projeto</label>
+            <input type="text" id="edit-proj-titulo" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100" />
           </div>
-
           <div>
-            <label class="text-xs font-medium text-slate-300 block mb-1">Setor Externo *</label>
-            <input type="text" id="edit-proj-setor" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+            <label class="block text-xs font-medium text-slate-300 mb-1">Setor Externo</label>
+            <input type="text" id="edit-proj-setor" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100" />
           </div>
-
           <div>
-            <label class="text-xs font-medium text-slate-300 block mb-1">Áreas de Atuação *</label>
-            <input type="text" id="edit-proj-areas" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+            <label class="block text-xs font-medium text-slate-300 mb-1">Áreas de Atuação</label>
+            <input type="text" id="edit-proj-areas" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100" />
           </div>
-
           <div>
-            <label class="text-xs font-medium text-slate-300 block mb-1">Interdisciplinaridade *</label>
-            <input type="text" id="edit-proj-inter" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+            <label class="block text-xs font-medium text-slate-300 mb-1">Interdisciplinaridade</label>
+            <input type="text" id="edit-proj-inter" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100" />
           </div>
-
           <div>
-            <label class="text-xs font-medium text-slate-300 block mb-1">Nome do Grupo / Time *</label>
-            <input type="text" id="edit-proj-grupo" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+            <label class="block text-xs font-medium text-slate-300 mb-1">Nome do Grupo</label>
+            <input type="text" id="edit-proj-grupo" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100" />
           </div>
-
-          <div id="edit-orientador-wrapper" class="hidden">
-            <label class="text-xs font-medium text-slate-300 block mb-1">Orientador Responsável (Admin)</label>
-            <select id="edit-proj-orientador" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
-            </select>
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Orientador</label>
+            <input type="text" id="edit-proj-orientador" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100" />
           </div>
         </div>
 
-        <hr class="border-slate-800" />
-
-        <div class="space-y-2">
-          <label class="text-xs font-bold text-slate-200 block">Membros do Grupo (Editar Nome / RA ou Adicionar)</label>
-          <div id="edit-membros-container" class="space-y-2"></div>
-
-          <div class="pt-2 flex flex-col sm:flex-row gap-2">
-            <input type="text" id="edit-add-aluno-nome" placeholder="Nome do novo aluno" class="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
-            <input type="text" id="edit-add-aluno-ra" placeholder="RA" class="w-full sm:w-32 bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
-            <button type="button" onclick="addMembroInEditModal()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-indigo-400 border border-slate-700 rounded-lg text-xs font-semibold">
-              + Adicionar Aluno
+        <div class="border-t border-slate-800 pt-3">
+          <div class="flex items-center justify-between mb-2">
+            <label class="text-xs font-semibold text-slate-200">Integrantes do Grupo</label>
+            <button type="button" onclick="addMembroField('membros-list-edit')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-indigo-400 text-xs font-medium rounded-lg border border-slate-700">
+              <i class="fa-solid fa-plus mr-1"></i> Adicionar Aluno
             </button>
           </div>
+          <div id="membros-list-edit" class="space-y-2"></div>
         </div>
-      </div>
 
-      <div class="flex justify-end gap-2 pt-3 border-t border-slate-800">
-        <button onclick="closeEditProjetoModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-lg">Cancelar</button>
-        <button onclick="saveEditedProjeto()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg">Salvar Alterações</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL: ALUNO EDITAR PRÓPRIO NOME E RA NO GRUPO -->
-  <div id="modal-aluno-edit-self" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-slate-900 border border-slate-800 rounded-xl max-w-md w-full p-5 space-y-4 shadow-2xl">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-        <h3 class="text-base font-bold text-slate-100">Editar Meus Dados no Grupo</h3>
-        <button onclick="closeAlunoEditModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-      </div>
-
-      <div class="space-y-3">
-        <div>
-          <label class="text-xs font-medium text-slate-300 block mb-1">Meu Nome no Grupo *</label>
-          <input type="text" id="aluno-self-nome" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200">
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeEditProjetoModal()" class="px-4 py-2 bg-slate-800 text-slate-300 text-xs font-semibold rounded-lg">Cancelar</button>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg">Salvar Alterações</button>
         </div>
-        <div>
-          <label class="text-xs font-medium text-slate-300 block mb-1">Meu RA *</label>
-          <input type="text" id="aluno-self-ra" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200">
-        </div>
-      </div>
-
-      <div class="flex justify-end gap-2 pt-2 border-t border-slate-800">
-        <button onclick="closeAlunoEditModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-lg">Cancelar</button>
-        <button onclick="saveAlunoSelfEdit()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg">Salvar Meus Dados</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL: STATUS CHANGE (Apenas Admin, Coordenador, Orientador) -->
-  <div id="modal-status" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-slate-900 border border-slate-800 rounded-xl max-w-md w-full p-5 space-y-4 shadow-2xl">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-        <h3 class="text-base font-bold text-slate-100">Transição de Status do Projeto</h3>
-        <button onclick="closeModalStatus()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-      </div>
-
-      <div class="space-y-3">
-        <p class="text-xs text-slate-300" id="status-modal-info"></p>
-        <div>
-          <label class="text-xs font-medium text-slate-300 block mb-1">Selecione o Novo Status *</label>
-          <select id="select-novo-status" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200"></select>
-        </div>
-      </div>
-
-      <div class="flex justify-end gap-2 pt-2 border-t border-slate-800">
-        <button onclick="closeModalStatus()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-lg">Cancelar</button>
-        <button onclick="confirmStatusTransition()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg">Confirmar Transição</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL: CADASTRO / EDIÇÃO PROFESSOR -->
-  <div id="modal-prof" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-slate-900 border border-slate-800 rounded-xl max-w-md w-full p-5 space-y-4 shadow-2xl">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-        <h3 class="text-base font-bold text-slate-100" id="modal-prof-title">Cadastrar Professor</h3>
-        <button onclick="closeModalProf()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-      </div>
-
-      <div class="space-y-3">
-        <div>
-          <label class="text-xs font-medium text-slate-300 block mb-1">RA / Matrícula do Professor *</label>
-          <input type="text" id="prof-ra" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200">
-        </div>
-        <div>
-          <label class="text-xs font-medium text-slate-300 block mb-1">Nome Completo *</label>
-          <input type="text" id="prof-nome" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200">
-        </div>
-        <div>
-          <label class="text-xs font-medium text-slate-300 block mb-1">E-mail *</label>
-          <input type="email" id="prof-email" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200">
-        </div>
-        <div>
-          <label class="text-xs font-medium text-slate-300 block mb-1">Senha de Acesso *</label>
-          <input type="text" id="prof-senha" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200">
-        </div>
-        <div>
-          <label class="text-xs font-medium text-slate-300 block mb-1">Perfil no Sistema *</label>
-          <select id="prof-perfil" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200"></select>
-        </div>
-      </div>
-
-      <div class="flex justify-end gap-2 pt-2 border-t border-slate-800">
-        <button onclick="closeModalProf()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-lg">Cancelar</button>
-        <button onclick="saveProf()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg">Salvar Professor</button>
-      </div>
+      </form>
     </div>
   </div>
 
   <script>
-    let currentUser = null;
-    let accountsData = [];
-    let projetosData = [];
+    let currentUser = JSON.parse(localStorage.getItem("extensao_user") || "null");
+    let allProjetos = [];
+    let allUsuarios = [];
 
-    let selectedProjectIdForStatus = null;
-    let editingProjectId = null;
-    let tempEditMembros = [];
-    let tempMembrosNovos = [];
-    let editingProfId = null;
-    let alunoEditingContext = { membroId: null };
-
-    const ALL_STATUSES = [
-      'NOVO', 'PENDENTE', 'DESENVOLVIMENTO', 'CANCELADO', 
-      'CONCLUIDO', 'FINALIZADO', 'LIBERADO_APRESENTACAO', 'AVALIADO'
-    ];
-
-    function getCurrentActorRole() {
-      return currentUser ? currentUser.role : 'public';
-    }
-
-    // ==========================================
-    // CARREGAMENTO DE DADOS DO BACKEND MYSQL
-    // ==========================================
-    async function loadAllData() {
-      try {
-        const [projRes, usersRes] = await Promise.all([
-          fetch('/api/projetos'),
-          fetch('/api/usuarios')
-        ]);
-        projetosData = await projRes.json();
-        accountsData = await usersRes.json();
-
-        renderProjetos();
-        renderProfessores();
-        renderMeusGruposAluno();
-        renderContasTable();
-      } catch (err) {
-        console.error('Erro ao conectar com o servidor Python:', err);
+    document.addEventListener("DOMContentLoaded", async () => {
+      addMembroField("membros-list-create");
+      updateUIForUser();
+      await loadProjetos();
+      if (currentUser && ["admin", "coordenador", "orientador"].includes(currentUser.role)) {
+        await loadUsuarios();
       }
+    });
+
+    function toggleSidebar() {
+      const sb = document.getElementById("sidebar");
+      const bd = document.getElementById("sidebar-backdrop");
+      sb.classList.toggle("-translate-x-full");
+      bd.classList.toggle("hidden");
     }
 
-    // ==========================================
-    // LOGIN & SESSÃO
-    // ==========================================
-    function openLoginModal() {
-      document.getElementById('login-error-msg').classList.add('hidden');
-      document.getElementById('login-identifier').value = '';
-      document.getElementById('login-password').value = '';
-      document.getElementById('modal-login').classList.remove('hidden');
-    }
-
-    function closeLoginModal() {
-      document.getElementById('modal-login').classList.add('hidden');
-    }
-
-    async function handleLogin(e) {
-      e.preventDefault();
-      const identifier = document.getElementById('login-identifier').value.trim();
-      const senha = document.getElementById('login-password').value;
-
-      const res = await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ identifier, senha })
+    function switchTab(tab) {
+      ["consultar", "meus-grupos", "registrar-trabalho", "gerenciar-contas"].forEach(t => {
+        document.getElementById(`view-${t}`).classList.add("hidden");
+        const navBtn = document.getElementById(`nav-${t}`);
+        if (navBtn) {
+          navBtn.classList.remove("bg-indigo-600", "text-white", "shadow-md", "shadow-indigo-600/20", "font-semibold");
+          navBtn.classList.add("text-slate-400", "font-medium");
+        }
       });
 
-      if (!res.ok) {
-        document.getElementById('login-error-msg').classList.remove('hidden');
-        return;
+      document.getElementById(`view-${tab}`).classList.remove("hidden");
+      const activeBtn = document.getElementById(`nav-${tab}`);
+      if (activeBtn) {
+        activeBtn.classList.add("bg-indigo-600", "text-white", "shadow-md", "shadow-indigo-600/20", "font-semibold");
+        activeBtn.classList.remove("text-slate-400", "font-medium");
       }
 
-      currentUser = await res.json();
-      closeLoginModal();
-      await applyRolePermissions();
-    }
-
-    async function logout() {
-      currentUser = null;
-      await applyRolePermissions();
-    }
-
-    // ==========================================
-    // PERMISSÕES E VISIBILIDADE DE BOTÕES/ABAS
-    // ==========================================
-    async function applyRolePermissions() {
-      const role = getCurrentActorRole();
-      const avatar = document.getElementById('user-avatar');
-      const userName = document.getElementById('user-name');
-      const roleBadge = document.getElementById('user-role-badge');
-
-      const btnLogin = document.getElementById('btn-open-login');
-      const btnLogout = document.getElementById('btn-logout');
-
-      const navGrupos = document.getElementById('nav-meus-grupos');
-      const navRegTrabalho = document.getElementById('nav-registrar-trabalho');
-      const navCrudProf = document.getElementById('nav-crud-professor');
-      const navGestaoContas = document.getElementById('nav-gestao-contas');
-      const navCargaMassiva = document.getElementById('nav-carga-massiva');
-
-      navGrupos.classList.add('hidden');
-      navRegTrabalho.classList.add('hidden');
-      navCrudProf.classList.add('hidden');
-      navGestaoContas.classList.add('hidden');
-      navCargaMassiva.classList.add('hidden');
-
-      if (role === 'public') {
-        btnLogin.classList.remove('hidden');
-        btnLogout.classList.add('hidden');
-        avatar.innerText = 'AP';
-        userName.innerText = 'Visitante';
-        roleBadge.innerText = 'Ator: Acesso Público';
-        switchTab('consultar');
-      } else {
-        btnLogin.classList.add('hidden');
-        btnLogout.classList.remove('hidden');
-        avatar.innerText = currentUser.nome.substring(0, 2).toUpperCase();
-        userName.innerText = currentUser.nome;
-
-        if (role === 'aluno') {
-          roleBadge.innerText = `Aluno • RA: ${currentUser.ra}`;
-          navGrupos.classList.remove('hidden');
-          switchTab('meus-grupos');
-        } else if (role === 'orientador') {
-          roleBadge.innerText = `Orientador • ${currentUser.ra}`;
-          navRegTrabalho.classList.remove('hidden');
-          navGestaoContas.classList.remove('hidden');
-          setupGestaoContasUI();
-          switchTab('registrar-trabalho');
-        } else if (role === 'coordenador') {
-          roleBadge.innerText = `Coordenador • ${currentUser.ra}`;
-          navCrudProf.classList.remove('hidden');
-          navGestaoContas.classList.remove('hidden');
-          setupGestaoContasUI();
-          switchTab('crud-professor');
-        } else if (role === 'admin') {
-          roleBadge.innerText = `Administrador • ${currentUser.email}`;
-          navCrudProf.classList.remove('hidden');
-          navGestaoContas.classList.remove('hidden');
-          navCargaMassiva.classList.remove('hidden');
-          setupGestaoContasUI();
-          switchTab('consultar');
-        }
-      }
-
-      await loadAllData();
-    }
-
-    function switchTab(tabId) {
-      const role = getCurrentActorRole();
-
-      if (role === 'public' && tabId !== 'consultar') return;
-      if (tabId === 'gestao-contas' && (role === 'aluno' || role === 'public')) return;
-      if (tabId === 'meus-grupos' && role !== 'aluno') return;
-
-      const tabs = ['consultar', 'meus-grupos', 'registrar-trabalho', 'crud-professor', 'gestao-contas', 'carga-massiva'];
       const titles = {
-        'consultar': 'Consultar Projetos Extensionistas',
-        'meus-grupos': 'Meus Grupos e Confirmação',
-        'registrar-trabalho': 'Registrar Trabalho, Grupo e Membros',
-        'crud-professor': 'CRUD de Professores',
-        'gestao-contas': 'Criação e Gestão de Acessos',
-        'carga-massiva': 'Carga Massiva de Registros'
+        "consultar": "Consultar Projetos Extensionistas",
+        "meus-grupos": "Confirmação de Participação em Grupos",
+        "registrar-trabalho": "Registrar Trabalho / Grupo Extensionista",
+        "gerenciar-contas": "Gerenciar Acessos e Contas"
       };
-
-      tabs.forEach(id => {
-        const view = document.getElementById(`view-${id}`);
-        const nav = document.getElementById(`nav-${id}`);
-        if (view && nav) {
-          if (id === tabId) {
-            view.classList.remove('hidden');
-            nav.className = "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all bg-indigo-600 text-white shadow-lg shadow-indigo-600/20";
-          } else {
-            view.classList.add('hidden');
-            nav.className = "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-slate-400 hover:text-slate-200 hover:bg-slate-900";
-          }
-        }
-      });
-
-      document.getElementById('page-title').innerText = titles[tabId] || 'Módulo de Controle';
+      document.getElementById("page-title").textContent = titles[tab] || "Módulo 2: Controle";
 
       if (window.innerWidth < 768) {
-        const sidebar = document.getElementById('sidebar');
-        if (!sidebar.classList.contains('-translate-x-full')) toggleSidebar();
+        document.getElementById("sidebar").classList.add("-translate-x-full");
+        document.getElementById("sidebar-backdrop").classList.add("hidden");
       }
     }
 
-    // ==========================================
-    // RENDERIZAÇÃO DE PROJETOS E BOTÃO PUBLICAR
-    // ==========================================
-    function renderProjetos() {
-      const grid = document.getElementById('projetos-cards-grid');
-      grid.innerHTML = '';
-      const role = getCurrentActorRole();
+    function updateUIForUser() {
+      const btnLogin = document.getElementById("btn-open-login");
+      const btnLogout = document.getElementById("btn-logout");
+      const navMeusGrupos = document.getElementById("nav-meus-grupos");
+      const navRegistrar = document.getElementById("nav-registrar-trabalho");
+      const navContas = document.getElementById("nav-gerenciar-contas");
 
-      const listaExibida = (role === 'public') 
-        ? projetosData.filter(p => p.publicado) 
-        : projetosData;
+      navMeusGrupos.classList.add("hidden");
+      navRegistrar.classList.add("hidden");
+      navContas.classList.add("hidden");
 
-      if (listaExibida.length === 0) {
-        grid.innerHTML = `<div class="col-span-full text-center py-10 text-xs text-slate-500 bg-slate-950/40 rounded-xl border border-slate-800">Nenhum projeto publicado encontrado no momento.</div>`;
+      if (!currentUser) {
+        btnLogin.classList.remove("hidden");
+        btnLogout.classList.add("hidden");
+        document.getElementById("user-name").textContent = "Visitante";
+        document.getElementById("user-role-badge").textContent = "Ator: Acesso Público";
+        document.getElementById("user-avatar").textContent = "AP";
+        document.getElementById("consultar-subtitle").textContent = "Consulta pública de trabalhos extensionistas publicados";
+        switchTab("consultar");
         return;
       }
 
-      listaExibida.forEach(p => {
-        let statusBadgeColor = 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20';
-        if (p.status === 'CONCLUIDO' || p.status === 'FINALIZADO') statusBadgeColor = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
-        if (p.status === 'CANCELADO') statusBadgeColor = 'bg-red-500/10 text-red-400 border-red-500/20';
-        if (p.status === 'PENDENTE') statusBadgeColor = 'bg-amber-500/10 text-amber-400 border-amber-500/20';
-
-        const canManage = (role === 'admin' || role === 'coordenador' || role === 'orientador');
-
-        let actionButtonsHtml = '';
-        if (canManage) {
-          const pubBtnLabel = p.publicado ? 'Despublicar' : 'Publicar';
-          const pubBtnStyle = p.publicado 
-            ? 'bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border-emerald-500/30' 
-            : 'bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border-amber-500/30';
-
-          actionButtonsHtml = `
-            <button onclick="togglePublicarProjeto(${p.id}, ${!p.publicado})" class="text-[11px] px-2 py-1 rounded-md border transition-colors ${pubBtnStyle}">
-              <i class="fa-solid fa-globe mr-1"></i>${pubBtnLabel}
-            </button>
-            <button onclick="openEditProjetoModal(${p.id})" class="text-[11px] px-2 py-1 bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 rounded-md border border-indigo-500/30 transition-colors">
-              <i class="fa-solid fa-pen-to-square mr-1"></i>Editar
-            </button>
-            <button onclick="openModalStatus(${p.id})" class="text-[11px] px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-md border border-slate-700 transition-colors">
-              <i class="fa-solid fa-arrows-rotate mr-1"></i>Status
-            </button>
-          `;
-        }
-
-        const publishedTag = p.publicado 
-          ? `<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"><i class="fa-solid fa-globe mr-1"></i>PUBLICADO</span>`
-          : `<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-800 text-slate-400 border border-slate-700">RASCUNHO</span>`;
-
-        let membrosBadges = (p.grupo && p.grupo.membros ? p.grupo.membros : []).map(m => {
-          let icon = '<i class="fa-solid fa-clock text-amber-400 ml-1" title="Pendente"></i>';
-          if (m.status_participacao === 'CONFIRMADO') icon = '<i class="fa-solid fa-check text-emerald-400 ml-1" title="Confirmado"></i>';
-          if (m.status_participacao === 'RECUSADO') icon = '<i class="fa-solid fa-xmark text-red-400 ml-1" title="Recusado"></i>';
-
-          return `
-            <span class="text-[10px] px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-300">
-              ${m.nome} (RA: ${m.ra}) ${icon}
-            </span>
-          `;
-        }).join('');
-
-        grid.innerHTML += `
-          <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80 flex flex-col justify-between space-y-3">
-            <div>
-              <div class="flex items-center justify-between gap-2 mb-2">
-                <div class="flex items-center gap-1.5">
-                  <span class="px-2 py-0.5 rounded text-[10px] font-semibold border ${statusBadgeColor}">${p.status}</span>
-                  ${role !== 'public' ? publishedTag : ''}
-                </div>
-                <span class="text-[11px] text-slate-400 truncate"><i class="fa-solid fa-user-tie mr-1"></i>${p.orientador_nome}</span>
-              </div>
-              <h3 class="text-sm font-bold text-slate-100 mb-1">${p.titulo}</h3>
-              <p class="text-xs text-indigo-400 font-medium mb-2"><i class="fa-solid fa-building text-[10px] mr-1"></i>Setor: ${p.setor_externo}</p>
-              
-              <div class="space-y-1 text-[11px] text-slate-400 border-t border-slate-800/60 pt-2">
-                <div><strong class="text-slate-300">Áreas:</strong> ${p.areas_atuacao}</div>
-                <div><strong class="text-slate-300">Interdisciplinaridade:</strong> ${p.interdisciplinaridade}</div>
-                <div><strong class="text-slate-300">Grupo:</strong> ${p.grupo ? p.grupo.nome : '-'}</div>
-              </div>
-
-              <div class="mt-2.5 flex flex-wrap gap-1">
-                ${membrosBadges}
-              </div>
-            </div>
-
-            ${canManage ? `
-              <div class="pt-2 border-t border-slate-800/60 flex flex-wrap items-center justify-end gap-1.5">
-                ${actionButtonsHtml}
-              </div>
-            ` : ''}
-          </div>
-        `;
-      });
-    }
-
-    async function togglePublicarProjeto(projId, novoEstado) {
-      const res = await fetch(`/api/projetos/${projId}/publicar`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ actor_role: getCurrentActorRole(), publicado: novoEstado })
-      });
-      if (res.ok) {
-        await loadAllData();
-        alert(novoEstado ? 'Projeto publicado com sucesso! Agora está visível no Acesso Público.' : 'Projeto removido da vitrine pública.');
-      }
-    }
-
-    // ==========================================
-    // EDITAR PROJETO E GRUPO
-    // ==========================================
-    function openEditProjetoModal(projId) {
-      const p = projetosData.find(proj => proj.id === projId);
-      if (!p) return;
-
-      editingProjectId = projId;
-      const role = getCurrentActorRole();
-
-      document.getElementById('edit-proj-titulo').value = p.titulo;
-      document.getElementById('edit-proj-setor').value = p.setor_externo;
-      document.getElementById('edit-proj-areas').value = p.areas_atuacao;
-      document.getElementById('edit-proj-inter').value = p.interdisciplinaridade;
-      document.getElementById('edit-proj-grupo').value = p.grupo ? p.grupo.nome : '';
-
-      const orientadorWrapper = document.getElementById('edit-orientador-wrapper');
-      const orientadorSelect = document.getElementById('edit-proj-orientador');
-
-      if (role === 'admin') {
-        orientadorWrapper.classList.remove('hidden');
-        orientadorSelect.innerHTML = '';
-        const orientadores = accountsData.filter(acc => acc.role === 'orientador');
-        orientadores.forEach(ori => {
-          orientadorSelect.innerHTML += `<option value="${ori.nome}" ${ori.nome === p.orientador_nome ? 'selected' : ''}>${ori.nome}</option>`;
-        });
-      } else {
-        orientadorWrapper.classList.add('hidden');
-      }
-
-      tempEditMembros = p.grupo && p.grupo.membros ? p.grupo.membros.map(m => ({ ...m })) : [];
-      renderEditMembrosInputs();
-
-      document.getElementById('modal-edit-projeto').classList.remove('hidden');
-    }
-
-    function closeEditProjetoModal() {
-      document.getElementById('modal-edit-projeto').classList.add('hidden');
-      editingProjectId = null;
-    }
-
-    function renderEditMembrosInputs() {
-      const container = document.getElementById('edit-membros-container');
-      if (tempEditMembros.length === 0) {
-        container.innerHTML = `<div class="text-xs text-slate-500 italic">Nenhum membro neste grupo.</div>`;
-        return;
-      }
-
-      container.innerHTML = tempEditMembros.map((m, idx) => `
-        <div class="flex flex-col sm:flex-row items-center gap-2 bg-slate-950 p-2 rounded-lg border border-slate-800">
-          <input type="text" value="${m.nome}" onchange="updateTempEditMembro(${idx}, 'nome', this.value)" placeholder="Nome do Aluno" class="flex-1 w-full bg-slate-900 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-slate-200">
-          <input type="text" value="${m.ra}" onchange="updateTempEditMembro(${idx}, 'ra', this.value)" placeholder="RA" class="w-full sm:w-28 bg-slate-900 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-slate-200">
-          <span class="text-[10px] px-2 py-1 rounded bg-slate-900 text-slate-400 border border-slate-800 shrink-0">${m.status_participacao}</span>
-          <button type="button" onclick="removeTempEditMembro(${idx})" class="text-red-400 hover:text-red-300 px-2 py-1">
-            <i class="fa-solid fa-trash text-xs"></i>
-          </button>
-        </div>
-      `).join('');
-    }
-
-    function updateTempEditMembro(index, field, value) {
-      tempEditMembros[index][field] = value.trim();
-    }
-
-    function removeTempEditMembro(index) {
-      tempEditMembros.splice(index, 1);
-      renderEditMembrosInputs();
-    }
-
-    function addMembroInEditModal() {
-      const nomeInput = document.getElementById('edit-add-aluno-nome');
-      const raInput = document.getElementById('edit-add-aluno-ra');
-      let nome = nomeInput.value.trim();
-      const ra = raInput.value.trim();
-
-      if (!ra) return alert('Informe o RA do aluno.');
-      if (!nome) {
-        const foundAcc = accountsData.find(a => a.ra === ra && a.role === 'aluno');
-        nome = foundAcc ? foundAcc.nome : `Aluno RA ${ra}`;
-      }
-
-      tempEditMembros.push({ ra, nome, status_participacao: 'PENDENTE' });
-      nomeInput.value = '';
-      raInput.value = '';
-      renderEditMembrosInputs();
-    }
-
-    async function saveEditedProjeto() {
-      const payload = {
-        actor_role: getCurrentActorRole(),
-        titulo: document.getElementById('edit-proj-titulo').value.trim(),
-        setor_externo: document.getElementById('edit-proj-setor').value.trim(),
-        areas_atuacao: document.getElementById('edit-proj-areas').value.trim(),
-        interdisciplinaridade: document.getElementById('edit-proj-inter').value.trim(),
-        grupo_nome: document.getElementById('edit-proj-grupo').value.trim(),
-        membros: tempEditMembros
+      btnLogin.classList.add("hidden");
+      btnLogout.classList.remove("hidden");
+      document.getElementById("user-name").textContent = currentUser.nome;
+      const roleLabels = {
+        admin: "Administrador",
+        coordenador: "Coordenador",
+        orientador: "Orientador",
+        aluno: "Aluno"
       };
+      document.getElementById("user-role-badge").textContent = `Ator: ${roleLabels[currentUser.role] || currentUser.role}`;
+      document.getElementById("user-avatar").textContent = currentUser.nome.substring(0, 2).toUpperCase();
+      document.getElementById("consultar-subtitle").textContent = "Visualizando todos os projetos cadastrados no sistema";
 
-      if (getCurrentActorRole() === 'admin') {
-        payload.orientador_nome = document.getElementById('edit-proj-orientador').value;
+      if (currentUser.role === "aluno") {
+        navMeusGrupos.classList.remove("hidden");
       }
 
-      const res = await fetch(`/api/projetos/${editingProjectId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      if (res.ok) {
-        closeEditProjetoModal();
-        await loadAllData();
-        alert('Projeto e grupo atualizados no banco de dados!');
+      if (["admin", "coordenador", "orientador"].includes(currentUser.role)) {
+        navRegistrar.classList.remove("hidden");
+        navContas.classList.remove("hidden");
+        document.getElementById("proj-orientador").value = currentUser.nome;
+        populateRoleOptions();
       }
     }
 
-    // ==========================================
-    // ALUNO: ACEITAR / REJEITAR E EDITAR DADOS PRÓPRIOS
-    // ==========================================
-    function renderMeusGruposAluno() {
-      const container = document.getElementById('pending-groups-container');
-      container.innerHTML = '';
-
-      if (!currentUser || currentUser.role !== 'aluno') return;
-
-      let countPending = 0;
-      let foundAny = false;
-
-      projetosData.forEach(p => {
-        if (!p.grupo || !p.grupo.membros) return;
-        p.grupo.membros.forEach(membro => {
-          if (membro.ra === currentUser.ra) {
-            foundAny = true;
-            if (membro.status_participacao === 'PENDENTE') countPending++;
-
-            let statusBadge = '';
-            if (membro.status_participacao === 'CONFIRMADO') {
-              statusBadge = '<span class="text-emerald-400 font-semibold">Aceito / Confirmado</span>';
-            } else if (membro.status_participacao === 'RECUSADO') {
-              statusBadge = '<span class="text-red-400 font-semibold">Rejeitado</span>';
-            } else {
-              statusBadge = '<span class="text-amber-400 font-semibold">Pendente de Resposta</span>';
-            }
-
-            container.innerHTML += `
-              <div class="flex flex-col lg:flex-row lg:items-center justify-between p-4 bg-slate-900 rounded-lg border border-slate-800 gap-4">
-                <div class="space-y-1">
-                  <div class="text-xs font-bold text-slate-200">${p.titulo} <span class="text-indigo-400">(Grupo: ${p.grupo.nome})</span></div>
-                  <div class="text-[11px] text-slate-400">Orientador: ${p.orientador_nome} • Status do Projeto: <strong class="text-slate-300">${p.status}</strong> • Seu Vínculo: ${statusBadge}</div>
-                  <div class="text-[11px] text-slate-300 bg-slate-950/60 px-2.5 py-1 rounded inline-block border border-slate-800">
-                    Meu Registro no Grupo: <strong>${membro.nome}</strong> (RA: <strong>${membro.ra}</strong>)
-                  </div>
-                </div>
-
-                <div class="flex flex-wrap items-center gap-2">
-                  <button onclick="openAlunoEditModal(${membro.id}, '${membro.nome}', '${membro.ra}')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-indigo-300 border border-slate-700 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5">
-                    <i class="fa-solid fa-user-pen"></i> Editar Meu Nome/RA
-                  </button>
-
-                  ${membro.status_participacao !== 'CONFIRMADO' ? `
-                    <button onclick="responderParticipacao(${membro.id}, 'CONFIRMADO')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5">
-                      <i class="fa-solid fa-check"></i> Aceitar Projeto
-                    </button>
-                  ` : ''}
-
-                  ${membro.status_participacao !== 'RECUSADO' ? `
-                    <button onclick="responderParticipacao(${membro.id}, 'RECUSADO')" class="px-3 py-1.5 bg-red-600/20 hover:bg-red-600/40 text-red-400 border border-red-500/30 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5">
-                      <i class="fa-solid fa-xmark"></i> Rejeitar Projeto
-                    </button>
-                  ` : ''}
-                </div>
-              </div>
-            `;
-          }
-        });
-      });
-
-      if (!foundAny) {
-        container.innerHTML = `<div class="text-xs text-slate-500 italic p-2">Você ainda não foi vinculado a nenhum projeto extensionista.</div>`;
-      }
-
-      document.getElementById('badge-pending-count').innerText = countPending;
-    }
-
-    async function responderParticipacao(membroId, novoStatus) {
-      const res = await fetch(`/api/membros/${membroId}/resposta`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status_participacao: novoStatus })
-      });
-      if (res.ok) {
-        await loadAllData();
-        alert(novoStatus === 'CONFIRMADO' ? 'Você aceitou participar do projeto!' : 'Você rejeitou a participação no projeto.');
-      }
-    }
-
-    function openAlunoEditModal(membroId, nome, ra) {
-      alunoEditingContext = { membroId };
-      document.getElementById('aluno-self-nome').value = nome;
-      document.getElementById('aluno-self-ra').value = ra;
-      document.getElementById('modal-aluno-edit-self').classList.remove('hidden');
-    }
-
-    function closeAlunoEditModal() {
-      document.getElementById('modal-aluno-edit-self').classList.add('hidden');
-    }
-
-    async function saveAlunoSelfEdit() {
-      const novoNome = document.getElementById('aluno-self-nome').value.trim();
-      const novoRa = document.getElementById('aluno-self-ra').value.trim();
-
-      if (!novoNome || !novoRa) return alert('Preencha seu Nome e RA.');
-
-      const res = await fetch(`/api/membros/${alunoEditingContext.membroId}/aluno-self`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: currentUser.id, nome: novoNome, ra: novoRa })
-      });
-
-      if (res.ok) {
-        currentUser.nome = novoNome;
-        currentUser.ra = novoRa;
-        document.getElementById('user-name').innerText = novoNome;
-        document.getElementById('user-role-badge').innerText = `Aluno • RA: ${novoRa}`;
-        closeAlunoEditModal();
-        await loadAllData();
-        alert('Seus dados foram atualizados!');
-      }
-    }
-
-    // ==========================================
-    // ORIENTADOR: REGISTRAR NOVO PROJETO
-    // ==========================================
-    function addAlunoMembro() {
-      const nomeInput = document.getElementById('input-nome-aluno');
-      const raInput = document.getElementById('input-ra-aluno');
-      const nome = nomeInput.value.trim();
-      const ra = raInput.value.trim();
-
-      if (!ra) return alert('Por favor, digite o RA do aluno.');
-
-      let finalNome = nome;
-      if (!finalNome) {
-        const foundAcc = accountsData.find(a => a.ra === ra && a.role === 'aluno');
-        finalNome = foundAcc ? foundAcc.nome : `Aluno RA ${ra}`;
-      }
-
-      tempMembrosNovos.push({ ra: ra, nome: finalNome });
-      nomeInput.value = '';
-      raInput.value = '';
-      renderMembrosNovos();
-    }
-
-    function renderMembrosNovos() {
-      const container = document.getElementById('membros-list-container');
-      if (tempMembrosNovos.length === 0) {
-        container.innerHTML = `<span class="text-xs text-slate-500 italic">Nenhum aluno adicionado ainda.</span>`;
-        return;
-      }
-
-      container.innerHTML = tempMembrosNovos.map((m, index) => `
-        <span class="text-xs px-2.5 py-1 bg-slate-800 text-slate-200 rounded-md border border-slate-700 flex items-center gap-2">
-          <span>${m.nome} (RA: ${m.ra})</span>
-          <button type="button" onclick="removeMembroNovo(${index})" class="text-red-400 hover:text-red-300"><i class="fa-solid fa-xmark"></i></button>
-        </span>
-      `).join('');
-    }
-
-    function removeMembroNovo(index) {
-      tempMembrosNovos.splice(index, 1);
-      renderMembrosNovos();
-    }
-
-    async function handleSaveProjeto(e) {
-      e.preventDefault();
-      if (tempMembrosNovos.length === 0) return alert('Adicione pelo menos um aluno ao grupo.');
-
-      const payload = {
-        titulo: document.getElementById('input-titulo').value.trim(),
-        setor_externo: document.getElementById('input-setorexterno').value.trim(),
-        areas_atuacao: document.getElementById('input-areas').value.trim(),
-        interdisciplinaridade: document.getElementById('input-interdisciplinaridade').value.trim(),
-        grupo_nome: document.getElementById('input-nome-grupo').value.trim(),
-        orientador_nome: currentUser.nome,
-        membros: tempMembrosNovos
-      };
-
-      const res = await fetch('/api/projetos', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      if (res.ok) {
-        tempMembrosNovos = [];
-        document.getElementById('form-novo-projeto').reset();
-        renderMembrosNovos();
-        await loadAllData();
-        alert('Trabalho Extensionista registrado com sucesso e notificações enviadas aos alunos!');
-        switchTab('consultar');
-      }
-    }
-
-    // ==========================================
-    // CRUD PROFESSORES & GESTÃO DE CONTAS
-    // ==========================================
-    function renderProfessores() {
-      const tbody = document.getElementById('professores-table-body');
-      tbody.innerHTML = '';
-      const role = getCurrentActorRole();
-
-      const profs = accountsData.filter(acc => acc.role === 'orientador' || acc.role === 'coordenador');
-
-      profs.forEach(p => {
-        const isCoord = p.role === 'coordenador';
-        const canModify = (role === 'admin') || (role === 'coordenador' && !isCoord);
-
-        tbody.innerHTML += `
-          <tr class="hover:bg-slate-900/50">
-            <td class="p-3.5 font-medium text-slate-400">${p.ra}</td>
-            <td class="p-3.5 font-bold text-slate-200">${p.nome}</td>
-            <td class="p-3.5 text-slate-400">${p.email}</td>
-            <td class="p-3.5"><span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">${p.role.toUpperCase()}</span></td>
-            <td class="p-3.5 text-right space-x-2">
-              ${canModify ? `
-                <button onclick="openModalProf(${p.id})" class="text-indigo-400 hover:text-indigo-300"><i class="fa-solid fa-pen"></i></button>
-                <button onclick="deleteConta(${p.id})" class="text-slate-500 hover:text-red-400"><i class="fa-solid fa-trash"></i></button>
-              ` : `<span class="text-[10px] text-slate-500">Protegido</span>`}
-            </td>
-          </tr>
-        `;
-      });
-    }
-
-    function openModalProf(profId = null) {
-      editingProfId = profId;
-      const role = getCurrentActorRole();
-      const perfilSelect = document.getElementById('prof-perfil');
-      perfilSelect.innerHTML = `<option value="orientador">ORIENTADOR</option>`;
-      if (role === 'admin') {
-        perfilSelect.innerHTML += `<option value="coordenador">COORDENADOR</option>`;
-      }
-
-      if (profId) {
-        const prof = accountsData.find(a => a.id === profId);
-        document.getElementById('modal-prof-title').innerText = 'Editar Professor';
-        document.getElementById('prof-ra').value = prof.ra;
-        document.getElementById('prof-nome').value = prof.nome;
-        document.getElementById('prof-email').value = prof.email;
-        document.getElementById('prof-senha').value = '';
-        perfilSelect.value = prof.role;
-      } else {
-        document.getElementById('modal-prof-title').innerText = 'Cadastrar Professor';
-        document.getElementById('prof-ra').value = '';
-        document.getElementById('prof-nome').value = '';
-        document.getElementById('prof-email').value = '';
-        document.getElementById('prof-senha').value = '';
-      }
-      document.getElementById('modal-prof').classList.remove('hidden');
-    }
-
-    function closeModalProf() {
-      document.getElementById('modal-prof').classList.add('hidden');
-      editingProfId = null;
-    }
-
-    async function saveProf() {
-      const payload = {
-        actor_role: getCurrentActorRole(),
-        ra: document.getElementById('prof-ra').value.trim(),
-        nome: document.getElementById('prof-nome').value.trim(),
-        email: document.getElementById('prof-email').value.trim(),
-        senha: document.getElementById('prof-senha').value.trim(),
-        role: document.getElementById('prof-perfil').value
-      };
-
-      if (!payload.ra || !payload.nome || !payload.email || (!editingProfId && !payload.senha)) {
-        return alert('Preencha todos os campos obrigatórios.');
-      }
-
-      const url = editingProfId ? `/api/usuarios/${editingProfId}` : '/api/usuarios';
-      const method = editingProfId ? 'PUT' : 'POST';
-
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      if (res.ok) {
-        closeModalProf();
-        await loadAllData();
-      } else {
-        const err = await res.json();
-        alert(err.error || 'Erro ao salvar professor.');
-      }
-    }
-
-    function setupGestaoContasUI() {
-      const role = getCurrentActorRole();
-      const select = document.getElementById('conta-perfil');
-      const desc = document.getElementById('gestao-contas-desc');
-      select.innerHTML = '';
-
-      if (role === 'admin') {
-        desc.innerText = 'Permissão de Administrador: Crie acessos para Coordenadores, Orientadores e Alunos.';
-        select.innerHTML = `
+    function populateRoleOptions() {
+      const sel = document.getElementById("user-new-role");
+      sel.innerHTML = "";
+      if (currentUser.role === "admin") {
+        sel.innerHTML = `
           <option value="coordenador">Coordenador</option>
           <option value="orientador">Orientador</option>
           <option value="aluno">Aluno</option>
         `;
-      } else if (role === 'coordenador') {
-        desc.innerText = 'Permissão de Coordenador: Crie acessos para Orientadores e Alunos.';
-        select.innerHTML = `
+      } else if (currentUser.role === "coordenador") {
+        sel.innerHTML = `
           <option value="orientador">Orientador</option>
           <option value="aluno">Aluno</option>
         `;
-      } else if (role === 'orientador') {
-        desc.innerText = 'Permissão de Orientador: Crie acessos para Alunos.';
-        select.innerHTML = `<option value="aluno">Aluno</option>`;
+      } else if (currentUser.role === "orientador") {
+        sel.innerHTML = `<option value="aluno">Aluno</option>`;
       }
-      toggleCampoRA();
     }
 
-    function toggleCampoRA() {
-      const perfil = document.getElementById('conta-perfil').value;
-      const label = document.getElementById('label-conta-ra');
-      label.innerText = perfil === 'aluno' ? 'RA do Aluno *' : 'RA / Matrícula do Professor *';
+    function openLoginModal() {
+      document.getElementById("login-error").classList.add("hidden");
+      document.getElementById("login-modal").classList.remove("hidden");
     }
 
-    async function handleCriarConta(e) {
+    function closeLoginModal() {
+      document.getElementById("login-modal").classList.add("hidden");
+    }
+
+    async function handleLogin(e) {
       e.preventDefault();
-      const actorRole = getCurrentActorRole();
-      if (actorRole === 'aluno' || actorRole === 'public') return;
+      const identifier = document.getElementById("login-identifier").value;
+      const senha = document.getElementById("login-senha").value;
+      const errEl = document.getElementById("login-error");
 
-      const payload = {
-        actor_role: actorRole,
-        role: document.getElementById('conta-perfil').value,
-        nome: document.getElementById('conta-nome').value.trim(),
-        ra: document.getElementById('conta-ra').value.trim(),
-        email: document.getElementById('conta-email').value.trim(),
-        senha: document.getElementById('conta-senha').value.trim()
+      try {
+        const res = await fetch("/api/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ identifier, senha })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          errEl.textContent = data.error || "Falha ao entrar";
+          errEl.classList.remove("hidden");
+          return;
+        }
+        currentUser = data;
+        localStorage.setItem("extensao_user", JSON.stringify(currentUser));
+        closeLoginModal();
+        updateUIForUser();
+        await loadProjetos();
+        if (["admin", "coordenador", "orientador"].includes(currentUser.role)) {
+          await loadUsuarios();
+        }
+      } catch (err) {
+        errEl.textContent = "Erro de conexão com o servidor.";
+        errEl.classList.remove("hidden");
+      }
+    }
+
+    function logout() {
+      currentUser = null;
+      localStorage.removeItem("extensao_user");
+      updateUIForUser();
+      renderProjetos();
+    }
+
+    async function loadProjetos() {
+      const res = await fetch("/api/projetos");
+      allProjetos = await res.json();
+      renderProjetos();
+      if (currentUser && currentUser.role === "aluno") {
+        renderAlunoGrupos();
+      }
+    }
+
+    function renderProjetos() {
+      const grid = document.getElementById("projetos-cards-grid");
+      const query = (document.getElementById("search-projetos").value || "").toLowerCase();
+      const isManager = currentUser && ["admin", "coordenador", "orientador"].includes(currentUser.role);
+
+      const filtrados = allProjetos.filter(p => {
+        if (!currentUser && !p.publicado) return false;
+        if (currentUser && currentUser.role === "aluno" && !p.publicado) {
+          const isMember = (p.grupo?.membros || []).some(m => m.ra.toLowerCase() === currentUser.ra.toLowerCase());
+          if (!isMember) return false;
+        }
+        const texto = `${p.titulo} ${p.areas_atuacao} ${p.setor_externo} ${p.orientador_nome} ${(p.grupo?.membros || []).map(m => m.nome).join(" ")}`.toLowerCase();
+        return texto.includes(query);
+      });
+
+      if (filtrados.length === 0) {
+        grid.innerHTML = `<div class="col-span-full text-center py-10 text-xs text-slate-400 bg-slate-950/40 rounded-xl border border-slate-800/60">Nenhum projeto encontrado no momento.</div>`;
+        return;
+      }
+
+      const statusColors = {
+        "NOVO": "bg-sky-500/15 text-sky-400 border-sky-500/30",
+        "EM ANDAMENTO": "bg-amber-500/15 text-amber-400 border-amber-500/30",
+        "CONCLUIDO": "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
+        "CANCELADO": "bg-red-500/15 text-red-400 border-red-500/30"
       };
 
-      const res = await fetch('/api/usuarios', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      grid.innerHTML = filtrados.map(p => {
+        const badgeClass = statusColors[p.status] || "bg-slate-800 text-slate-300 border-slate-700";
+        const membrosHtml = (p.grupo?.membros || []).map(m => {
+          const stIcon = m.status_participacao === "CONFIRMADO"
+            ? `<span class="text-emerald-400" title="Confirmado"><i class="fa-solid fa-circle-check"></i></span>`
+            : m.status_participacao === "RECUSADO"
+            ? `<span class="text-red-400" title="Recusado"><i class="fa-solid fa-circle-xmark"></i></span>`
+            : `<span class="text-amber-400" title="Pendente"><i class="fa-solid fa-clock"></i></span>`;
+          return `<li class="flex items-center justify-between text-[11px] text-slate-300 bg-slate-900/80 px-2.5 py-1 rounded-md border border-slate-800/80">
+            <span class="truncate">${m.nome} <span class="text-slate-500">(${m.ra})</span></span>
+            ${stIcon}
+          </li>`;
+        }).join("");
+
+        const managerControls = isManager ? `
+          <div class="pt-3 mt-3 border-t border-slate-800/80 space-y-2.5">
+            <div class="flex items-center justify-between gap-2">
+              <select onchange="alterarStatusProjeto(${p.id}, this.value)" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-[11px] text-slate-200 focus:outline-none focus:border-indigo-500">
+                <option value="NOVO" ${p.status === "NOVO" ? "selected" : ""}>Status: NOVO</option>
+                <option value="EM ANDAMENTO" ${p.status === "EM ANDAMENTO" ? "selected" : ""}>Status: EM ANDAMENTO</option>
+                <option value="CONCLUIDO" ${p.status === "CONCLUIDO" ? "selected" : ""}>Status: CONCLUÍDO</option>
+                <option value="CANCELADO" ${p.status === "CANCELADO" ? "selected" : ""}>Status: CANCELADO</option>
+              </select>
+
+              <button onclick="togglePublicarProjeto(${p.id}, ${!p.publicado})" class="px-2.5 py-1.5 ${p.publicado ? "bg-slate-800 hover:bg-slate-700 text-amber-400 border-slate-700" : "bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-500"} text-[11px] font-semibold rounded-lg border transition-colors flex items-center gap-1.5" title="${p.publicado ? "Ocultar do mural público" : "Publicar projeto no mural público"}">
+                <i class="fa-solid ${p.publicado ? "fa-eye-slash" : "fa-globe"}"></i>
+                <span>${p.publicado ? "Ocultar" : "Postar Projeto"}</span>
+              </button>
+            </div>
+
+            <div class="flex items-center justify-end gap-2">
+              <button onclick="openEditProjetoModal(${p.id})" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-lg border border-slate-700 transition-colors flex items-center gap-1.5" title="Editar Projeto">
+                <i class="fa-solid fa-pen-to-square"></i>
+                <span>Editar</span>
+              </button>
+              <button onclick="deletarProjeto(${p.id}, '${p.titulo.replace(/'/g, "\\'")}')" class="px-2.5 py-1.5 bg-red-950/60 hover:bg-red-900/80 text-red-400 text-xs font-medium rounded-lg border border-red-800/60 transition-colors flex items-center gap-1.5" title="Excluir Projeto">
+                <i class="fa-solid fa-trash"></i>
+                <span>Excluir</span>
+              </button>
+            </div>
+          </div>
+        ` : "";
+
+        return `
+          <div class="bg-slate-950/70 border border-slate-800/80 rounded-xl p-4 flex flex-col justify-between hover:border-slate-700 transition-all">
+            <div>
+              <div class="flex items-start justify-between gap-2 mb-2">
+                <span class="px-2 py-0.5 text-[10px] font-bold rounded-md border ${badgeClass}">${p.status}</span>
+                ${isManager ? `<span class="text-[10px] font-medium ${p.publicado ? "text-emerald-400" : "text-slate-500"}"><i class="fa-solid ${p.publicado ? "fa-globe" : "fa-lock"} mr-1"></i>${p.publicado ? "Público" : "Interno"}</span>` : ""}
+              </div>
+              <h4 class="text-sm font-bold text-slate-100 mb-1">${p.titulo}</h4>
+              <p class="text-[11px] text-slate-400 mb-3"><i class="fa-solid fa-building mr-1 text-indigo-400"></i> ${p.setor_externo}</p>
+
+              <div class="space-y-1 text-[11px] text-slate-300 mb-3">
+                <div><span class="text-slate-500">Áreas:</span> ${p.areas_atuacao}</div>
+                <div><span class="text-slate-500">Interdisciplinaridade:</span> ${p.interdisciplinaridade}</div>
+                <div><span class="text-slate-500">Orientador:</span> ${p.orientador_nome}</div>
+              </div>
+
+              <div class="bg-slate-900/50 rounded-lg p-2.5 border border-slate-800/60">
+                <div class="text-[11px] font-semibold text-indigo-300 mb-1.5"><i class="fa-solid fa-users mr-1"></i> Grupo: ${p.grupo?.nome || "Sem grupo"}</div>
+                <ul class="space-y-1">${membrosHtml || '<li class="text-[11px] text-slate-500">Nenhum aluno vinculado</li>'}</ul>
+              </div>
+            </div>
+            ${managerControls}
+          </div>
+        `;
+      }).join("");
+    }
+
+    function addMembroField(containerId, ra = "", nome = "", status = "PENDENTE") {
+      const container = document.getElementById(containerId);
+      const row = document.createElement("div");
+      row.className = "flex items-center gap-2 membro-row";
+      row.dataset.status = status;
+      row.innerHTML = `
+        <input type="text" placeholder="RA do Aluno" value="${ra}" required class="membro-ra w-1/3 bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
+        <input type="text" placeholder="Nome do Aluno" value="${nome}" required class="membro-nome flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
+        <button type="button" onclick="this.parentElement.remove()" class="p-1.5 text-slate-500 hover:text-red-400">
+          <i class="fa-solid fa-trash-can text-xs"></i>
+        </button>
+      `;
+      container.appendChild(row);
+    }
+
+    function collectMembros(containerId) {
+      const rows = document.querySelectorAll(`#${containerId} .membro-row`);
+      return Array.from(rows).map(r => ({
+        ra: r.querySelector(".membro-ra").value.trim(),
+        nome: r.querySelector(".membro-nome").value.trim(),
+        status_participacao: r.dataset.status || "PENDENTE"
+      })).filter(m => m.ra && m.nome);
+    }
+
+    async function handleCriarProjeto(e) {
+      e.preventDefault();
+      const payload = {
+        titulo: document.getElementById("proj-titulo").value,
+        setor_externo: document.getElementById("proj-setor").value,
+        areas_atuacao: document.getElementById("proj-areas").value,
+        interdisciplinaridade: document.getElementById("proj-inter").value,
+        grupo_nome: document.getElementById("proj-grupo").value,
+        orientador_nome: document.getElementById("proj-orientador").value,
+        membros: collectMembros("membros-list-create")
+      };
+
+      const res = await fetch("/api/projetos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
 
       if (res.ok) {
         e.target.reset();
-        toggleCampoRA();
-        await loadAllData();
-        alert(`Conta de ${payload.role.toUpperCase()} criada com sucesso!`);
+        document.getElementById("membros-list-create").innerHTML = "";
+        addMembroField("membros-list-create");
+        document.getElementById("proj-orientador").value = currentUser.nome;
+        await loadProjetos();
+        switchTab("consultar");
       } else {
-        const err = await res.json();
-        alert(err.error || 'Erro ao criar conta.');
+        alert("Erro ao cadastrar projeto.");
       }
     }
 
-    function renderContasTable() {
-      const tbody = document.getElementById('contas-table-body');
-      if (!tbody) return;
-      tbody.innerHTML = '';
-
-      const role = getCurrentActorRole();
-      let visibleAccounts = [];
-
-      if (role === 'admin') {
-        visibleAccounts = accountsData.filter(a => a.role !== 'admin');
-      } else if (role === 'coordenador') {
-        visibleAccounts = accountsData.filter(a => a.role === 'orientador' || a.role === 'aluno');
-      } else if (role === 'orientador') {
-        visibleAccounts = accountsData.filter(a => a.role === 'aluno');
-      }
-
-      visibleAccounts.forEach(acc => {
-        tbody.innerHTML += `
-          <tr class="hover:bg-slate-900/50">
-            <td class="p-3 font-medium text-slate-400">${acc.ra}</td>
-            <td class="p-3 font-bold text-slate-200">${acc.nome}</td>
-            <td class="p-3 text-slate-400">${acc.email}</td>
-            <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">${acc.role.toUpperCase()}</span></td>
-            <td class="p-3 text-right">
-              <button onclick="deleteConta(${acc.id})" class="text-slate-500 hover:text-red-400"><i class="fa-solid fa-trash"></i></button>
-            </td>
-          </tr>
-        `;
-      });
-    }
-
-    async function deleteConta(id) {
-      await fetch(`/api/usuarios/${id}`, { method: 'DELETE' });
-      await loadAllData();
-    }
-
-    // ==========================================
-    // STATUS MODAL (APENAS ADMIN, COORD, ORIENTADOR)
-    // ==========================================
-    function openModalStatus(projId) {
-      const role = getCurrentActorRole();
-      if (role === 'aluno' || role === 'public') return;
-
-      selectedProjectIdForStatus = projId;
-      const p = projetosData.find(proj => proj.id === projId);
+    function openEditProjetoModal(projetoId) {
+      const p = allProjetos.find(item => item.id === projetoId);
       if (!p) return;
+      document.getElementById("edit-proj-id").value = p.id;
+      document.getElementById("edit-proj-titulo").value = p.titulo;
+      document.getElementById("edit-proj-setor").value = p.setor_externo;
+      document.getElementById("edit-proj-areas").value = p.areas_atuacao;
+      document.getElementById("edit-proj-inter").value = p.interdisciplinaridade;
+      document.getElementById("edit-proj-grupo").value = p.grupo?.nome || "";
+      document.getElementById("edit-proj-orientador").value = p.orientador_nome;
 
-      document.getElementById('status-modal-info').innerText = `Projeto: "${p.titulo}" | Status Atual: ${p.status}`;
-      const select = document.getElementById('select-novo-status');
-      select.innerHTML = '';
-
-      ALL_STATUSES.forEach(s => {
-        select.innerHTML += `<option value="${s}" ${s === p.status ? 'selected' : ''}>${s}</option>`;
-      });
-
-      document.getElementById('modal-status').classList.remove('hidden');
+      const list = document.getElementById("membros-list-edit");
+      list.innerHTML = "";
+      (p.grupo?.membros || []).forEach(m => addMembroField("membros-list-edit", m.ra, m.nome, m.status_participacao));
+      document.getElementById("edit-projeto-modal").classList.remove("hidden");
     }
 
-    function closeModalStatus() {
-      document.getElementById('modal-status').classList.add('hidden');
+    function closeEditProjetoModal() {
+      document.getElementById("edit-projeto-modal").classList.add("hidden");
     }
 
-    async function confirmStatusTransition() {
-      const newStatus = document.getElementById('select-novo-status').value;
-      const res = await fetch(`/api/projetos/${selectedProjectIdForStatus}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ actor_role: getCurrentActorRole(), status: newStatus })
+    async function handleEditarProjeto(e) {
+      e.preventDefault();
+      const id = document.getElementById("edit-proj-id").value;
+      const payload = {
+        actor_role: currentUser.role,
+        titulo: document.getElementById("edit-proj-titulo").value,
+        setor_externo: document.getElementById("edit-proj-setor").value,
+        areas_atuacao: document.getElementById("edit-proj-areas").value,
+        interdisciplinaridade: document.getElementById("edit-proj-inter").value,
+        grupo_nome: document.getElementById("edit-proj-grupo").value,
+        orientador_nome: document.getElementById("edit-proj-orientador").value,
+        membros: collectMembros("membros-list-edit")
+      };
+
+      const res = await fetch(`/api/projetos/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
       });
 
       if (res.ok) {
-        closeModalStatus();
-        await loadAllData();
+        closeEditProjetoModal();
+        await loadProjetos();
+      } else {
+        const err = await res.json();
+        alert(err.error || "Erro ao editar projeto.");
+      }
+    }
+
+    async function alterarStatusProjeto(projetoId, status) {
+      await fetch(`/api/projetos/${projetoId}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ actor_role: currentUser.role, status })
+      });
+      await loadProjetos();
+    }
+
+    async function togglePublicarProjeto(projetoId, publicar) {
+      await fetch(`/api/projetos/${projetoId}/publicar`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ actor_role: currentUser.role, publicado: publicar })
+      });
+      await loadProjetos();
+    }
+
+    async function deletarProjeto(projetoId, titulo) {
+      if (!confirm(`Tem certeza que deseja excluir definitivamente o projeto "${titulo}"?`)) return;
+
+      try {
+        const res = await fetch(`/api/projetos/${projetoId}`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ actor_role: currentUser.role })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          alert(data.error || "Erro ao excluir projeto.");
+          return;
+        }
+        await loadProjetos();
+      } catch (err) {
+        alert("Erro de conexão ao excluir projeto.");
       }
     }
 
     // ==========================================
-    // UTILITÁRIOS
+    // CONTAS E USUÁRIOS
     // ==========================================
-    function simularCargaMassiva(tipo) {
-      alert(`Carga massiva de ${tipo} executada com sucesso!`);
+    async function loadUsuarios() {
+      const res = await fetch("/api/usuarios");
+      allUsuarios = await res.json();
+      const tbody = document.getElementById("usuarios-table-body");
+      tbody.innerHTML = allUsuarios.map(u => `
+        <tr class="hover:bg-slate-900/50">
+          <td class="py-2.5 px-4 font-mono text-slate-300">${u.ra}</td>
+          <td class="py-2.5 px-4 font-medium text-slate-100">${u.nome}</td>
+          <td class="py-2.5 px-4 text-slate-400">${u.email}</td>
+          <td class="py-2.5 px-4 uppercase text-[10px] font-bold text-indigo-400">${u.role}</td>
+          <td class="py-2.5 px-4 text-right">
+            ${u.role !== "admin" ? `<button onclick="deletarUsuario(${u.id})" class="text-red-400 hover:text-red-300 text-xs"><i class="fa-solid fa-trash"></i></button>` : '<span class="text-[10px] text-slate-600">Protegido</span>'}
+          </td>
+        </tr>
+      `).join("");
     }
 
-    function filterProjetos() {
-      const q = document.getElementById('search-projetos').value.toLowerCase();
-      const cards = document.querySelectorAll('#projetos-cards-grid > div');
-      cards.forEach(card => {
-        card.style.display = card.innerText.toLowerCase().includes(q) ? 'flex' : 'none';
+    async function handleCriarUsuario(e) {
+      e.preventDefault();
+      const payload = {
+        actor_role: currentUser.role,
+        role: document.getElementById("user-new-role").value,
+        ra: document.getElementById("user-new-ra").value,
+        nome: document.getElementById("user-new-nome").value,
+        email: document.getElementById("user-new-email").value,
+        senha: document.getElementById("user-new-senha").value
+      };
+
+      const res = await fetch("/api/usuarios", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
       });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Erro ao criar conta.");
+        return;
+      }
+      e.target.reset();
+      await loadUsuarios();
+      alert("Conta criada com sucesso!");
     }
 
-    function toggleSidebar() {
-      document.getElementById('sidebar').classList.toggle('-translate-x-full');
-      document.getElementById('sidebar-backdrop').classList.toggle('hidden');
+    async function deletarUsuario(id) {
+      if (!confirm("Remover esta conta de usuário?")) return;
+      await fetch(`/api/usuarios/${id}`, { method: "DELETE" });
+      await loadUsuarios();
     }
 
-    window.onload = () => {
-      applyRolePermissions();
-    };
+    // ==========================================
+    // ALUNO: ACEITAR / REJEITAR PARTICIPAÇÃO
+    // ==========================================
+    function renderAlunoGrupos() {
+      const container = document.getElementById("pending-groups-container");
+      const badge = document.getElementById("badge-convites");
+      const meusVinculos = [];
+
+      allProjetos.forEach(p => {
+        (p.grupo?.membros || []).forEach(m => {
+          if (m.ra.toLowerCase() === currentUser.ra.toLowerCase()) {
+            meusVinculos.push({ projeto: p, membro: m });
+          }
+        });
+      });
+
+      const pendentesCount = meusVinculos.filter(v => v.membro.status_participacao === "PENDENTE").length;
+      if (pendentesCount > 0) {
+        badge.textContent = pendentesCount;
+        badge.classList.remove("hidden");
+      } else {
+        badge.classList.add("hidden");
+      }
+
+      if (meusVinculos.length === 0) {
+        container.innerHTML = `<p class="text-xs text-slate-400">Você ainda não foi incluído em nenhum grupo de projeto extensionista.</p>`;
+        return;
+      }
+
+      container.innerHTML = meusVinculos.map(({ projeto, membro }) => `
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div class="text-xs font-bold text-slate-100">${projeto.titulo}</div>
+            <div class="text-[11px] text-slate-400">Grupo: <span class="text-indigo-400 font-medium">${projeto.grupo.nome}</span> • Orientador: ${projeto.orientador_nome}</div>
+            <div class="mt-1 text-[11px]">Status da sua participação: <span class="font-bold ${membro.status_participacao === "CONFIRMADO" ? "text-emerald-400" : membro.status_participacao === "RECUSADO" ? "text-red-400" : "text-amber-400"}">${membro.status_participacao}</span></div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="responderConvite(${membro.id}, 'CONFIRMADO')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg transition-colors">
+              <i class="fa-solid fa-check mr-1"></i> Aceitar
+            </button>
+            <button onclick="responderConvite(${membro.id}, 'RECUSADO')" class="px-3 py-1.5 bg-red-950/70 hover:bg-red-900 text-red-300 border border-red-800/60 text-xs font-semibold rounded-lg transition-colors">
+              <i class="fa-solid fa-xmark mr-1"></i> Recusar
+            </button>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    async function responderConvite(membroId, status) {
+      await fetch(`/api/membros/${membroId}/resposta`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status_participacao: status })
+      });
+      await loadProjetos();
+    }
   </script>
 </body>
 </html>
