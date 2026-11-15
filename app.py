@@ -1,5 +1,6 @@
 import os
 import sqlite3
+import threading
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from flask import Flask, render_template, request, jsonify, session
@@ -37,7 +38,7 @@ SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
 SMTP_USER = ""
 SMTP_PASSWORD = ""
-BREVO_ENABLED = False
+BREVO_ENABLED = True
 SENHA_PROVISORIA_PADRAO = "123456"
 
 
@@ -178,32 +179,78 @@ def exigir_acesso_relatorios():
     return None
 
 
+def enviar_email_brevo(destinatario_email, assunto, html_content):
+    """Envia um e-mail transacional pela API da Brevo."""
+    if not BREVO_ENABLED:
+        print("[BREVO] Envio desativado pela configuração BREVO_ENABLED.")
+        return False
+
+    if sib_api_v3_sdk is None:
+        print("[BREVO] Biblioteca sib-api-v3-sdk não está instalada.")
+        return False
+
+    if not BREVO_API_KEY:
+        print("[BREVO] BREVO_API_KEY não foi configurada em segredos.py.")
+        return False
+
+    try:
+        configuration = sib_api_v3_sdk.Configuration()
+        configuration.api_key["api-key"] = BREVO_API_KEY
+        configuration.host = "https://api.brevo.com/v3"
+        api_instance = sib_api_v3_sdk.TransactionalEmailsApi(
+            sib_api_v3_sdk.ApiClient(configuration)
+        )
+
+        sender = {
+            "name": "Projeto Extensionista da Faccamp",
+            "email": "extensao.unifaccamp@gmail.com"
+        }
+        mensagem = sib_api_v3_sdk.SendSmtpEmail(
+            to=[{"email": destinatario_email}],
+            html_content=html_content,
+            sender=sender,
+            subject=assunto
+        )
+        resposta = api_instance.send_transac_email(mensagem)
+        print(f"[BREVO] E-mail aceito pela API para {destinatario_email}: {resposta}")
+        return True
+    except Exception as e:
+        print(f"[ERRO BREVO] Falha ao enviar para {destinatario_email}: {e}")
+        return False
+
+
+def enviar_email_brevo_em_segundo_plano(destinatario_email, assunto, html_content):
+    """Inicia o envio sem bloquear a resposta da rota Flask."""
+    try:
+        tarefa = threading.Thread(
+            target=enviar_email_brevo,
+            args=(destinatario_email, assunto, html_content),
+            daemon=True,
+            name="brevo-email"
+        )
+        tarefa.start()
+        print(f"[BREVO] Envio em segundo plano iniciado para {destinatario_email}.")
+        return True
+    except Exception as e:
+        print(f"[ERRO BREVO] Não foi possível iniciar o envio para {destinatario_email}: {e}")
+        return False
+
+
 def enviar_notificacao_email(destinatario_email, nome_aluno, titulo_projeto, nome_grupo, orientador):
+    """Envia convite somente ao aluno incluído em um projeto."""
     assunto = f"Convite de Projeto Extensionista: {titulo_projeto}"
-    corpo = f"""
-Olá, {nome_aluno}!
+    html_content = f"""
+        <div style="font-family: Arial, sans-serif; color: #333;">
+            <h2>Olá, {nome_aluno}!</h2>
+            <p>Você foi incluído(a) no grupo <b>{nome_grupo}</b> do projeto extensionista:</p>
+            <p><b>Projeto:</b> {titulo_projeto}<br>
+            <b>Orientador(a):</b> {orientador}</p>
+            <p>Acesse o sistema com seu RA ou e-mail para aceitar ou rejeitar sua participação.</p>
+            <p>Atenciosamente,<br>Equipe do DevTrack System</p>
+        </div>
+    """
+    return enviar_email_brevo_em_segundo_plano(destinatario_email, assunto, html_content)
 
-Você foi incluído(a) no grupo "{nome_grupo}" do projeto extensionista:
-Projeto: {titulo_projeto}
-Orientador(a): {orientador}
-
-Acesse o sistema com seu RA ou E-mail para ACEITAR ou REJEITAR sua participação no projeto.
-    """.strip()
-
-    if SMTP_ENABLED:
-        try:
-            msg = MIMEMultipart()
-            msg["From"] = SMTP_USER
-            msg["To"] = destinatario_email
-            msg["Subject"] = assunto
-            msg.attach(MIMEText(corpo, "plain", "utf-8"))
-
-            with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
-                server.starttls()
-                server.login(SMTP_USER, SMTP_PASSWORD)
-                server.send_message(msg)
-        except Exception as e:
-            print(f"[ERRO SMTP] Falha ao enviar e-mail para {destinatario_email}: {e}")
 
 
 init_db()
@@ -473,44 +520,24 @@ def criar_usuario():
     cursor.close()
     conn.close()
 
-    # Envia o e-mail via Brevo (API HTTP) de forma isolada para não travar o cadastro
-    try:
-        if not BREVO_ENABLED:
-            raise Exception("envio de e-mail desativado")
-        configuration = sib_api_v3_sdk.Configuration()
-        configuration.api_key["api-key"] = BREVO_API_KEY
-        configuration.host = "https://api.brevo.com/v3"
-        api_instance = sib_api_v3_sdk.TransactionalEmailsApi(sib_api_v3_sdk.ApiClient(configuration))
-
-        subject = "Bem-vindo ao DevTrack System - Suas Credenciais de Acesso"
-        html_content = f"""
-            <div style="font-family: Arial, sans-serif; color: #333;">
-                <h2>Olá, {nome}!</h2>
-                <p>Sua conta no DevTrack System foi criada com sucesso.</p>
-                <p><b>Seus dados de acesso:</b></p>
-                <ul>
-                    <li><b>RA:</b> {ra}</li>
-                    <li><b>E-mail:</b> {email}</li>
-                    <li><b>Senha Provisória:</b> {SENHA_PROVISORIA_PADRAO}</li>
-                </ul>
-                <p>Recomendamos que altere a sua senha após o primeiro acesso.</p>
-                <p>Atenciosamente,<br>Equipa do DevTrack System</p>
-            </div>
-        """
-
-        sender = {"name": "DevTrack System", "email": "victor.victorhollanda.hollanda@gmail.com"}
-        to = [{"email": email}]
-
-        send_smtp_email = sib_api_v3_sdk.SendSmtpEmail(
-            to=to,
-            html_content=html_content,
-            sender=sender,
-            subject=subject
-        )
-
-        api_instance.send_transac_email(send_smtp_email)
-    except Exception as e:
-        print(f"Erro ao enviar e-mail via Brevo: {e}")
+    # Envia boas-vindas para TODA conta criada, independentemente do perfil.
+    # O cadastro permanece concluído mesmo se o provedor de e-mail estiver indisponível.
+    subject = "Bem-vindo ao DevTrack System - Suas Credenciais de Acesso"
+    html_content = f"""
+        <div style="font-family: Arial, sans-serif; color: #333;">
+            <h2>Olá, {nome}!</h2>
+            <p>Sua conta no DevTrack System foi criada com sucesso.</p>
+            <p><b>Seus dados de acesso:</b></p>
+            <ul>
+                <li><b>RA:</b> {ra}</li>
+                <li><b>E-mail:</b> {email}</li>
+                <li><b>Senha Provisória:</b> {SENHA_PROVISORIA_PADRAO}</li>
+            </ul>
+            <p>Recomendamos que altere sua senha após o primeiro acesso.</p>
+            <p>Atenciosamente,<br>Equipe do DevTrack System</p>
+        </div>
+    """
+    enviar_email_brevo_em_segundo_plano(email, subject, html_content)
 
     return jsonify({"id": new_id, "ra": ra, "name": nome, "email": email, "role": role, "curso": curso})
 
