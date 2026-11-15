@@ -4,10 +4,17 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from flask import Flask, render_template, request, jsonify
 
-import sib_api_v3_sdk
-from sib_api_v3_sdk.rest import ApiException
 import smtplib
-from segredos import BREVO_API_KEY
+try:
+    import sib_api_v3_sdk
+    from sib_api_v3_sdk.rest import ApiException
+except ImportError:
+    sib_api_v3_sdk = None
+    ApiException = Exception
+try:
+    from segredos import BREVO_API_KEY
+except ImportError:
+    BREVO_API_KEY = ""
 
 app = Flask(__name__)
 
@@ -83,6 +90,26 @@ def init_db():
             justificativa_recusa TEXT DEFAULT '',
             FOREIGN KEY (grupo_id) REFERENCES grupos(id) ON DELETE CASCADE
         );
+
+        CREATE TABLE IF NOT EXISTS pareceres_etica (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            projeto_id INTEGER NOT NULL UNIQUE,
+            status TEXT DEFAULT 'PENDENTE' CHECK(status IN ('PENDENTE', 'APROVADO', 'REPROVADO')),
+            parecer TEXT DEFAULT '',
+            por TEXT DEFAULT '',
+            atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (projeto_id) REFERENCES projetos(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS pareceres_conselho (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            projeto_id INTEGER NOT NULL UNIQUE,
+            status TEXT DEFAULT 'PENDENTE' CHECK(status IN ('PENDENTE', 'APROVADO', 'REPROVADO')),
+            parecer TEXT DEFAULT '',
+            por TEXT DEFAULT '',
+            atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (projeto_id) REFERENCES projetos(id) ON DELETE CASCADE
+        );
     """)
 
     # Migração segura para bancos já existentes
@@ -101,6 +128,10 @@ def init_db():
     colunas_membros = [col["name"] for col in cursor.fetchall()]
     if "justificativa_recusa" not in colunas_membros:
         cursor.execute("ALTER TABLE grupo_membros ADD COLUMN justificativa_recusa TEXT DEFAULT ''")
+
+    # Garante pareceres pendentes também para projetos que já existiam antes da atualização.
+    cursor.execute("INSERT OR IGNORE INTO pareceres_etica (projeto_id, status) SELECT id, 'PENDENTE' FROM projetos")
+    cursor.execute("INSERT OR IGNORE INTO pareceres_conselho (projeto_id, status) SELECT id, 'PENDENTE' FROM projetos")
 
     # Insere APENAS o Administrador inicial caso ainda não exista
     cursor.execute("SELECT id FROM usuarios WHERE email = ?", ("admin@faccamp.com",))
@@ -160,7 +191,7 @@ def index():
 # ==========================================
 @app.route("/api/login", methods=["POST"])
 def login():
-    data = request.json
+    data = request.get_json(silent=True) or {}
     identifier = data.get("identifier", "").strip().lower()
     senha = data.get("senha", "")
 
@@ -354,7 +385,7 @@ def listar_usuarios():
 
 @app.route("/api/usuarios", methods=["POST"])
 def criar_usuario():
-    data = request.json
+    data = request.get_json(silent=True) or {}
     actor_role = data.get("actor_role")
     role = data.get("role")
     ra = data.get("ra", "").strip()
@@ -494,6 +525,14 @@ def listar_projetos():
         else:
             p["grupo"] = {"id": None, "nome": "", "membros": []}
 
+        cursor.execute("SELECT status, parecer, por, atualizado_em FROM pareceres_etica WHERE projeto_id = ?", (p["id"],))
+        etica = cursor.fetchone()
+        p["etica"] = dict(etica) if etica else {"status": "PENDENTE", "parecer": "", "por": "", "atualizado_em": None}
+
+        cursor.execute("SELECT status, parecer, por, atualizado_em FROM pareceres_conselho WHERE projeto_id = ?", (p["id"],))
+        conselho = cursor.fetchone()
+        p["conselho"] = dict(conselho) if conselho else {"status": "PENDENTE", "parecer": "", "por": "", "atualizado_em": None}
+
     cursor.close()
     conn.close()
     return jsonify(projetos)
@@ -501,7 +540,7 @@ def listar_projetos():
 
 @app.route("/api/projetos", methods=["POST"])
 def criar_projeto():
-    data = request.json
+    data = request.get_json(silent=True) or {}
     titulo = data.get("titulo")
     setor_externo = data.get("setor_externo")
     areas_atuacao = data.get("areas_atuacao")
@@ -550,6 +589,9 @@ def criar_projeto():
         )
         enviar_notificacao_email(aluno_acc["email"], aluno_acc["nome"], titulo, grupo_nome, orientador_nome)
 
+    cursor.execute("INSERT INTO pareceres_etica (projeto_id, status) VALUES (?, 'PENDENTE')", (projeto_id,))
+    cursor.execute("INSERT INTO pareceres_conselho (projeto_id, status) VALUES (?, 'PENDENTE')", (projeto_id,))
+
     conn.commit()
     cursor.close()
     conn.close()
@@ -558,7 +600,7 @@ def criar_projeto():
 
 @app.route("/api/projetos/<int:projeto_id>", methods=["PUT"])
 def editar_projeto(projeto_id):
-    data = request.json
+    data = request.get_json(silent=True) or {}
     actor_role = data.get("actor_role")
     actor_nome = data.get("actor_nome", "").strip()
 
@@ -629,16 +671,29 @@ def editar_projeto(projeto_id):
 
 @app.route("/api/projetos/<int:projeto_id>/status", methods=["PATCH"])
 def alterar_status_projeto(projeto_id):
-    data = request.json
+    data = request.get_json(silent=True) or {}
     actor_role = data.get("actor_role")
     actor_nome = data.get("actor_nome", "").strip()
-    novo_status = data.get("status")
+    novo_status = str(data.get("status", "")).strip().upper()
+    if novo_status not in ["NOVO", "EM ANDAMENTO", "DESENVOLVIMENTO", "CONCLUIDO", "CANCELADO"]:
+        return jsonify({"error": "Status de projeto inválido."}), 400
 
     if actor_role in ["aluno", "public"]:
         return jsonify({"error": "Alunos e visitantes não podem alterar o status do projeto"}), 403
 
     conn = get_db_connection()
     cursor = conn.cursor()
+
+    if novo_status == "DESENVOLVIMENTO":
+        cursor.execute("SELECT status FROM pareceres_etica WHERE projeto_id = ?", (projeto_id,))
+        parecer_etica = cursor.fetchone()
+        cursor.execute("SELECT status FROM pareceres_conselho WHERE projeto_id = ?", (projeto_id,))
+        parecer_conselho = cursor.fetchone()
+        if (not parecer_etica or not parecer_conselho or
+                parecer_etica["status"] != "APROVADO" or parecer_conselho["status"] != "APROVADO"):
+            cursor.close()
+            conn.close()
+            return jsonify({"error": "O projeto só pode ir para DESENVOLVIMENTO com os pareceres de Ética e Conselho APROVADOS."}), 400
 
     if actor_role in ["admin", "coordenador"]:
         cursor.execute("UPDATE projetos SET status = ? WHERE id = ?", (novo_status, projeto_id))
@@ -659,7 +714,7 @@ def alterar_status_projeto(projeto_id):
 
 @app.route("/api/projetos/<int:projeto_id>/publicar", methods=["PATCH"])
 def publicar_projeto(projeto_id):
-    data = request.json
+    data = request.get_json(silent=True) or {}
     actor_role = data.get("actor_role")
     actor_nome = data.get("actor_nome", "").strip()
     publicado = 1 if data.get("publicado", True) else 0
@@ -712,6 +767,50 @@ def deletar_projeto(projeto_id):
     cursor.close()
     conn.close()
     return jsonify({"message": "Projeto excluído com sucesso"})
+
+
+@app.route("/api/projetos/<int:projeto_id>/pareceres", methods=["PATCH"])
+def atualizar_parecer(projeto_id):
+    data = request.get_json(silent=True) or {}
+    tipo = str(data.get("tipo", "")).strip().lower()
+    status = str(data.get("status", "")).strip().upper()
+    parecer = str(data.get("parecer", "")).strip()
+    por = str(data.get("por", "Gestão")).strip() or "Gestão"
+    actor_role = str(data.get("actor_role", "")).strip().lower()
+    actor_nome = str(data.get("actor_nome", "")).strip()
+
+    if actor_role not in ["admin", "coordenador", "orientador"]:
+        return jsonify({"error": "Sem permissão para registrar pareceres."}), 403
+    if tipo not in ("etica", "conselho"):
+        return jsonify({"error": "Tipo de parecer inválido. Use 'etica' ou 'conselho'."}), 400
+    if status not in ("PENDENTE", "APROVADO", "REPROVADO"):
+        return jsonify({"error": "Status de parecer inválido."}), 400
+
+    tabela = "pareceres_etica" if tipo == "etica" else "pareceres_conselho"
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, orientador_nome FROM projetos WHERE id = ?", (projeto_id,))
+    projeto = cursor.fetchone()
+    if not projeto:
+        cursor.close()
+        conn.close()
+        return jsonify({"error": "Projeto não encontrado."}), 404
+    if actor_role == "orientador" and (not actor_nome or actor_nome.lower() not in projeto["orientador_nome"].lower()):
+        cursor.close()
+        conn.close()
+        return jsonify({"error": "Você não é o orientador responsável por este projeto."}), 403
+
+    cursor.execute(
+        f"INSERT INTO {tabela} (projeto_id, status, parecer, por, atualizado_em) "
+        "VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP) "
+        "ON CONFLICT(projeto_id) DO UPDATE SET status=excluded.status, parecer=excluded.parecer, "
+        "por=excluded.por, atualizado_em=CURRENT_TIMESTAMP",
+        (projeto_id, status, parecer, por)
+    )
+    conn.commit()
+    cursor.close()
+    conn.close()
+    return jsonify({"message": "Parecer atualizado com sucesso."})
 
 
 # ==========================================
@@ -770,7 +869,7 @@ def carga_massiva_json():
                 interdisciplinaridade = str(p.get("interdisciplinaridade", "Não especificada")).strip()
                 orientador_nome = str(p.get("orientador_nome", "Orientador")).strip()
                 status = str(p.get("status", "NOVO")).strip().upper()
-                if status not in ["NOVO", "EM ANDAMENTO", "CONCLUIDO", "CANCELADO"]:
+                if status not in ["NOVO", "EM ANDAMENTO", "CONCLUIDO", "CANCELADO"] or status == "DESENVOLVIMENTO":
                     status = "NOVO"
                 publicado = 1 if p.get("publicado", False) else 0
                 grupo_nome = str(p.get("grupo_nome", f"Grupo - {titulo[:25]}")).strip()
@@ -786,6 +885,8 @@ def carga_massiva_json():
                     (titulo, setor_externo, areas_atuacao, interdisciplinaridade, status, publicado, orientador_nome)
                 )
                 projeto_id = cursor.lastrowid
+                cursor.execute("INSERT INTO pareceres_etica (projeto_id, status) VALUES (?, 'PENDENTE')", (projeto_id,))
+                cursor.execute("INSERT INTO pareceres_conselho (projeto_id, status) VALUES (?, 'PENDENTE')", (projeto_id,))
                 cursor.execute("INSERT INTO grupos (projeto_id, nome) VALUES (?, ?)", (projeto_id, grupo_nome))
                 grupo_id = cursor.lastrowid
 
@@ -819,7 +920,7 @@ def carga_massiva_json():
 # ==========================================
 @app.route("/api/membros/<int:membro_id>/resposta", methods=["PATCH"])
 def responder_convite_aluno(membro_id):
-    data = request.json
+    data = request.get_json(silent=True) or {}
     status_participacao = data.get("status_participacao")
     justificativa = str(data.get("justificativa", "")).strip() if status_participacao == "RECUSADO" else ""
 
@@ -840,7 +941,7 @@ def responder_convite_aluno(membro_id):
 
 @app.route("/api/membros/<int:membro_id>/aluno-self", methods=["PATCH"])
 def editar_dados_proprios_aluno(membro_id):
-    data = request.json
+    data = request.get_json(silent=True) or {}
     user_id = data.get("user_id")
     novo_nome = data.get("nome", "").strip()
 
