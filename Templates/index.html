@@ -1,0 +1,2156 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Módulo 2: Controle — Sistema de Projetos Extensionistas UNIFACCAMP</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #0f172a; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 9999px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #475569; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 antialiased selection:bg-indigo-500 selection:text-white">
+
+  <div class="flex h-screen overflow-hidden">
+
+    <!-- Mobile Sidebar Backdrop -->
+    <div id="sidebar-backdrop" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-950/80 z-30 hidden md:hidden backdrop-blur-xs"></div>
+
+    <!-- Sidebar Navigation -->
+    <aside id="sidebar" class="fixed md:static inset-y-0 left-0 z-40 w-64 bg-slate-950 border-r border-slate-800/80 flex flex-col justify-between transform -translate-x-full md:translate-x-0 transition-transform duration-200 ease-in-out shrink-0">
+      <div>
+        <!-- Brand Header com Logo UNIFACCAMP em cima e Módulo 2: Controle abaixo -->
+        <div class="px-5 pt-5 pb-4 border-b border-slate-800/80 flex flex-col items-center text-center">
+          <div class="w-full flex items-center justify-center mb-3 bg-white/95 rounded-xl p-2.5 shadow-md">
+            <img src="/static/logo_faccamp.png" alt="Logo UNIFACCAMP" class="max-h-12 w-auto object-contain" onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');" />
+            <div class="hidden flex items-center gap-2 text-slate-900 font-extrabold tracking-tight text-base">
+              <i class="fa-solid fa-graduation-cap text-indigo-700 text-xl"></i>
+              <span>UNIFACCAMP</span>
+            </div>
+          </div>
+          <div class="w-full">
+            <h1 class="text-sm font-bold text-slate-100">Módulo 2: Controle</h1>
+            <p class="text-[11px] text-slate-400">Registro Extensionista</p>
+          </div>
+        </div>
+
+        <!-- Navigation Menu -->
+        <nav class="p-3 space-y-1">
+          <button onclick="switchTab('consultar')" id="nav-consultar" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-indigo-600 text-white shadow-md shadow-indigo-600/20 transition-all">
+            <i class="fa-solid fa-magnifying-glass w-4 text-center"></i>
+            <span>Consultar Projetos</span>
+          </button>
+
+          <button onclick="switchTab('meus-grupos')" id="nav-meus-grupos" class="hidden w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-900 transition-all">
+            <span class="flex items-center gap-3">
+              <i class="fa-solid fa-user-check w-4 text-center"></i>
+              <span>Confirmação de Grupos</span>
+            </span>
+            <span id="badge-convites" class="hidden px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">0</span>
+          </button>
+
+          <button onclick="switchTab('registrar-trabalho')" id="nav-registrar-trabalho" class="hidden w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-900 transition-all">
+            <i class="fa-solid fa-folder-plus w-4 text-center"></i>
+            <span>Registrar Trabalho/Grupo</span>
+          </button>
+
+          <button onclick="switchTab('pareceres')" id="nav-pareceres" class="hidden w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-900 transition-all">
+            <i class="fa-solid fa-clipboard-check w-4 text-center"></i>
+            <span>Pareceres (Ética / Conselho)</span>
+          </button>
+
+          <button onclick="switchTab('gerenciar-contas')" id="nav-gerenciar-contas" class="hidden w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-900 transition-all">
+            <i class="fa-solid fa-users-gear w-4 text-center"></i>
+            <span>Criar Acessos / Contas</span>
+          </button>
+
+          <button onclick="switchTab('carga-massiva')" id="nav-carga-massiva" class="hidden w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-900 transition-all">
+            <i class="fa-solid fa-file-code w-4 text-center"></i>
+            <span>Carga Massiva (JSON)</span>
+          </button>
+        </nav>
+      </div>
+
+      <!-- Active Actor Profile Indicator + Botão Alterar Minha Senha -->
+      <div class="p-3 border-t border-slate-800/80 space-y-2.5">
+        <div class="flex items-center justify-between gap-2 min-w-0">
+          <div class="flex items-center gap-2.5 min-w-0 flex-1">
+            <div class="relative shrink-0">
+              <div id="user-avatar" class="w-9 h-9 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-xs font-bold text-white shadow-md">
+                AP
+              </div>
+              <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-slate-950"></span>
+            </div>
+            <div class="min-w-0 flex-1">
+              <div id="user-name" class="text-xs font-semibold text-slate-200 truncate">Visitante</div>
+              <div id="user-role-badge" class="text-[10px] text-slate-400 font-medium truncate">Ator: Acesso Público</div>
+            </div>
+          </div>
+        </div>
+
+        <button onclick="openChangePasswordModal(false)" id="btn-alterar-minha-senha" class="hidden w-full py-1.5 px-3 bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 rounded-lg text-[11px] font-medium transition-colors flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-key text-indigo-400"></i>
+          <span>Alterar Minha Senha</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-900">
+
+      <!-- Top Navbar Header -->
+      <header class="h-16 border-b border-slate-800/80 px-4 md:px-6 flex items-center justify-between gap-4 shrink-0 bg-slate-950/60 backdrop-blur-md">
+        <div class="flex items-center gap-3 min-w-0">
+          <button onclick="toggleSidebar()" class="md:hidden p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800">
+            <i class="fa-solid fa-bars text-lg"></i>
+          </button>
+          <h2 id="page-title" class="text-base md:text-lg font-bold text-slate-100 truncate">Consultar Projetos Extensionistas</h2>
+        </div>
+
+        <!-- Account Auth Controls -->
+        <div class="flex items-center gap-2">
+          <button onclick="openLoginModal()" id="btn-open-login" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg shadow-lg shadow-indigo-600/20 transition-all flex items-center gap-2">
+            <i class="fa-solid fa-right-to-bracket"></i>
+            <span>Entrar</span>
+          </button>
+          <button onclick="logout()" id="btn-logout" class="hidden px-3.5 py-1.5 bg-slate-800 hover:bg-red-950/60 hover:text-red-400 hover:border-red-800/60 text-slate-300 border border-slate-700 text-xs font-semibold rounded-lg transition-all flex items-center gap-2">
+            <i class="fa-solid fa-right-from-bracket"></i>
+            <span>Sair</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Dynamic Views Container -->
+      <div class="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar" id="content-area">
+
+        <!-- VIEW 1: CONSULTAR PROJETOS -->
+        <div id="view-consultar" class="space-y-6">
+
+          <!-- Cards de Resumo (Indicadores KPI) -->
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div class="bg-slate-950/70 border border-slate-800/80 rounded-xl p-3.5 flex items-center justify-between">
+              <div>
+                <p class="text-[11px] font-medium text-slate-400">Total Visível</p>
+                <p id="kpi-total" class="text-xl font-bold text-slate-100 mt-0.5">0</p>
+              </div>
+              <div class="w-9 h-9 rounded-lg bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+                <i class="fa-solid fa-folder-open text-sm"></i>
+              </div>
+            </div>
+
+            <div class="bg-slate-950/70 border border-slate-800/80 rounded-xl p-3.5 flex items-center justify-between">
+              <div>
+                <p class="text-[11px] font-medium text-slate-400">Em Andamento</p>
+                <p id="kpi-andamento" class="text-xl font-bold text-amber-400 mt-0.5">0</p>
+              </div>
+              <div class="w-9 h-9 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                <i class="fa-solid fa-spinner text-sm"></i>
+              </div>
+            </div>
+
+            <div class="bg-slate-950/70 border border-slate-800/80 rounded-xl p-3.5 flex items-center justify-between">
+              <div>
+                <p class="text-[11px] font-medium text-slate-400">Concluídos</p>
+                <p id="kpi-concluidos" class="text-xl font-bold text-emerald-400 mt-0.5">0</p>
+              </div>
+              <div class="w-9 h-9 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                <i class="fa-solid fa-circle-check text-sm"></i>
+              </div>
+            </div>
+
+            <div class="bg-slate-950/70 border border-slate-800/80 rounded-xl p-3.5 flex items-center justify-between">
+              <div>
+                <p class="text-[11px] font-medium text-slate-400">No Mural Público</p>
+                <p id="kpi-publicados" class="text-xl font-bold text-sky-400 mt-0.5">0</p>
+              </div>
+              <div class="w-9 h-9 rounded-lg bg-sky-500/15 border border-sky-500/30 flex items-center justify-center text-sky-400">
+                <i class="fa-solid fa-globe text-sm"></i>
+              </div>
+            </div>
+          </div>
+                    <!-- PAINEL ANALÍTICO AVANÇADO: TAXA DE CONFORMIDADE E GRÁFICOS -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div class="bg-slate-950/70 border border-slate-800 rounded-xl p-4 flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <h4 class="text-xs font-bold text-slate-200 uppercase tracking-wider">Índice de Conformidade</h4>
+                  <i class="fa-solid fa-chart-pie text-indigo-400"></i>
+                </div>
+                <p class="text-[11px] text-slate-400 mb-3">Projetos com Ética e Conselho aprovados frente ao total.</p>
+              </div>
+              <div>
+                <div class="flex items-center justify-between text-xs font-semibold mb-1">
+                  <span id="taxa-conformidade-txt" class="text-indigo-300">0%</span>
+                  <span class="text-slate-400">Meta: 100%</span>
+                </div>
+                <div class="w-full h-2 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
+                  <div id="taxa-conformidade-bar" class="h-full bg-indigo-500 w-0 transition-all duration-500"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-slate-950/70 border border-slate-800 rounded-xl p-4 lg:col-span-2 flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <h4 class="text-xs font-bold text-slate-200 uppercase tracking-wider">Distribuição Visual por Áreas de Atuação</h4>
+                  <i class="fa-solid fa-layer-group text-emerald-400"></i>
+                </div>
+                <p class="text-[11px] text-slate-400 mb-2">Volume de projetos segmentados por categoria temática.</p>
+              </div>
+              <div id="categorias-distribuicao-container" class="space-y-2 mt-2">
+                <!-- Preenchido dinamicamente via JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Barra de Busca + Filtro por Status + Exportar CSV -->
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-slate-950/60 p-4 rounded-xl border border-slate-800/80">
+            <div>
+              <h3 class="text-base font-bold text-slate-100">Projetos Extensionistas Registrados</h3>
+              <p class="text-xs text-slate-400" id="consultar-subtitle">Consulta pública de trabalhos extensionistas publicados</p>
+            </div>
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+              <button onclick="exportarProjetosCSV()" id="btn-exportar-csv" class="hidden px-3.5 py-2 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center gap-1.5" title="Baixar planilha CSV dos projetos listados">
+                <i class="fa-solid fa-file-csv"></i>
+                <span>Exportar CSV</span>
+              </button>
+              <select id="filter-status-projetos" onchange="renderProjetos()" class="bg-slate-900 border border-slate-700/80 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+                <option value="TODOS">Todos os Status</option>
+                <option value="NOVO">NOVO</option>
+                <option value="EM ANDAMENTO">EM ANDAMENTO</option>
+                <option value="DESENVOLVIMENTO">DESENVOLVIMENTO</option>
+                <option value="CONCLUIDO">CONCLUÍDO</option>
+                <option value="CANCELADO">CANCELADO</option>
+              </select>
+              <input type="text" id="search-projetos" onkeyup="renderProjetos()" placeholder="Buscar por título, área ou aluno..." class="w-full sm:w-64 bg-slate-900 border border-slate-700/80 rounded-lg px-3.5 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500" />
+            </div>
+          </div>
+
+          <div id="projetos-cards-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- VIEW 2: CONFIRMAÇÃO DE GRUPOS (ALUNO) -->
+        <div id="view-meus-grupos" class="space-y-6 hidden">
+          <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80">
+            <h3 class="text-base font-bold text-slate-100 mb-1">Meus Grupos e Confirmação</h3>
+            <p class="text-xs text-slate-400">Aceite ou rejeite sua vinculação nos projetos extensionistas em que seu RA foi incluído, ou corrija seu nome cadastrado (o RA é fixo da instituição).</p>
+          </div>
+
+          <div class="bg-slate-950/60 rounded-xl border border-slate-800/80 overflow-hidden p-4">
+            <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-3">Convites e Vinculações em Projetos</h4>
+            <div id="pending-groups-container" class="space-y-3">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+        </div>
+
+        <!-- VIEW 3: REGISTRAR TRABALHO / GRUPO -->
+        <div id="view-registrar-trabalho" class="space-y-6 hidden">
+          <div class="bg-slate-950/60 p-5 rounded-xl border border-slate-800/80 max-w-4xl">
+            <h3 class="text-base font-bold text-slate-100 mb-1">Cadastrar Novo Projeto Extensionista</h3>
+            <p class="text-xs text-slate-400 mb-5">Preencha os dados do projeto e inclua alunos cadastrados selecionando por cursos ou digitando o RA.</p>
+
+            <form onsubmit="handleCriarProjeto(event)" class="space-y-5">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-medium text-slate-300 mb-1">Título do Projeto *</label>
+                  <input type="text" id="proj-titulo" required placeholder="Ex: Inclusão Digital Comunitária" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-300 mb-1">Setor Externo / Parceiro *</label>
+                  <input type="text" id="proj-setor" required placeholder="Ex: Associação de Bairro / Escola Municipal" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-medium text-slate-300 mb-1">Áreas de Atuação *</label>
+                  <input type="text" id="proj-areas" required placeholder="Ex: Tecnologia, Educação, Gestão" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-300 mb-1">Interdisciplinaridade *</label>
+                  <input type="text" id="proj-inter" required placeholder="Ex: Ciência da Computação + Administração" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-medium text-slate-300 mb-1">Nome do Grupo *</label>
+                  <input type="text" id="proj-grupo" required placeholder="Ex: Equipe Alfa Extensionista" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-300 mb-1">Orientador(es) Responsável(is) *</label>
+                  <input type="text" id="proj-orientador" required placeholder="Ex: Prof. André Marcos" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
+                </div>
+              </div>
+
+              <!-- SELEÇÃO DE ALUNOS POR CURSOS (MÚLTIPLOS CURSOS + CHECKBOXES) -->
+              <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-4 space-y-3">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <h4 class="text-xs font-bold text-indigo-300"><i class="fa-solid fa-graduation-cap mr-1.5"></i> Selecionar Alunos por Curso</h4>
+                    <p class="text-[11px] text-slate-400">Adicione um ou mais cursos da UNIFACCAMP abaixo para listar os alunos e incluí-los em lote.</p>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <select id="curso-selector-add" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
+                      <option value="">Escolha um curso...</option>
+                    </select>
+                    <button type="button" onclick="adicionarCursoFiltro('create')" class="px-3 py-1.5 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/40 text-xs font-semibold rounded-lg transition-colors">
+                      <i class="fa-solid fa-plus mr-1"></i> Adicionar Curso
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Tags dos cursos selecionados -->
+                <div id="cursos-tags-create" class="flex flex-wrap gap-2"></div>
+
+                <!-- Lista de alunos dos cursos selecionados com checkbox -->
+                <div id="alunos-por-curso-box-create" class="hidden space-y-2.5 pt-2 border-t border-slate-800/80">
+                  <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-semibold text-slate-300">Marque os alunos que deseja incluir:</span>
+                    <button type="button" onclick="incluirAlunosSelecionados('create', 'membros-list-create')" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg shadow-md shadow-emerald-600/20 transition-all">
+                      <i class="fa-solid fa-user-check mr-1"></i> Incluir Alunos Selecionados
+                    </button>
+                  </div>
+                  <div id="alunos-checklist-create" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto custom-scrollbar pr-1"></div>
+                </div>
+              </div>
+
+              <!-- LISTA DE INTEGRANTES INCLUÍDOS NO GRUPO (E INCLUSÃO MANUAL POR RA) -->
+              <div class="border-t border-slate-800 pt-4">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                  <div>
+                    <label class="text-xs font-semibold text-slate-200">Integrantes Vinculados ao Grupo *</label>
+                    <p class="text-[11px] text-slate-400">Apenas alunos com acesso cadastrado no sistema são aceitos (digite o RA para preencher automaticamente).</p>
+                  </div>
+                  <button type="button" onclick="addMembroField('membros-list-create')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-indigo-400 text-xs font-medium rounded-lg border border-slate-700 transition-colors">
+                    <i class="fa-solid fa-plus mr-1"></i> Adicionar Manualmente por RA
+                  </button>
+                </div>
+                <div id="membros-list-create" class="space-y-2">
+                  <!-- Dynamic rows -->
+                </div>
+              </div>
+
+              <div class="pt-2 flex justify-end">
+                <button type="submit" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg shadow-lg shadow-indigo-600/20 transition-all">
+                  <i class="fa-solid fa-floppy-disk mr-1.5"></i> Salvar Projeto Extensionista
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- VIEW 4: CRIAR ACESSOS / CONTAS E GERENCIAR USUÁRIOS -->
+        <div id="view-gerenciar-contas" class="space-y-6 hidden">
+          <div class="bg-slate-950/60 p-5 rounded-xl border border-slate-800/80 max-w-3xl">
+            <h3 class="text-base font-bold text-slate-100 mb-1">Criar Nova Conta de Acesso</h3>
+            <p class="text-xs text-slate-400 mb-4">Todas as contas criadas iniciam automaticamente com a senha provisória <span class="font-mono font-bold text-indigo-400">123456</span> e exigem troca obrigatória no primeiro acesso.</p>
+
+            <form onsubmit="handleCriarUsuario(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Perfil / Papel *</label>
+                <select id="user-new-role" onchange="toggleCampoCursoNovoUsuario()" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
+                  <!-- Populated by role permissions -->
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">RA / Matrícula *</label>
+                <input type="text" id="user-new-ra" required placeholder="Ex: 20260123" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
+              </div>
+
+              <!-- Campo Curso (exibido quando Perfil = Aluno) -->
+              <div id="div-user-new-curso" class="md:col-span-2 hidden">
+                <label class="block text-xs font-medium text-slate-300 mb-1">Curso do Aluno (UNIFACCAMP) *</label>
+                <select id="user-new-curso" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
+                  <!-- Populado automaticamente com os cursos da UNIFACCAMP -->
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Nome Completo *</label>
+                <input type="text" id="user-new-nome" required placeholder="Nome do usuário" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">E-mail *</label>
+                <input type="email" id="user-new-email" required placeholder="exemplo@hotmail.com" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
+              </div>
+
+              <div class="md:col-span-2 bg-slate-900/80 border border-slate-800 rounded-lg px-3.5 py-2.5 flex items-center justify-between">
+                <span class="text-xs text-slate-300"><i class="fa-solid fa-shield-halved text-indigo-400 mr-1.5"></i> Senha Inicial Provisória Padrão:</span>
+                <span class="font-mono text-xs font-bold text-indigo-300 bg-indigo-500/15 px-2.5 py-0.5 rounded border border-indigo-500/30">123456</span>
+              </div>
+
+              <div class="md:col-span-2 flex justify-end">
+                <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg shadow-lg shadow-indigo-600/20 transition-all">
+                  <i class="fa-solid fa-user-plus mr-1.5"></i> Criar Conta
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Lista de Usuários com Filtro por Curso, Pesquisa por Nome ou RA, Desbloqueio e Redefinição de Senha -->
+          <div class="bg-slate-950/60 rounded-xl border border-slate-800/80 overflow-hidden">
+            <div class="p-4 border-b border-slate-800/80 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+              <div>
+                <h4 id="usuarios-list-title" class="text-xs font-bold text-slate-300 uppercase tracking-wider">Contas Cadastradas no Sistema</h4>
+                <p id="usuarios-list-subtitle" class="text-[11px] text-slate-400">Gerencie acessos e contas subordinadas ao seu perfil.</p>
+              </div>
+              <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <select id="filter-curso-usuarios" onchange="renderUsuariosTable()" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+                  <option value="TODOS">Todos os Cursos</option>
+                </select>
+                <div class="relative w-full sm:w-64">
+                  <i class="fa-solid fa-magnifying-glass text-slate-500 text-xs absolute left-3 top-1/2 -translate-y-1/2"></i>
+                  <input type="text" id="search-usuarios" onkeyup="renderUsuariosTable()" placeholder="Pesquisar por Nome ou RA..." class="w-full bg-slate-900 border border-slate-700 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500" />
+                </div>
+              </div>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="border-b border-slate-800 text-[11px] font-semibold text-slate-400 uppercase bg-slate-950/40">
+                    <th class="py-3 px-4">RA</th>
+                    <th class="py-3 px-4">Nome</th>
+                    <th class="py-3 px-4">Perfil / Curso</th>
+                    <th class="py-3 px-4">Status de Acesso</th>
+                    <th class="py-3 px-4 text-right">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="usuarios-table-body" class="divide-y divide-slate-800/60 text-xs">
+                  <!-- Dynamically populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- VIEW 5: CARGA MASSIVA VIA JSON (ACERVO DE PROJETOS E PROFESSORES) -->
+        <div id="view-carga-massiva" class="space-y-6 hidden">
+          <div class="bg-slate-950/60 p-5 rounded-xl border border-slate-800/80 max-w-4xl space-y-5">
+            <div>
+              <h3 class="text-base font-bold text-slate-100 mb-1">Importação de Acervo em Lote (JSON)</h3>
+              <p class="text-xs text-slate-400">Importe múltiplos projetos ou professores/usuários de uma só vez. As contas importadas iniciam com senha provisória <span class="font-mono text-indigo-400">123456</span>.</p>
+            </div>
+
+            <!-- Seleção do Tipo de Acervo -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Tipo de Acervo para Importar *</label>
+                <select id="json-tipo-acervo" onchange="updateJsonExample()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
+                  <option value="projetos">Acervo de Projetos Extensionistas</option>
+                  <option value="usuarios">Acervo de Professores / Usuários</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Carregar Arquivo .json do Dispositivo</label>
+                <input type="file" id="json-file-input" accept=".json,application/json" onchange="handleJsonFileUpload(event)" class="w-full text-xs text-slate-300 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-indigo-400 hover:file:bg-slate-700 cursor-pointer" />
+              </div>
+            </div>
+
+            <!-- Bloco Visual de Exemplo da Estrutura JSON -->
+            <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4">
+              <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                <span class="text-xs font-semibold text-indigo-400"><i class="fa-solid fa-circle-info mr-1"></i> Modelo de Estrutura Obrigatória do JSON:</span>
+                <button type="button" onclick="preencherComExemploJson()" class="px-3 py-1 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 text-[11px] font-semibold rounded-lg transition-colors">
+                  <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Preencher Caixa com Este Exemplo
+                </button>
+              </div>
+              <pre id="json-example-preview" class="text-[11px] font-mono text-emerald-300 bg-slate-950 p-3 rounded-lg border border-slate-800/80 overflow-x-auto custom-scrollbar leading-relaxed"></pre>
+            </div>
+
+            <!-- Área de Texto para Colar / Editar o JSON -->
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1">Conteúdo JSON para Importação *</label>
+              <textarea id="json-raw-input" rows="8" placeholder="Cole aqui a lista JSON [...] ou selecione um arquivo .json acima..." class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs font-mono text-slate-100 focus:outline-none focus:border-indigo-500 custom-scrollbar"></textarea>
+            </div>
+
+            <div class="flex items-center justify-between gap-4 pt-1">
+              <span id="json-import-feedback" class="text-xs font-medium"></span>
+              <button type="button" onclick="handleImportarJson()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg shadow-lg shadow-emerald-600/20 transition-all flex items-center gap-2">
+                <i class="fa-solid fa-file-import"></i>
+                <span>Processar e Importar Acervo</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <div id="view-pareceres" class="space-y-5 hidden p-4 md:p-6 overflow-y-auto custom-scrollbar">
+        <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
+          <div>
+            <h3 class="text-lg font-bold text-slate-100">Análise de pareceres</h3>
+            <p class="text-xs text-slate-400 mt-1">Registre a decisão da Ética e do Conselho. Ambos precisam estar aprovados para liberar o status DESENVOLVIMENTO.</p>
+          </div>
+          <button onclick="loadProjetos();" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200"><i class="fa-solid fa-rotate mr-1"></i> Atualizar lista</button>
+        </div>
+        <div id="pareceres-lista" class="grid grid-cols-1 xl:grid-cols-2 gap-4"></div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- TELA EXCLUSIVA DE LOGIN (APARECE SOZINHA COM LOGO GRANDE DA UNIFACCAMP NO TOPO) -->
+  <div id="login-modal" class="fixed inset-0 bg-slate-950 z-50 hidden flex flex-col items-center justify-center p-4 overflow-y-auto">
+    <div class="w-full max-w-sm flex flex-col items-center">
+      <!-- Logo UNIFACCAMP bem grande acima da caixa de login -->
+      <div class="w-full bg-white rounded-2xl p-5 mb-6 shadow-2xl flex flex-col items-center justify-center">
+        <img src="/static/logo_faccamp.png" alt="Logo UNIFACCAMP" class="max-h-24 w-auto object-contain" onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');" />
+        <div class="hidden flex items-center gap-3 text-slate-900 font-black tracking-tight text-2xl py-2">
+          <i class="fa-solid fa-graduation-cap text-indigo-700 text-3xl"></i>
+          <span>UNIFACCAMP</span>
+        </div>
+      </div>
+
+      <!-- Caixa de Login -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full p-6 shadow-2xl">
+        <div class="flex items-center justify-between mb-5">
+          <div>
+            <h3 class="text-base font-bold text-slate-100">Acessar o Sistema</h3>
+            <p class="text-[11px] text-slate-400">Módulo 2: Controle Extensionista</p>
+          </div>
+          <button onclick="closeLoginModal()" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800" title="Voltar para consulta pública">
+            <i class="fa-solid fa-xmark text-base"></i>
+          </button>
+        </div>
+
+        <form onsubmit="handleLogin(event)" class="space-y-4">
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">E-mail ou RA</label>
+            <input type="text" id="login-identifier" required placeholder="exemplo@hotmail.com ou seu RA" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3.5 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Senha</label>
+            <div class="relative">
+              <input type="password" id="login-senha" required minlength="6" maxlength="18" oninput="avaliarForcaSenha('login-senha', 'login-senha-strength-bar', 'login-senha-strength-text')" class="w-full bg-slate-950 border border-slate-700 rounded-lg pl-3.5 pr-10 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
+              <button type="button" onclick="togglePasswordVisibility('login-senha', 'icon-eye-login')" class="absolute inset-y-0 right-0 px-3 flex items-center text-slate-400 hover:text-slate-200" title="Mostrar/Ocultar senha">
+                <i id="icon-eye-login" class="fa-solid fa-eye text-xs"></i>
+              </button>
+            </div>
+            <!-- Indicador de força da senha -->
+            <div class="mt-1.5 space-y-1">
+              <div class="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
+                <div id="login-senha-strength-bar" class="h-full w-0 transition-all duration-300"></div>
+              </div>
+              <p id="login-senha-strength-text" class="text-[11px] text-slate-400">De 6 a 18 caracteres ou dígitos.</p>
+            </div>
+          </div>
+          <p id="login-error" class="text-xs text-red-400 hidden"></p>
+          <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg shadow-lg shadow-indigo-600/20 transition-all">
+            Entrar
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: TROCA DE SENHA (OBRIGATÓRIA NO 1º ACESSO E OPCIONAL A QUALQUER MOMENTO) -->
+  <div id="change-password-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-6 shadow-2xl">
+      <div class="flex items-center justify-between mb-3">
+        <div>
+          <h3 id="change-pass-title" class="text-base font-bold text-slate-100">Alterar Minha Senha</h3>
+          <p id="change-pass-subtitle" class="text-[11px] text-slate-400">Defina uma nova senha pessoal (6 a 18 caracteres).</p>
+        </div>
+        <button id="btn-close-change-pass" onclick="closeChangePasswordModal()" class="text-slate-400 hover:text-white p-1">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form onsubmit="handleAlterarSenha(event)" class="space-y-4">
+        <div id="div-senha-atual">
+          <label class="block text-xs font-medium text-slate-300 mb-1">Senha Atual *</label>
+          <div class="relative">
+            <input type="password" id="change-pass-atual" class="w-full bg-slate-950 border border-slate-700 rounded-lg pl-3.5 pr-10 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
+            <button type="button" onclick="togglePasswordVisibility('change-pass-atual', 'icon-eye-change-atual')" class="absolute inset-y-0 right-0 px-3 flex items-center text-slate-400 hover:text-slate-200" title="Mostrar/Ocultar senha">
+              <i id="icon-eye-change-atual" class="fa-solid fa-eye text-xs"></i>
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Nova Senha (6 a 18 caracteres) *</label>
+          <div class="relative">
+            <input type="password" id="change-pass-nova" required minlength="6" maxlength="18" oninput="avaliarForcaSenha('change-pass-nova', 'change-pass-bar', 'change-pass-text')" class="w-full bg-slate-950 border border-slate-700 rounded-lg pl-3.5 pr-10 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
+            <button type="button" onclick="togglePasswordVisibility('change-pass-nova', 'icon-eye-change-nova')" class="absolute inset-y-0 right-0 px-3 flex items-center text-slate-400 hover:text-slate-200" title="Mostrar/Ocultar senha">
+              <i id="icon-eye-change-nova" class="fa-solid fa-eye text-xs"></i>
+            </button>
+          </div>
+          <div class="mt-1.5 space-y-1">
+            <div class="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
+              <div id="change-pass-bar" class="h-full w-0 transition-all duration-300"></div>
+            </div>
+            <p id="change-pass-text" class="text-[11px] text-slate-400">Não pode ser 123456.</p>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Confirmar Nova Senha *</label>
+          <div class="relative">
+            <input type="password" id="change-pass-confirmar" required minlength="6" maxlength="18" class="w-full bg-slate-950 border border-slate-700 rounded-lg pl-3.5 pr-10 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
+            <button type="button" onclick="togglePasswordVisibility('change-pass-confirmar', 'icon-eye-change-confirmar')" class="absolute inset-y-0 right-0 px-3 flex items-center text-slate-400 hover:text-slate-200" title="Mostrar/Ocultar senha">
+              <i id="icon-eye-change-confirmar" class="fa-solid fa-eye text-xs"></i>
+            </button>
+          </div>
+        </div>
+
+        <p id="change-pass-error" class="text-xs text-red-400 hidden"></p>
+
+        <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg shadow-lg shadow-indigo-600/20 transition-all">
+          Salvar Nova Senha
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: EDITAR PROJETO -->
+  <div id="edit-projeto-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 shadow-2xl my-8">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-base font-bold text-slate-100">Editar Projeto Extensionista</h3>
+        <button onclick="closeEditProjetoModal()" class="text-slate-400 hover:text-white">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <form onsubmit="handleEditarProjeto(event)" class="space-y-4">
+        <input type="hidden" id="edit-proj-id" />
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Título do Projeto</label>
+            <input type="text" id="edit-proj-titulo" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Setor Externo</label>
+            <input type="text" id="edit-proj-setor" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Áreas de Atuação</label>
+            <input type="text" id="edit-proj-areas" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Interdisciplinaridade</label>
+            <input type="text" id="edit-proj-inter" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Nome do Grupo</label>
+            <input type="text" id="edit-proj-grupo" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Orientador(es)</label>
+            <input type="text" id="edit-proj-orientador" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100" />
+          </div>
+        </div>
+
+        <div class="border-t border-slate-800 pt-3">
+          <div class="flex items-center justify-between mb-2">
+            <label class="text-xs font-semibold text-slate-200">Integrantes do Grupo (Somente RAs com acesso de Aluno)</label>
+            <button type="button" onclick="addMembroField('membros-list-edit')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-indigo-400 text-xs font-medium rounded-lg border border-slate-700">
+              <i class="fa-solid fa-plus mr-1"></i> Adicionar por RA
+            </button>
+          </div>
+          <div id="membros-list-edit" class="space-y-2"></div>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeEditProjetoModal()" class="px-4 py-2 bg-slate-800 text-slate-300 text-xs font-semibold rounded-lg">Cancelar</button>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg">Salvar Alterações</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: ALUNO EDITAR SEUS PRÓPRIOS DADOS (RA BLOQUEADO PARA EDIÇÃO) -->
+  <div id="edit-aluno-self-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-6 shadow-2xl">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-base font-bold text-slate-100">Editar Meus Dados no Projeto</h3>
+        <button onclick="closeEditAlunoSelfModal()" class="text-slate-400 hover:text-white">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <form onsubmit="handleSalvarAlunoSelf(event)" class="space-y-4">
+        <input type="hidden" id="edit-self-membro-id" />
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Meu Nome Completo *</label>
+          <input type="text" id="edit-self-nome" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3.5 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">Meu RA / Matrícula <span class="text-[10px] text-amber-400">(Fixo da Instituição)</span></label>
+          <input type="text" id="edit-self-ra" readonly class="w-full bg-slate-950/50 border border-slate-800 rounded-lg px-3.5 py-2 text-xs font-mono text-slate-400 cursor-not-allowed" />
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeEditAlunoSelfModal()" class="px-4 py-2 bg-slate-800 text-slate-300 text-xs font-semibold rounded-lg">Cancelar</button>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg">Salvar Nome</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    let currentUser = JSON.parse(localStorage.getItem("extensao_user") || "null");
+    let allProjetos = [];
+    let allUsuarios = [];
+    let cursosSelecionadosCreate = new Set();
+    let isForcarTrocaSenha = false;
+
+    const CURSOS_UNIFACCAMP = [
+      "Ciência da Computação",
+      "Administração",
+      "Análise e Desenvolvimento de Sistemas",
+      "Arquitetura e Urbanismo",
+      "Biomedicina",
+      "Ciências Biológicas",
+      "Ciências Contábeis",
+      "Comércio Exterior",
+      "Design Gráfico",
+      "Direito",
+      "Educação Física",
+      "Enfermagem",
+      "Engenharia Ambiental e Sanitária",
+      "Engenharia Civil",
+      "Engenharia de Controle e Automação",
+      "Engenharia de Produção",
+      "Engenharia Elétrica",
+      "Engenharia Mecânica",
+      "Estética e Cosmética",
+      "Farmácia",
+      "Fisioterapia",
+      "Gastronomia",
+      "Gestão Comercial",
+      "Gestão da Qualidade",
+      "Gestão da Tecnologia da Informação",
+      "Gestão de Recursos Humanos",
+      "Gestão Financeira",
+      "Gestão Hospitalar",
+      "Gestão Pública",
+      "História",
+      "Jogos Digitais",
+      "Letras (Português/Inglês)",
+      "Logística",
+      "Marketing",
+      "Matemática",
+      "Medicina Veterinária",
+      "Nutrição",
+      "Odontologia",
+      "Pedagogia",
+      "Processos Gerenciais",
+      "Psicologia",
+      "Publicidade e Propaganda",
+      "Química",
+      "Radiologia",
+      "Redes de Computadores",
+      "Segurança no Trabalho",
+      "Serviço Social",
+      "Sistemas de Informação"
+    ];
+
+    const JSON_EXEMPLOS = {
+      projetos: JSON.stringify([
+        {
+          titulo: "Automação Residencial Comunitária",
+          setor_externo: "Associação de Moradores",
+          areas_atuacao: "Tecnologia e Engenharia",
+          interdisciplinaridade: "Ciência da Computação + Elétrica",
+          orientador_nome: "Prof. André Marcos",
+          status: "EM ANDAMENTO",
+          publicado: true,
+          grupo_nome: "Equipe Tech Extensão",
+          membros: [
+            { ra: "2026001", nome: "João Silva", status_participacao: "CONFIRMADO" },
+            { ra: "2026002", nome: "Maria Souza", status_participacao: "PENDENTE" }
+          ]
+        }
+      ], null, 2),
+      usuarios: JSON.stringify([
+        {
+          ra: "PROF101",
+          nome: "Prof. André Marcos",
+          email: "andre.marcos@faccamp.com",
+          role: "orientador"
+        },
+        {
+          ra: "2026001",
+          nome: "João Silva",
+          email: "joao.silva@faccamp.com",
+          role: "aluno",
+          curso: "Ciência da Computação"
+        }
+      ], null, 2)
+    };
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      popularDropdownCursosCadastro();
+      popularDropdownFiltroCursosUsuarios();
+      atualizarSeletorDeCursos();
+      updateJsonExample();
+      updateUIForUser();
+
+      if (currentUser && currentUser.primeiro_acesso && currentUser.role !== "admin") {
+        openChangePasswordModal(true);
+      }
+
+      if (currentUser && ["admin", "coordenador", "orientador"].includes(currentUser.role)) {
+        await loadUsuarios();
+      }
+      addMembroField("membros-list-create");
+      await loadProjetos();
+    });
+
+    function popularDropdownCursosCadastro() {
+      const sel = document.getElementById("user-new-curso");
+      if (!sel) return;
+      sel.innerHTML = `<option value="" disabled selected>Selecione o curso do aluno...</option>` +
+        CURSOS_UNIFACCAMP.map(c => `<option value="${c}">${c}</option>`).join("");
+    }
+
+    function popularDropdownFiltroCursosUsuarios() {
+      const sel = document.getElementById("filter-curso-usuarios");
+      if (!sel) return;
+      sel.innerHTML = `<option value="TODOS">Todos os Cursos</option>` +
+        CURSOS_UNIFACCAMP.map(c => `<option value="${c}">${c}</option>`).join("");
+    }
+
+    function togglePasswordVisibility(inputId, iconId) {
+      const input = document.getElementById(inputId);
+      const icon = document.getElementById(iconId);
+      if (input.type === "password") {
+        input.type = "text";
+        icon.classList.remove("fa-eye");
+        icon.classList.add("fa-eye-slash");
+      } else {
+        input.type = "password";
+        icon.classList.remove("fa-eye-slash");
+        icon.classList.add("fa-eye");
+      }
+    }
+
+    function avaliarForcaSenha(inputId, barId, textId) {
+      const val = document.getElementById(inputId).value;
+      const bar = document.getElementById(barId);
+      const text = document.getElementById(textId);
+
+      if (val.length === 0) {
+        bar.className = "h-full w-0 transition-all duration-300";
+        text.className = "text-[11px] text-slate-400";
+        text.textContent = "De 6 a 18 caracteres ou dígitos.";
+        return;
+      }
+
+      if (val.length < 6) {
+        bar.className = "h-full w-1/4 bg-red-500 transition-all duration-300";
+        text.className = "text-[11px] font-medium text-red-400";
+        text.textContent = `Senha fraca — mínimo de 6 caracteres (${val.length}/18).`;
+        return;
+      }
+
+      const temLetras = /[a-zA-Z]/.test(val);
+      const temNumeros = /[0-9]/.test(val);
+      const temMaiusculaOuSimbolo = /[A-Z]/.test(val) || /[^a-zA-Z0-9]/.test(val);
+
+      if (val.length >= 10 && temLetras && temNumeros && temMaiusculaOuSimbolo) {
+        bar.className = "h-full w-full bg-emerald-500 transition-all duration-300";
+        text.className = "text-[11px] font-medium text-emerald-400";
+        text.textContent = `Força da senha: Ótima (${val.length}/18)`;
+      } else if ((temLetras && temNumeros) || val.length >= 8) {
+        bar.className = "h-full w-2/3 bg-amber-400 transition-all duration-300";
+        text.className = "text-[11px] font-medium text-amber-400";
+        text.textContent = `Força da senha: Boa (${val.length}/18)`;
+      } else {
+        bar.className = "h-full w-1/3 bg-red-500 transition-all duration-300";
+        text.className = "text-[11px] font-medium text-red-400";
+        text.textContent = `Força da senha: Fraca (${val.length}/18)`;
+      }
+    }
+
+    function toggleSidebar() {
+      const sb = document.getElementById("sidebar");
+      const bd = document.getElementById("sidebar-backdrop");
+      sb.classList.toggle("-translate-x-full");
+      bd.classList.toggle("hidden");
+    }
+
+    function switchTab(tab) {
+      ["consultar", "meus-grupos", "registrar-trabalho", "gerenciar-contas", "carga-massiva", "pareceres"].forEach(t => {
+        document.getElementById(`view-${t}`).classList.add("hidden");
+        const navBtn = document.getElementById(`nav-${t}`);
+        if (navBtn) {
+          navBtn.classList.remove("bg-indigo-600", "text-white", "shadow-md", "shadow-indigo-600/20", "font-semibold");
+          navBtn.classList.add("text-slate-400", "font-medium");
+        }
+      });
+
+      document.getElementById(`view-${tab}`).classList.remove("hidden");
+      const activeBtn = document.getElementById(`nav-${tab}`);
+      if (activeBtn) {
+        activeBtn.classList.add("bg-indigo-600", "text-white", "shadow-md", "shadow-indigo-600/20", "font-semibold");
+        activeBtn.classList.remove("text-slate-400", "font-medium");
+      }
+
+      const titles = {
+        "consultar": "Consultar Projetos Extensionistas",
+        "meus-grupos": "Confirmação de Participação em Grupos",
+        "registrar-trabalho": "Registrar Trabalho / Grupo Extensionista",
+        "gerenciar-contas": "Gerenciar Acessos e Contas",
+        "carga-massiva": "Carga Massiva de Acervo (JSON)",
+        "pareceres": "Pareceres de Ética e Conselho"
+      };
+      document.getElementById("page-title").textContent = titles[tab] || "Módulo 2: Controle";
+
+      if (window.innerWidth < 768) {
+        document.getElementById("sidebar").classList.add("-translate-x-full");
+        document.getElementById("sidebar-backdrop").classList.add("hidden");
+      }
+    }
+
+    function updateUIForUser() {
+      const btnLogin = document.getElementById("btn-open-login");
+      const btnLogout = document.getElementById("btn-logout");
+      const btnAlterarSenha = document.getElementById("btn-alterar-minha-senha");
+      const btnExportCsv = document.getElementById("btn-exportar-csv");
+      const navMeusGrupos = document.getElementById("nav-meus-grupos");
+      const navRegistrar = document.getElementById("nav-registrar-trabalho");
+      const navContas = document.getElementById("nav-gerenciar-contas");
+      const navCargaMassiva = document.getElementById("nav-carga-massiva");
+      const navPareceres = document.getElementById("nav-pareceres");
+
+      navMeusGrupos.classList.add("hidden");
+      navRegistrar.classList.add("hidden");
+      navContas.classList.add("hidden");
+      navCargaMassiva.classList.add("hidden");
+      navPareceres.classList.add("hidden");
+      btnAlterarSenha.classList.add("hidden");
+      btnExportCsv.classList.add("hidden");
+
+      if (!currentUser) {
+        btnLogin.classList.remove("hidden");
+        btnLogout.classList.add("hidden");
+        document.getElementById("user-name").textContent = "Visitante";
+        document.getElementById("user-role-badge").textContent = "Ator: Acesso Público";
+        document.getElementById("user-avatar").textContent = "AP";
+        document.getElementById("consultar-subtitle").textContent = "Consulta pública de trabalhos extensionistas publicados";
+        switchTab("consultar");
+        return;
+      }
+
+      btnLogin.classList.add("hidden");
+      btnLogout.classList.remove("hidden");
+      btnAlterarSenha.classList.remove("hidden");
+      document.getElementById("user-name").textContent = currentUser.nome;
+      const roleLabels = {
+        admin: "Administrador",
+        coordenador: "Coordenador",
+        orientador: "Orientador",
+        aluno: "Aluno"
+      };
+      document.getElementById("user-role-badge").textContent = `Ator: ${roleLabels[currentUser.role] || currentUser.role}`;
+      document.getElementById("user-avatar").textContent = currentUser.nome.substring(0, 2).toUpperCase();
+      document.getElementById("consultar-subtitle").textContent = "Visualizando todos os projetos cadastrados no sistema";
+
+      if (currentUser.role === "aluno") {
+        navMeusGrupos.classList.remove("hidden");
+      }
+
+      if (["admin", "coordenador", "orientador"].includes(currentUser.role)) {
+        navRegistrar.classList.remove("hidden");
+        navContas.classList.remove("hidden");
+        navPareceres.classList.remove("hidden");
+        btnExportCsv.classList.remove("hidden");
+        document.getElementById("proj-orientador").value = currentUser.nome;
+        populateRoleOptions();
+
+        const listTitle = document.getElementById("usuarios-list-title");
+        const listSub = document.getElementById("usuarios-list-subtitle");
+        if (currentUser.role === "orientador") {
+          listTitle.textContent = "Alunos Cadastrados no Sistema";
+          listSub.textContent = "Exibindo exclusivamente contas de alunos cadastradas.";
+        } else if (currentUser.role === "coordenador") {
+          listTitle.textContent = "Orientadores e Alunos Cadastrados";
+          listSub.textContent = "Gerencie desbloqueios e contas de orientadores e alunos.";
+        } else {
+          listTitle.textContent = "Contas Cadastradas no Sistema";
+          listSub.textContent = "Visão completa: gerencie desbloqueios e redefina senhas provisórias.";
+        }
+      }
+
+      if (["admin", "coordenador"].includes(currentUser.role)) {
+        navCargaMassiva.classList.remove("hidden");
+      }
+    }
+
+    function populateRoleOptions() {
+      const sel = document.getElementById("user-new-role");
+      sel.innerHTML = "";
+      if (currentUser.role === "admin") {
+        sel.innerHTML = `
+          <option value="coordenador">Coordenador</option>
+          <option value="orientador">Orientador</option>
+          <option value="aluno">Aluno</option>
+        `;
+      } else if (currentUser.role === "coordenador") {
+        sel.innerHTML = `
+          <option value="orientador">Orientador</option>
+          <option value="aluno">Aluno</option>
+        `;
+      } else if (currentUser.role === "orientador") {
+        sel.innerHTML = `<option value="aluno">Aluno</option>`;
+      }
+      toggleCampoCursoNovoUsuario();
+    }
+
+    function toggleCampoCursoNovoUsuario() {
+      const role = document.getElementById("user-new-role").value;
+      const divCurso = document.getElementById("div-user-new-curso");
+      const selectCurso = document.getElementById("user-new-curso");
+      if (role === "aluno") {
+        divCurso.classList.remove("hidden");
+        selectCurso.required = true;
+      } else {
+        divCurso.classList.add("hidden");
+        selectCurso.required = false;
+        selectCurso.value = "";
+      }
+    }
+
+    // ==========================================
+    // LOGIN E TROCA DE SENHA (1º ACESSO E VOLUNTÁRIA)
+    // ==========================================
+    function openLoginModal() {
+      document.getElementById("login-error").classList.add("hidden");
+      document.getElementById("login-senha").value = "";
+      document.getElementById("login-senha").type = "password";
+      document.getElementById("icon-eye-login").className = "fa-solid fa-eye text-xs";
+      avaliarForcaSenha("login-senha", "login-senha-strength-bar", "login-senha-strength-text");
+      document.getElementById("login-modal").classList.remove("hidden");
+    }
+
+    function closeLoginModal() {
+      document.getElementById("login-modal").classList.add("hidden");
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const identifier = document.getElementById("login-identifier").value;
+      const senha = document.getElementById("login-senha").value;
+      const errEl = document.getElementById("login-error");
+
+      if (senha.length < 6 || senha.length > 18) {
+        errEl.textContent = "A senha deve ter entre 6 e 18 caracteres.";
+        errEl.classList.remove("hidden");
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ identifier, senha })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          errEl.textContent = data.error || "Falha ao entrar";
+          errEl.classList.remove("hidden");
+          return;
+        }
+        currentUser = data;
+        localStorage.setItem("extensao_user", JSON.stringify(currentUser));
+        closeLoginModal();
+        updateUIForUser();
+
+        if (["admin", "coordenador", "orientador"].includes(currentUser.role)) {
+          await loadUsuarios();
+        }
+        await loadProjetos();
+
+        if (currentUser.primeiro_acesso && currentUser.role !== "admin") {
+          openChangePasswordModal(true);
+        }
+      } catch (err) {
+        errEl.textContent = "Erro de conexão com o servidor.";
+        errEl.classList.remove("hidden");
+      }
+    }
+
+    function openChangePasswordModal(forcarPrimeiroAcesso = false) {
+      isForcarTrocaSenha = forcarPrimeiroAcesso;
+      const titleEl = document.getElementById("change-pass-title");
+      const subEl = document.getElementById("change-pass-subtitle");
+      const btnClose = document.getElementById("btn-close-change-pass");
+      const divAtual = document.getElementById("div-senha-atual");
+      const inputAtual = document.getElementById("change-pass-atual");
+      const inputNova = document.getElementById("change-pass-nova");
+      const inputConfirmar = document.getElementById("change-pass-confirmar");
+      const errEl = document.getElementById("change-pass-error");
+
+      errEl.classList.add("hidden");
+      inputAtual.value = "";
+      inputNova.value = "";
+      inputConfirmar.value = "";
+
+      inputAtual.type = "password";
+      inputNova.type = "password";
+      inputConfirmar.type = "password";
+      document.getElementById("icon-eye-change-atual").className = "fa-solid fa-eye text-xs";
+      document.getElementById("icon-eye-change-nova").className = "fa-solid fa-eye text-xs";
+      document.getElementById("icon-eye-change-confirmar").className = "fa-solid fa-eye text-xs";
+
+      avaliarForcaSenha("change-pass-nova", "change-pass-bar", "change-pass-text");
+
+      if (forcarPrimeiroAcesso) {
+        titleEl.textContent = "Primeiro Acesso — Defina Sua Senha";
+        subEl.textContent = "Por segurança, substitua a senha provisória (123456) antes de continuar.";
+        btnClose.classList.add("hidden");
+        divAtual.classList.add("hidden");
+        inputAtual.required = false;
+      } else {
+        titleEl.textContent = "Alterar Minha Senha";
+        subEl.textContent = "Escolha uma nova senha pessoal (6 a 18 caracteres).";
+        btnClose.classList.remove("hidden");
+        divAtual.classList.remove("hidden");
+        inputAtual.required = true;
+      }
+
+      document.getElementById("change-password-modal").classList.remove("hidden");
+    }
+
+    function closeChangePasswordModal() {
+      if (isForcarTrocaSenha) return;
+      document.getElementById("change-password-modal").classList.add("hidden");
+    }
+
+    async function handleAlterarSenha(e) {
+      e.preventDefault();
+      const senhaAtual = document.getElementById("change-pass-atual").value.trim();
+      const novaSenha = document.getElementById("change-pass-nova").value.trim();
+      const confirmar = document.getElementById("change-pass-confirmar").value.trim();
+      const errEl = document.getElementById("change-pass-error");
+
+      if (novaSenha.length < 6 || novaSenha.length > 18) {
+        errEl.textContent = "A nova senha deve ter entre 6 e 18 caracteres.";
+        errEl.classList.remove("hidden");
+        return;
+      }
+      if (novaSenha === "123456") {
+        errEl.textContent = "A nova senha não pode ser igual à senha provisória (123456).";
+        errEl.classList.remove("hidden");
+        return;
+      }
+      if (novaSenha !== confirmar) {
+        errEl.textContent = "A confirmação da senha não confere.";
+        errEl.classList.remove("hidden");
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/usuarios/${currentUser.id}/alterar-senha`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            senha_atual: senhaAtual,
+            nova_senha: novaSenha,
+            forcar_primeiro_acesso: isForcarTrocaSenha
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          errEl.textContent = data.error || "Erro ao alterar senha.";
+          errEl.classList.remove("hidden");
+          return;
+        }
+
+        currentUser.primeiro_acesso = false;
+        localStorage.setItem("extensao_user", JSON.stringify(currentUser));
+        isForcarTrocaSenha = false;
+        document.getElementById("change-password-modal").classList.add("hidden");
+        alert("Senha atualizada com sucesso!");
+      } catch (err) {
+        errEl.textContent = "Erro de conexão ao alterar senha.";
+        errEl.classList.add("hidden");
+      }
+    }
+
+    function logout() {
+      currentUser = null;
+      allUsuarios = [];
+      localStorage.removeItem("extensao_user");
+      updateUIForUser();
+      renderProjetos();
+    }
+
+    async function loadProjetos() {
+      const res = await fetch("/api/projetos");
+      allProjetos = await res.json();
+      renderProjetos();
+      renderPareceres();
+      if (currentUser && currentUser.role === "aluno") {
+        renderAlunoGrupos();
+      }
+    }
+
+    function getProjetosFiltrados() {
+      const query = (document.getElementById("search-projetos").value || "").toLowerCase();
+      const statusFilter = document.getElementById("filter-status-projetos").value;
+
+      const visiveisPorPerfil = allProjetos.filter(p => {
+        if (!currentUser && !p.publicado) return false;
+        if (currentUser && currentUser.role === "aluno" && !p.publicado) {
+          const isMember = (p.grupo?.membros || []).some(m => m.ra.toLowerCase() === currentUser.ra.toLowerCase());
+          if (!isMember) return false;
+        }
+        return true;
+      });
+
+      const filtrados = visiveisPorPerfil.filter(p => {
+        if (statusFilter !== "TODOS" && p.status !== statusFilter) return false;
+        const texto = `${p.titulo} ${p.areas_atuacao} ${p.setor_externo} ${p.orientador_nome} ${(p.grupo?.membros || []).map(m => m.nome).join(" ")}`.toLowerCase();
+        return texto.includes(query);
+      });
+
+      return { visiveisPorPerfil, filtrados };
+    }
+
+    function exportarProjetosCSV() {
+      const { filtrados } = getProjetosFiltrados();
+      if (filtrados.length === 0) {
+        alert("Não há projetos listados para exportar.");
+        return;
+      }
+
+      const headers = ["ID", "Título", "Setor Externo", "Áreas de Atuação", "Interdisciplinaridade", "Orientador", "Status", "Visibilidade", "Grupo", "Integrantes"];
+      const linhas = filtrados.map(p => {
+        const integrantesStr = (p.grupo?.membros || [])
+          .map(m => `${m.nome} (${m.ra} - ${m.status_participacao}${m.justificativa_recusa ? ": " + m.justificativa_recusa : ""})`)
+          .join(" | ");
+
+        return [
+          p.id,
+          p.titulo,
+          p.setor_externo,
+          p.areas_atuacao,
+          p.interdisciplinaridade,
+          p.orientador_nome,
+          p.status,
+          p.publicado ? "Público" : "Interno",
+          p.grupo?.nome || "",
+          integrantesStr
+        ].map(val => `"${String(val).replace(/"/g, '""')}"`).join(";");
+      });
+
+      const csvContent = "\uFEFF" + [headers.join(";"), ...linhas].join("\n");
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `relatorio_projetos_extensionistas_${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+
+    function renderProjetos() {
+      const grid = document.getElementById("projetos-cards-grid");
+      const isManager = currentUser && ["admin", "coordenador", "orientador"].includes(currentUser.role);
+      const { visiveisPorPerfil, filtrados } = getProjetosFiltrados();
+
+      document.getElementById("kpi-total").textContent = visiveisPorPerfil.length;
+      document.getElementById("kpi-andamento").textContent = visiveisPorPerfil.filter(p => ["EM ANDAMENTO", "DESENVOLVIMENTO"].includes(p.status)).length;
+      document.getElementById("kpi-concluidos").textContent = visiveisPorPerfil.filter(p => p.status === "CONCLUIDO").length;
+      document.getElementById("kpi-publicados").textContent = visiveisPorPerfil.filter(p => p.publicado).length;
+            // CÁLCULO DA TAXA DE CONFORMIDADE E GRÁFICOS
+      const totalVisiveis = visiveisPorPerfil.length;
+      const aprovadosConformidade = visiveisPorPerfil.filter(p => p.etica?.status === "APROVADO" && p.conselho?.status === "APROVADO").length;
+      const taxaConformidade = totalVisiveis > 0 ? Math.round((aprovadosConformidade / totalVisiveis) * 100) : 0;
+      
+      const txtConformidade = document.getElementById("taxa-conformidade-txt");
+      const barConformidade = document.getElementById("taxa-conformidade-bar");
+      if (txtConformidade && barConformidade) {
+        txtConformidade.textContent = `${taxaConformidade}% Aprovados (${aprovadosConformidade}/${totalVisiveis})`;
+        barConformidade.style.width = `${taxaConformidade}%`;
+      }
+
+      const categoriasContagem = {};
+      visiveisPorPerfil.forEach(p => {
+        const area = (p.areas_atuacao || "Geral").trim();
+        categoriasContagem[area] = (categoriasContagem[area] || 0) + 1;
+      });
+
+      const catContainer = document.getElementById("categorias-distribuicao-container");
+      if (catContainer) {
+        const maxCat = Math.max(...Object.values(categoriasContagem), 1);
+        catContainer.innerHTML = Object.keys(categoriasContagem).length === 0 
+          ? `<p class="text-[11px] text-slate-500">Sem dados de categorias registados.</p>`
+          : Object.entries(categoriasContagem).map(([cat, qtd]) => {
+              const percentual = Math.round((qtd / totalVisiveis) * 100);
+              return `
+                <div>
+                  <div class="flex justify-between text-[11px] mb-1">
+                    <span class="text-slate-300 font-medium">${cat}</span>
+                    <span class="text-slate-400">${qtd} projeto(s) (${percentual}%)</span>
+                  </div>
+                  <div class="w-full h-1.5 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
+                    <div class="h-full bg-emerald-500 rounded-full transition-all duration-500" style="width: ${(qtd / maxCat) * 100}%"></div>
+                  </div>
+                </div>
+              `;
+            }).join("");
+      }
+
+      if (filtrados.length === 0) {
+        grid.innerHTML = `<div class="col-span-full text-center py-10 text-xs text-slate-400 bg-slate-950/40 rounded-xl border border-slate-800/60">Nenhum projeto encontrado para os filtros aplicados.</div>`;
+        return;
+      }
+
+      const statusColors = {
+        "NOVO": "bg-sky-500/15 text-sky-400 border-sky-500/30",
+        "EM ANDAMENTO": "bg-amber-500/15 text-amber-400 border-amber-500/30",
+        "DESENVOLVIMENTO": "bg-violet-500/15 text-violet-400 border-violet-500/30",
+        "CONCLUIDO": "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
+        "CANCELADO": "bg-red-500/15 text-red-400 border-red-500/30"
+      };
+
+      grid.innerHTML = filtrados.map(p => {
+        const badgeClass = statusColors[p.status] || "bg-slate-800 text-slate-300 border-slate-700";
+        
+        // Verifica se o orientador logado é o responsável por este projeto específico (ou admin/coordenador)
+        const podeGerenciarEsteProjeto = currentUser && (
+          currentUser.role === "admin" ||
+          currentUser.role === "coordenador" ||
+          (currentUser.role === "orientador" && p.orientador_nome.toLowerCase().includes(currentUser.nome.toLowerCase()))
+        );
+
+        const membrosHtml = (p.grupo?.membros || []).map(m => {
+          const stIcon = m.status_participacao === "CONFIRMADO"
+            ? `<span class="text-emerald-400" title="Confirmado"><i class="fa-solid fa-circle-check"></i></span>`
+            : m.status_participacao === "RECUSADO"
+            ? `<span class="text-red-400" title="${m.justificativa_recusa ? "Recusado: " + m.justificativa_recusa : "Recusado"}"><i class="fa-solid fa-circle-xmark"></i></span>`
+            : `<span class="text-amber-400" title="Pendente"><i class="fa-solid fa-clock"></i></span>`;
+
+          const motivoHtml = (isManager && m.status_participacao === "RECUSADO" && m.justificativa_recusa)
+            ? `<div class="text-[10px] text-red-400/90 mt-0.5 pl-1 border-l-2 border-red-500/50">Motivo: ${m.justificativa_recusa}</div>`
+            : "";
+
+          return `<li class="text-[11px] text-slate-300 bg-slate-900/80 px-2.5 py-1.5 rounded-md border border-slate-800/80">
+            <div class="flex items-center justify-between gap-2">
+              <span class="truncate">${m.nome} <span class="text-slate-500">(${m.ra})</span></span>
+              ${stIcon}
+            </div>
+            ${motivoHtml}
+          </li>`;
+        }).join("");
+
+        const managerControls = podeGerenciarEsteProjeto ? `
+          <div class="pt-3 mt-3 border-t border-slate-800/80 space-y-2.5">
+            <div class="flex items-center justify-between gap-2">
+              <select onchange="alterarStatusProjeto(${p.id}, this.value)" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-[11px] text-slate-200 focus:outline-none focus:border-indigo-500">
+                <option value="NOVO" ${p.status === "NOVO" ? "selected" : ""}>Status: NOVO</option>
+                <option value="EM ANDAMENTO" ${p.status === "EM ANDAMENTO" ? "selected" : ""}>Status: EM ANDAMENTO</option>
+                <option value="DESENVOLVIMENTO" ${p.status === "DESENVOLVIMENTO" ? "selected" : ""}>Status: DESENVOLVIMENTO</option>
+                <option value="CONCLUIDO" ${p.status === "CONCLUIDO" ? "selected" : ""}>Status: CONCLUÍDO</option>
+                <option value="CANCELADO" ${p.status === "CANCELADO" ? "selected" : ""}>Status: CANCELADO</option>
+              </select>
+
+              <button onclick="togglePublicarProjeto(${p.id}, ${!p.publicado})" class="px-2.5 py-1.5 ${p.publicado ? "bg-slate-800 hover:bg-slate-700 text-amber-400 border-slate-700" : "bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-500"} text-[11px] font-semibold rounded-lg border transition-colors flex items-center gap-1.5" title="${p.publicado ? "Ocultar do mural público" : "Publicar projeto no mural público"}">
+                <i class="fa-solid ${p.publicado ? "fa-eye-slash" : "fa-globe"}"></i>
+                <span>${p.publicado ? "Ocultar" : "Postar Projeto"}</span>
+              </button>
+            </div>
+
+            <div class="flex items-center justify-end gap-2">
+              <button onclick="openEditProjetoModal(${p.id})" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-lg border border-slate-700 transition-colors flex items-center gap-1.5" title="Editar Projeto">
+                <i class="fa-solid fa-pen-to-square"></i>
+                <span>Editar</span>
+              </button>
+              <button onclick="deletarProjeto(${p.id}, '${p.titulo.replace(/'/g, "\\'")}')" class="px-2.5 py-1.5 bg-red-950/60 hover:bg-red-900/80 text-red-400 text-xs font-medium rounded-lg border border-red-800/60 transition-colors flex items-center gap-1.5" title="Excluir Projeto">
+                <i class="fa-solid fa-trash"></i>
+                <span>Excluir</span>
+              </button>
+            </div>
+          </div>
+        ` : (isManager ? `<div class="pt-2 mt-2 border-t border-slate-800/80 text-[10px] text-slate-500 italic text-center">Apenas o orientador responsável (${p.orientador_nome}), Coordenador ou Admin podem gerenciar este projeto.</div>` : "");
+
+        return `
+          <div class="bg-slate-950/70 border border-slate-800/80 rounded-xl p-4 flex flex-col justify-between hover:border-slate-700 transition-all">
+            <div>
+              <div class="flex items-start justify-between gap-2 mb-2">
+                <span class="px-2 py-0.5 text-[10px] font-bold rounded-md border ${badgeClass}">${p.status}</span>
+                ${isManager ? `<span class="text-[10px] font-medium ${p.publicado ? "text-emerald-400" : "text-slate-500"}"><i class="fa-solid ${p.publicado ? "fa-globe" : "fa-lock"} mr-1"></i>${p.publicado ? "Público" : "Interno"}</span>` : ""}
+              </div>
+              <h4 class="text-sm font-bold text-slate-100 mb-1">${p.titulo}</h4>
+              <p class="text-[11px] text-slate-400 mb-3"><i class="fa-solid fa-building mr-1 text-indigo-400"></i> ${p.setor_externo}</p>
+
+              <div class="space-y-1 text-[11px] text-slate-300 mb-3">
+                <div><span class="text-slate-500">Áreas:</span> ${p.areas_atuacao}</div>
+                <div><span class="text-slate-500">Interdisciplinaridade:</span> ${p.interdisciplinaridade}</div>
+                <div><span class="text-slate-500">Orientador(es):</span> ${p.orientador_nome}</div>
+              </div>
+
+              <div class="bg-slate-900/50 rounded-lg p-2.5 border border-slate-800/60">
+                <div class="text-[11px] font-semibold text-indigo-300 mb-1.5"><i class="fa-solid fa-users mr-1"></i> Grupo: ${p.grupo?.nome || "Sem grupo"}</div>
+                <ul class="space-y-1">${membrosHtml || '<li class="text-[11px] text-slate-500">Nenhum aluno vinculado</li>'}</ul>
+              </div>
+            </div>
+            ${managerControls}
+          </div>
+        `;
+      }).join("");
+    }
+
+    // ==========================================
+    // SELEÇÃO DE ALUNOS POR CURSOS (MÚLTIPLOS CURSOS)
+    // ==========================================
+    function atualizarSeletorDeCursos() {
+      const select = document.getElementById("curso-selector-add");
+      if (!select) return;
+      const alunos = allUsuarios.filter(u => u.role === "aluno");
+
+      const extras = alunos
+        .map(a => (a.curso || "").trim())
+        .filter(c => c && !CURSOS_UNIFACCAMP.includes(c));
+      const todosCursos = [...CURSOS_UNIFACCAMP, ...new Set(extras)];
+
+      select.innerHTML = `<option value="">Escolha um curso...</option>` +
+        todosCursos.map(c => {
+          const qtd = alunos.filter(a => (a.curso || "").trim() === c).length;
+          const labelQtd = qtd > 0 ? ` (${qtd} aluno${qtd > 1 ? "s" : ""})` : "";
+          return `<option value="${c}">${c}${labelQtd}</option>`;
+        }).join("");
+    }
+
+    function adicionarCursoFiltro(contexto) {
+      const select = document.getElementById("curso-selector-add");
+      const curso = select.value;
+      if (!curso) return;
+      cursosSelecionadosCreate.add(curso);
+      select.value = "";
+      renderCursosEAlunosFiltro(contexto);
+    }
+
+    function removerCursoFiltro(contexto, curso) {
+      cursosSelecionadosCreate.delete(curso);
+      renderCursosEAlunosFiltro(contexto);
+    }
+
+    function renderCursosEAlunosFiltro(contexto) {
+      const tagsContainer = document.getElementById(`cursos-tags-${contexto}`);
+      const box = document.getElementById(`alunos-por-curso-box-${contexto}`);
+      const checklist = document.getElementById(`alunos-checklist-${contexto}`);
+
+      const cursosArr = Array.from(cursosSelecionadosCreate);
+      if (cursosArr.length === 0) {
+        tagsContainer.innerHTML = "";
+        box.classList.add("hidden");
+        checklist.innerHTML = "";
+        return;
+      }
+
+      tagsContainer.innerHTML = cursosArr.map(c => `
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/40">
+          <span>${c}</span>
+          <button type="button" onclick="removerCursoFiltro('${contexto}', '${c.replace(/'/g, "\\'")}')" class="hover:text-white">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </span>
+      `).join("");
+
+      const alunosFiltrados = allUsuarios.filter(u =>
+        u.role === "aluno" && u.curso && cursosSelecionadosCreate.has(u.curso.trim())
+      );
+
+      box.classList.remove("hidden");
+
+      if (alunosFiltrados.length === 0) {
+        checklist.innerHTML = `<p class="col-span-full text-[11px] text-slate-400">Nenhum aluno cadastrado ainda nos cursos selecionados.</p>`;
+        return;
+      }
+
+      checklist.innerHTML = alunosFiltrados.map(a => `
+        <label class="flex items-center gap-2.5 bg-slate-950/90 hover:bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 cursor-pointer transition-colors">
+          <input type="checkbox" value="${a.ra}" data-nome="${a.nome}" class="aluno-curso-checkbox w-4 h-4 rounded border-slate-600 text-indigo-600 focus:ring-indigo-500 bg-slate-900" />
+          <div class="min-w-0 flex-1">
+            <div class="text-xs font-semibold text-slate-100 truncate">${a.nome}</div>
+            <div class="text-[10px] text-slate-400 truncate">RA: <span class="font-mono text-indigo-300">${a.ra}</span> • ${a.curso}</div>
+          </div>
+        </label>
+      `).join("");
+    }
+
+    function incluirAlunosSelecionados(contexto, targetContainerId) {
+      const checkboxes = document.querySelectorAll(`#alunos-checklist-${contexto} .aluno-curso-checkbox:checked`);
+      if (checkboxes.length === 0) {
+        alert("Marque pelo menos um aluno na caixa de seleção antes de incluir.");
+        return;
+      }
+
+      const container = document.getElementById(targetContainerId);
+      container.querySelectorAll(".membro-row").forEach(row => {
+        const raVal = row.querySelector(".membro-ra").value.trim();
+        if (!raVal) row.remove();
+      });
+
+      const rasJaNaLista = new Set(
+        Array.from(container.querySelectorAll(".membro-ra")).map(inp => inp.value.trim().toLowerCase())
+      );
+
+      let adicionados = 0;
+      checkboxes.forEach(cb => {
+        const ra = cb.value.trim();
+        const nome = cb.dataset.nome;
+        if (!rasJaNaLista.has(ra.toLowerCase())) {
+          addMembroField(targetContainerId, ra, nome, "PENDENTE");
+          rasJaNaLista.add(ra.toLowerCase());
+          adicionados++;
+        }
+        cb.checked = false;
+      });
+
+      if (adicionados === 0) {
+        alert("Os alunos marcados já estão na lista de integrantes do grupo.");
+      }
+    }
+
+    // ==========================================
+    // INCLUSÃO MANUAL POR RA (BUSCA INSTANTÂNEA DE ALUNO COM ACESSO)
+    // ==========================================
+    function addMembroField(containerId, ra = "", nome = "", status = "PENDENTE") {
+      const container = document.getElementById(containerId);
+      const row = document.createElement("div");
+      row.className = "flex flex-col sm:flex-row sm:items-center gap-2 membro-row bg-slate-900/40 p-2 rounded-lg border border-slate-800/80";
+      row.dataset.status = status;
+
+      row.innerHTML = `
+        <input type="text" placeholder="Digite o RA do Aluno" value="${ra}" required oninput="validarAlunoPorRaInput(this)" class="membro-ra w-full sm:w-1/3 bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
+        <div class="flex-1 flex items-center gap-2">
+          <input type="text" placeholder="Nome preenchido automaticamente..." value="${nome}" readonly required class="membro-nome flex-1 bg-slate-950/70 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-300 cursor-not-allowed" />
+          <span class="membro-status-icon text-xs shrink-0"></span>
+          <button type="button" onclick="this.closest('.membro-row').remove()" class="p-1.5 text-slate-500 hover:text-red-400" title="Remover aluno">
+            <i class="fa-solid fa-trash-can text-xs"></i>
+          </button>
+        </div>
+      `;
+      container.appendChild(row);
+
+      if (ra) {
+        validarAlunoPorRaInput(row.querySelector(".membro-ra"));
+      }
+    }
+
+    function validarAlunoPorRaInput(raInput) {
+      const row = raInput.closest(".membro-row");
+      const nomeInput = row.querySelector(".membro-nome");
+      const iconSpan = row.querySelector(".membro-status-icon");
+      const raDigitado = raInput.value.trim().toLowerCase();
+
+      if (!raDigitado) {
+        nomeInput.value = "";
+        nomeInput.className = "membro-nome flex-1 bg-slate-950/70 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-300 cursor-not-allowed";
+        iconSpan.innerHTML = "";
+        row.dataset.valido = "false";
+        return;
+      }
+
+      const alunoEncontrado = allUsuarios.find(
+        u => u.role === "aluno" && u.ra.trim().toLowerCase() === raDigitado
+      );
+
+      if (alunoEncontrado) {
+        nomeInput.value = `${alunoEncontrado.nome}${alunoEncontrado.curso ? " (" + alunoEncontrado.curso + ")" : ""}`;
+        nomeInput.className = "membro-nome flex-1 bg-emerald-950/30 border border-emerald-700/60 rounded-lg px-3 py-1.5 text-xs text-emerald-300 font-medium cursor-not-allowed";
+        iconSpan.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400" title="Aluno com acesso validado"></i>`;
+        row.dataset.valido = "true";
+        row.dataset.nomeReal = alunoEncontrado.nome;
+      } else {
+        nomeInput.value = "RA não encontrado ou sem acesso de aluno";
+        nomeInput.className = "membro-nome flex-1 bg-red-950/30 border border-red-800/60 rounded-lg px-3 py-1.5 text-xs text-red-400 cursor-not-allowed";
+        iconSpan.innerHTML = `<i class="fa-solid fa-circle-xmark text-red-400" title="Apenas alunos cadastrados podem ser incluídos"></i>`;
+        row.dataset.valido = "false";
+        row.dataset.nomeReal = "";
+      }
+    }
+
+    function collectMembros(containerId) {
+      const rows = document.querySelectorAll(`#${containerId} .membro-row`);
+      const lista = [];
+      const rasUnicos = new Set();
+
+      for (const r of rows) {
+        const ra = r.querySelector(".membro-ra").value.trim();
+        if (!ra) continue;
+
+        if (r.dataset.valido !== "true") {
+          return { error: `O RA "${ra}" não pertence a um aluno cadastrado com acesso no sistema. Corrija ou remova a linha.` };
+        }
+
+        if (rasUnicos.has(ra.toLowerCase())) continue;
+        rasUnicos.add(ra.toLowerCase());
+
+        lista.push({
+          ra: ra,
+          nome: r.dataset.nomeReal || r.querySelector(".membro-nome").value.trim(),
+          status_participacao: r.dataset.status || "PENDENTE"
+        });
+      }
+
+      return { membros: lista };
+    }
+
+    async function handleCriarProjeto(e) {
+      e.preventDefault();
+      const resultadoMembros = collectMembros("membros-list-create");
+      if (resultadoMembros.error) {
+        alert(resultadoMembros.error);
+        return;
+      }
+      if (resultadoMembros.membros.length === 0) {
+        alert("Inclua pelo menos 1 aluno cadastrado com acesso no sistema.");
+        return;
+      }
+
+      const payload = {
+        titulo: document.getElementById("proj-titulo").value,
+        setor_externo: document.getElementById("proj-setor").value,
+        areas_atuacao: document.getElementById("proj-areas").value,
+        interdisciplinaridade: document.getElementById("proj-inter").value,
+        grupo_nome: document.getElementById("proj-grupo").value,
+        orientador_nome: document.getElementById("proj-orientador").value,
+        membros: resultadoMembros.membros
+      };
+
+      const res = await fetch("/api/projetos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (res.ok) {
+        e.target.reset();
+        cursosSelecionadosCreate.clear();
+        renderCursosEAlunosFiltro("create");
+        document.getElementById("membros-list-create").innerHTML = "";
+        addMembroField("membros-list-create");
+        document.getElementById("proj-orientador").value = currentUser.nome;
+        await loadProjetos();
+        switchTab("consultar");
+      } else {
+        const err = await res.json();
+        alert(err.error || "Erro ao cadastrar projeto.");
+      }
+    }
+
+    function openEditProjetoModal(projetoId) {
+      const p = allProjetos.find(item => item.id === projetoId);
+      if (!p) return;
+      document.getElementById("edit-proj-id").value = p.id;
+      document.getElementById("edit-proj-titulo").value = p.titulo;
+      document.getElementById("edit-proj-setor").value = p.setor_externo;
+      document.getElementById("edit-proj-areas").value = p.areas_atuacao;
+      document.getElementById("edit-proj-inter").value = p.interdisciplinaridade;
+      document.getElementById("edit-proj-grupo").value = p.grupo?.nome || "";
+      document.getElementById("edit-proj-orientador").value = p.orientador_nome;
+
+      const list = document.getElementById("membros-list-edit");
+      list.innerHTML = "";
+      (p.grupo?.membros || []).forEach(m => addMembroField("membros-list-edit", m.ra, m.nome, m.status_participacao));
+      document.getElementById("edit-projeto-modal").classList.remove("hidden");
+    }
+
+    function closeEditProjetoModal() {
+      document.getElementById("edit-projeto-modal").classList.add("hidden");
+    }
+
+    async function handleEditarProjeto(e) {
+      e.preventDefault();
+      const resultadoMembros = collectMembros("membros-list-edit");
+      if (resultadoMembros.error) {
+        alert(resultadoMembros.error);
+        return;
+      }
+
+      const id = document.getElementById("edit-proj-id").value;
+      const payload = {
+        actor_role: currentUser.role,
+        actor_nome: currentUser.nome,
+        titulo: document.getElementById("edit-proj-titulo").value,
+        setor_externo: document.getElementById("edit-proj-setor").value,
+        areas_atuacao: document.getElementById("edit-proj-areas").value,
+        interdisciplinaridade: document.getElementById("edit-proj-inter").value,
+        grupo_nome: document.getElementById("edit-proj-grupo").value,
+        orientador_nome: document.getElementById("edit-proj-orientador").value,
+        membros: resultadoMembros.membros
+      };
+
+      const res = await fetch(`/api/projetos/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (res.ok) {
+        closeEditProjetoModal();
+        await loadProjetos();
+      } else {
+        const err = await res.json();
+        alert(err.error || "Erro ao editar projeto.");
+      }
+    }
+
+    async function alterarStatusProjeto(projetoId, status) {
+      const res = await fetch(`/api/projetos/${projetoId}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          actor_role: currentUser.role, 
+          actor_nome: currentUser.nome, 
+          status 
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Erro ao alterar status.");
+      }
+      await loadProjetos();
+    }
+
+    async function togglePublicarProjeto(projetoId, publicar) {
+      const res = await fetch(`/api/projetos/${projetoId}/publicar`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          actor_role: currentUser.role, 
+          actor_nome: currentUser.nome, 
+          publicado: publicar 
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Erro ao alterar publicação.");
+      }
+      await loadProjetos();
+    }
+
+    async function deletarProjeto(projetoId, titulo) {
+      if (!confirm(`Tem certeza que deseja excluir definitivamente o projeto "${titulo}"?`)) return;
+
+      try {
+        const res = await fetch(`/api/projetos/${projetoId}`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ 
+            actor_role: currentUser.role, 
+            actor_nome: currentUser.nome 
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          alert(data.error || "Erro ao excluir projeto.");
+          return;
+        }
+        await loadProjetos();
+      } catch (err) {
+        alert("Erro de conexão ao excluir projeto.");
+      }
+    }
+
+    // ==========================================
+    // CARGA MASSIVA VIA JSON
+    // ==========================================
+    function updateJsonExample() {
+      const tipo = document.getElementById("json-tipo-acervo").value;
+      document.getElementById("json-example-preview").textContent = JSON_EXEMPLOS[tipo];
+      document.getElementById("json-import-feedback").textContent = "";
+    }
+
+    function preencherComExemploJson() {
+      const tipo = document.getElementById("json-tipo-acervo").value;
+      document.getElementById("json-raw-input").value = JSON_EXEMPLOS[tipo];
+      document.getElementById("json-import-feedback").textContent = "";
+    }
+
+    function handleJsonFileUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        document.getElementById("json-raw-input").value = evt.target.result;
+      };
+      reader.readAsText(file, "UTF-8");
+    }
+
+    async function handleImportarJson() {
+      const tipo = document.getElementById("json-tipo-acervo").value;
+      const rawText = document.getElementById("json-raw-input").value.trim();
+      const feedback = document.getElementById("json-import-feedback");
+
+      if (!rawText) {
+        feedback.className = "text-xs font-medium text-red-400";
+        feedback.textContent = "Cole o conteúdo JSON ou selecione um arquivo primeiro.";
+        return;
+      }
+
+      let registros;
+      try {
+        registros = JSON.parse(rawText);
+      } catch (err) {
+        feedback.className = "text-xs font-medium text-red-400";
+        feedback.textContent = "JSON inválido: verifique vírgulas, chaves e aspas.";
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/carga-massiva", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            actor_role: currentUser.role,
+            tipo: tipo,
+            registros: registros
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          feedback.className = "text-xs font-medium text-red-400";
+          feedback.textContent = data.error || "Erro ao importar acervo.";
+          return;
+        }
+
+        feedback.className = "text-xs font-medium text-emerald-400";
+        feedback.textContent = data.message;
+        document.getElementById("json-raw-input").value = "";
+        await loadUsuarios();
+        await loadProjetos();
+      } catch (err) {
+        feedback.className = "text-xs font-medium text-red-400";
+        feedback.textContent = "Erro de conexão ao processar importação.";
+      }
+    }
+
+    // ==========================================
+    // CONTAS E USUÁRIOS (FILTRO ESTRITO POR HIERARQUIA, FILTRO POR CURSO, PESQUISA, DESBLOQUEIO E REDEFINIÇÃO DE SENHA)
+    // ==========================================
+    async function loadUsuarios() {
+      if (!currentUser) return;
+      const res = await fetch(`/api/usuarios?actor_role=${encodeURIComponent(currentUser.role)}`);
+      allUsuarios = await res.json();
+      atualizarSeletorDeCursos();
+      renderUsuariosTable();
+    }
+
+    function renderUsuariosTable() {
+      const tbody = document.getElementById("usuarios-table-body");
+      if (!tbody || !currentUser) return;
+      const query = (document.getElementById("search-usuarios")?.value || "").toLowerCase().trim();
+      const cursoFiltro = document.getElementById("filter-curso-usuarios")?.value || "TODOS";
+
+      const visiveisPorHierarquia = allUsuarios.filter(u => {
+        if (currentUser.role === "admin") return true;
+        if (currentUser.role === "coordenador") return u.role === "orientador" || u.role === "aluno";
+        if (currentUser.role === "orientador") return u.role === "aluno";
+        return false;
+      });
+
+      const filtrados = visiveisPorHierarquia.filter(u => {
+        if (cursoFiltro !== "TODOS" && (u.curso || "").trim() !== cursoFiltro) return false;
+        return u.nome.toLowerCase().includes(query) || u.ra.toLowerCase().includes(query);
+      });
+
+      if (filtrados.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-xs text-slate-400">Nenhum usuário encontrado.</td></tr>`;
+        return;
+      }
+
+      const canUnlock = ["admin", "coordenador"].includes(currentUser.role);
+      const isAdmin = currentUser.role === "admin";
+
+      tbody.innerHTML = filtrados.map(u => {
+        const statusBadge = u.bloqueado
+          ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-red-500/20 text-red-400 border border-red-500/40"><i class="fa-solid fa-lock"></i> BLOQUEADO</span>`
+          : u.primeiro_acesso
+          ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/30"><i class="fa-solid fa-clock"></i> Senha Provisória</span>`
+          : `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"><i class="fa-solid fa-check"></i> Ativo</span>`;
+
+        const btnDesbloquear = (u.bloqueado && canUnlock)
+          ? `<button onclick="desbloquearUsuario(${u.id}, '${u.nome.replace(/'/g, "\\'")}')" class="px-2.5 py-1 bg-amber-600 hover:bg-amber-500 text-white text-[11px] font-semibold rounded-lg transition-colors" title="Desbloquear acesso do usuário"><i class="fa-solid fa-unlock mr-1"></i> Desbloquear</button>`
+          : "";
+
+        const btnRedefinirSenha = (isAdmin && u.role !== "admin")
+          ? `<button onclick="redefinirSenhaUsuario(${u.id}, '${u.nome.replace(/'/g, "\\'")}')" class="px-2.5 py-1 bg-slate-800 hover:bg-indigo-600 text-slate-200 hover:text-white border border-slate-700 text-[11px] font-semibold rounded-lg transition-colors" title="Voltar senha para a provisória (123456)"><i class="fa-solid fa-rotate-left mr-1"></i> Redefinir Senha</button>`
+          : "";
+
+        const btnExcluir = (u.role !== "admin")
+          ? `<button onclick="deletarUsuario(${u.id})" class="p-1.5 text-red-400 hover:text-red-300 hover:bg-red-950/50 rounded-lg transition-colors" title="Excluir conta"><i class="fa-solid fa-trash"></i></button>`
+          : `<span class="text-[10px] text-slate-600">Protegido</span>`;
+
+        return `
+          <tr class="hover:bg-slate-900/50 ${u.bloqueado ? "bg-red-950/15" : ""}">
+            <td class="py-2.5 px-4 font-mono text-slate-300">${u.ra}</td>
+            <td class="py-2.5 px-4">
+              <div class="font-medium text-slate-100">${u.nome}</div>
+              <div class="text-[11px] text-slate-400">${u.email}</div>
+            </td>
+            <td class="py-2.5 px-4">
+              <div class="uppercase text-[10px] font-bold text-indigo-400">${u.role}</div>
+              <div class="text-[11px] text-slate-300">${u.curso || "—"}</div>
+            </td>
+            <td class="py-2.5 px-4">${statusBadge}</td>
+            <td class="py-2.5 px-4 text-right">
+              <div class="inline-flex flex-wrap items-center justify-end gap-1.5">
+                ${btnDesbloquear}
+                ${btnRedefinirSenha}
+                ${btnExcluir}
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    async function desbloquearUsuario(id, nome) {
+      if (!confirm(`Desbloquear o acesso de "${nome}"?`)) return;
+      const res = await fetch(`/api/usuarios/${id}/desbloquear`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ actor_role: currentUser.role })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Erro ao desbloquear usuário.");
+        return;
+      }
+      await loadUsuarios();
+      alert(data.message);
+    }
+
+    async function redefinirSenhaUsuario(id, nome) {
+      if (!confirm(`Redefinir a senha de "${nome}" para a provisória padrão (123456)?`)) return;
+      const res = await fetch(`/api/usuarios/${id}/redefinir-senha`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ actor_role: currentUser.role })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Erro ao redefinir senha.");
+        return;
+      }
+      await loadUsuarios();
+      alert(data.message);
+    }
+
+    async function handleCriarUsuario(e) {
+      e.preventDefault();
+      const role = document.getElementById("user-new-role").value;
+      const curso = role === "aluno" ? document.getElementById("user-new-curso").value.trim() : "";
+
+      if (role === "aluno" && !curso) {
+        alert("Selecione o curso do aluno.");
+        return;
+      }
+
+      const payload = {
+        actor_role: currentUser.role,
+        role: role,
+        ra: document.getElementById("user-new-ra").value,
+        nome: document.getElementById("user-new-nome").value,
+        email: document.getElementById("user-new-email").value,
+        curso: curso
+      };
+
+      const res = await fetch("/api/usuarios", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Erro ao criar conta.");
+        return;
+      }
+      e.target.reset();
+      toggleCampoCursoNovoUsuario();
+      await loadUsuarios();
+      renderCursosEAlunosFiltro("create");
+      alert("Conta criada com sucesso! Senha provisória inicial: 123456");
+    }
+
+    async function deletarUsuario(id) {
+      if (!confirm("Remover esta conta de usuário?")) return;
+      const res = await fetch(`/api/usuarios/${id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ actor_role: currentUser.role })
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error || "Sem permissão para excluir este usuário.");
+        return;
+      }
+      await loadUsuarios();
+      renderCursosEAlunosFiltro("create");
+    }
+
+    // ==========================================
+    // ALUNO: ACEITAR / REJEITAR COM JUSTIFICATIVA E EDITAR NOME PRÓPRIO
+    // ==========================================
+    function renderAlunoGrupos() {
+      const container = document.getElementById("pending-groups-container");
+      const badge = document.getElementById("badge-convites");
+      const meusVinculos = [];
+
+      allProjetos.forEach(p => {
+        (p.grupo?.membros || []).forEach(m => {
+          if (m.ra.toLowerCase() === currentUser.ra.toLowerCase()) {
+            meusVinculos.push({ projeto: p, membro: m });
+          }
+        });
+      });
+
+      const pendentesCount = meusVinculos.filter(v => v.membro.status_participacao === "PENDENTE").length;
+      if (pendentesCount > 0) {
+        badge.textContent = pendentesCount;
+        badge.classList.remove("hidden");
+      } else {
+        badge.classList.add("hidden");
+      }
+
+      if (meusVinculos.length === 0) {
+        container.innerHTML = `<p class="text-xs text-slate-400">Você ainda não foi incluído em nenhum grupo de projeto extensionista.</p>`;
+        return;
+      }
+
+      container.innerHTML = meusVinculos.map(({ projeto, membro }) => `
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div>
+            <div class="text-xs font-bold text-slate-100">${projeto.titulo}</div>
+            <div class="text-[11px] text-slate-400">Grupo: <span class="text-indigo-400 font-medium">${projeto.grupo.nome}</span> • Orientador: ${projeto.orientador_nome}</div>
+            <div class="text-[11px] text-slate-300 mt-1">Registrado como: <span class="font-semibold">${membro.nome}</span> (RA: <span class="font-mono">${membro.ra}</span>)</div>
+            <div class="mt-1 text-[11px]">Status da sua participação: <span class="font-bold ${membro.status_participacao === "CONFIRMADO" ? "text-emerald-400" : membro.status_participacao === "RECUSADO" ? "text-red-400" : "text-amber-400"}">${membro.status_participacao}</span></div>
+            ${membro.status_participacao === "RECUSADO" && membro.justificativa_recusa ? `<div class="text-[11px] text-red-300 mt-0.5">Justificativa informada: ${membro.justificativa_recusa}</div>` : ""}
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <button onclick="openEditAlunoSelfModal(${membro.id}, '${membro.nome.replace(/'/g, "\\'")}', '${membro.ra}')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold rounded-lg transition-colors">
+              <i class="fa-solid fa-user-pen mr-1"></i> Editar Meu Nome
+            </button>
+            <button onclick="responderConvite(${membro.id}, 'CONFIRMADO')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg transition-colors">
+              <i class="fa-solid fa-check mr-1"></i> Aceitar
+            </button>
+            <button onclick="responderConvite(${membro.id}, 'RECUSADO')" class="px-3 py-1.5 bg-red-950/70 hover:bg-red-900 text-red-300 border border-red-800/60 text-xs font-semibold rounded-lg transition-colors">
+              <i class="fa-solid fa-xmark mr-1"></i> Recusar
+            </button>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    async function responderConvite(membroId, status) {
+      let justificativa = "";
+      if (status === "RECUSADO") {
+        const motivo = prompt("Informe opcionalmente o motivo da recusa para o orientador (ex.: Choque de horário):");
+        if (motivo === null) return;
+        justificativa = motivo.trim();
+      }
+
+      await fetch(`/api/membros/${membroId}/resposta`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status_participacao: status,
+          justificativa: justificativa
+        })
+      });
+      await loadProjetos();
+    }
+
+    function openEditAlunoSelfModal(membroId, nomeAtual, raAtual) {
+      document.getElementById("edit-self-membro-id").value = membroId;
+      document.getElementById("edit-self-nome").value = nomeAtual;
+      document.getElementById("edit-self-ra").value = raAtual;
+      document.getElementById("edit-aluno-self-modal").classList.remove("hidden");
+    }
+
+    function closeEditAlunoSelfModal() {
+      document.getElementById("edit-aluno-self-modal").classList.add("hidden");
+    }
+
+    async function handleSalvarAlunoSelf(e) {
+      e.preventDefault();
+      const membroId = document.getElementById("edit-self-membro-id").value;
+      const novoNome = document.getElementById("edit-self-nome").value.trim();
+
+      const res = await fetch(`/api/membros/${membroId}/aluno-self`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: currentUser.id,
+          nome: novoNome
+        })
+      });
+
+      if (res.ok) {
+        currentUser.nome = novoNome;
+        localStorage.setItem("extensao_user", JSON.stringify(currentUser));
+        updateUIForUser();
+        closeEditAlunoSelfModal();
+        await loadProjetos();
+      } else {
+        alert("Erro ao atualizar seu nome.");
+      }
+    }
+  
+    function escapeParecerHtml(value) {
+      return String(value ?? "").replace(/[&<>"']/g, ch => ({"&":"&amp;", "<":"&lt;", ">":"&gt;", "\"":"&quot;", "'":"&#39;"}[ch]));
+    }
+
+    function renderPareceres() {
+      const container = document.getElementById("pareceres-lista");
+      if (!container) return;
+      if (!currentUser || !["admin", "coordenador", "orientador"].includes(currentUser.role)) {
+        container.innerHTML = '<p class="text-xs text-slate-400">Entre com uma conta de gestão para consultar os pareceres.</p>';
+        return;
+      }
+      const projetos = allProjetos.filter(p => currentUser.role !== "orientador" || String(p.orientador_nome || "").toLowerCase().includes(String(currentUser.nome || "").toLowerCase()));
+      if (!projetos.length) {
+        container.innerHTML = '<div class="col-span-full rounded-xl border border-slate-800 bg-slate-950/40 p-6 text-center text-xs text-slate-400">Nenhum projeto disponível para análise.</div>';
+        return;
+      }
+      const card = (p, tipo, label) => {
+        const dado = p[tipo] || {status:"PENDENTE", parecer:"", por:""};
+        const id = `${tipo}-${p.id}`;
+        return `<div class="rounded-xl border border-slate-800 bg-slate-950/60 p-4 space-y-2">
+          <div class="flex items-center justify-between gap-2"><label for="${id}-status" class="text-xs font-bold text-slate-200">${label}</label><span class="text-[10px] text-slate-400">${escapeParecerHtml(dado.status)}</span></div>
+          <select id="${id}-status" class="w-full rounded-lg bg-slate-900 border border-slate-700 px-3 py-2 text-xs text-slate-100"><option value="PENDENTE" ${dado.status === "PENDENTE" ? "selected" : ""}>Pendente</option><option value="APROVADO" ${dado.status === "APROVADO" ? "selected" : ""}>Aprovado</option><option value="REPROVADO" ${dado.status === "REPROVADO" ? "selected" : ""}>Reprovado</option></select>
+          <textarea id="${id}-texto" rows="2" placeholder="Observações do parecer..." class="w-full rounded-lg bg-slate-900 border border-slate-700 px-3 py-2 text-xs text-slate-100">${escapeParecerHtml(dado.parecer)}</textarea>
+          <button onclick="salvarParecer(${p.id}, '${tipo}')" class="px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold">Salvar ${label}</button>
+        </div>`;
+      };
+      container.innerHTML = projetos.map(p => `<article class="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 space-y-3">
+        <div><div class="text-[10px] uppercase tracking-wider text-indigo-400">Projeto #${p.id}</div><h4 class="font-bold text-sm text-slate-100">${escapeParecerHtml(p.titulo)}</h4><p class="text-[11px] text-slate-400">Orientador: ${escapeParecerHtml(p.orientador_nome)}</p></div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">${card(p, "etica", "Ética")}${card(p, "conselho", "Conselho")}</div>
+        <p class="text-[10px] ${p.etica?.status === "APROVADO" && p.conselho?.status === "APROVADO" ? "text-emerald-400" : "text-amber-400"}">${p.etica?.status === "APROVADO" && p.conselho?.status === "APROVADO" ? "Dois pareceres aprovados: projeto apto para DESENVOLVIMENTO." : "Aguardando aprovação dos dois pareceres para liberar DESENVOLVIMENTO."}</p>
+      </article>`).join("");
+    }
+
+    async function salvarParecer(projetoId, tipo) {
+      const status = document.getElementById(`${tipo}-${projetoId}-status`).value;
+      const parecer = document.getElementById(`${tipo}-${projetoId}-texto`).value;
+      const res = await fetch(`/api/projetos/${projetoId}/pareceres`, {
+        method: "PATCH",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({tipo, status, parecer, por: currentUser?.nome || "Gestão", actor_role: currentUser?.role, actor_nome: currentUser?.nome})
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { alert(data.error || "Não foi possível salvar o parecer."); return; }
+      await loadProjetos();
+      alert("Parecer salvo com sucesso.");
+    }
+
+</script>
+</body>
+</html>
