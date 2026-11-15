@@ -60,6 +60,11 @@
             <span>Registrar Trabalho/Grupo</span>
           </button>
 
+          <button onclick="switchTab('pareceres')" id="nav-pareceres" class="hidden w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-900 transition-all">
+            <i class="fa-solid fa-clipboard-check w-4 text-center"></i>
+            <span>Pareceres (Ética / Conselho)</span>
+          </button>
+
           <button onclick="switchTab('gerenciar-contas')" id="nav-gerenciar-contas" class="hidden w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-900 transition-all">
             <i class="fa-solid fa-users-gear w-4 text-center"></i>
             <span>Criar Acessos / Contas</span>
@@ -185,6 +190,7 @@
                 <option value="TODOS">Todos os Status</option>
                 <option value="NOVO">NOVO</option>
                 <option value="EM ANDAMENTO">EM ANDAMENTO</option>
+                <option value="DESENVOLVIMENTO">DESENVOLVIMENTO</option>
                 <option value="CONCLUIDO">CONCLUÍDO</option>
                 <option value="CANCELADO">CANCELADO</option>
               </select>
@@ -445,6 +451,17 @@
         </div>
 
       </div>
+      <div id="view-pareceres" class="space-y-5 hidden p-4 md:p-6 overflow-y-auto custom-scrollbar">
+        <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
+          <div>
+            <h3 class="text-lg font-bold text-slate-100">Análise de pareceres</h3>
+            <p class="text-xs text-slate-400 mt-1">Registre a decisão da Ética e do Conselho. Ambos precisam estar aprovados para liberar o status DESENVOLVIMENTO.</p>
+          </div>
+          <button onclick="loadProjetos();" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200"><i class="fa-solid fa-rotate mr-1"></i> Atualizar lista</button>
+        </div>
+        <div id="pareceres-lista" class="grid grid-cols-1 xl:grid-cols-2 gap-4"></div>
+      </div>
+
     </main>
   </div>
 
@@ -828,7 +845,7 @@
     }
 
     function switchTab(tab) {
-      ["consultar", "meus-grupos", "registrar-trabalho", "gerenciar-contas", "carga-massiva"].forEach(t => {
+      ["consultar", "meus-grupos", "registrar-trabalho", "gerenciar-contas", "carga-massiva", "pareceres"].forEach(t => {
         document.getElementById(`view-${t}`).classList.add("hidden");
         const navBtn = document.getElementById(`nav-${t}`);
         if (navBtn) {
@@ -849,7 +866,8 @@
         "meus-grupos": "Confirmação de Participação em Grupos",
         "registrar-trabalho": "Registrar Trabalho / Grupo Extensionista",
         "gerenciar-contas": "Gerenciar Acessos e Contas",
-        "carga-massiva": "Carga Massiva de Acervo (JSON)"
+        "carga-massiva": "Carga Massiva de Acervo (JSON)",
+        "pareceres": "Pareceres de Ética e Conselho"
       };
       document.getElementById("page-title").textContent = titles[tab] || "Módulo 2: Controle";
 
@@ -868,11 +886,13 @@
       const navRegistrar = document.getElementById("nav-registrar-trabalho");
       const navContas = document.getElementById("nav-gerenciar-contas");
       const navCargaMassiva = document.getElementById("nav-carga-massiva");
+      const navPareceres = document.getElementById("nav-pareceres");
 
       navMeusGrupos.classList.add("hidden");
       navRegistrar.classList.add("hidden");
       navContas.classList.add("hidden");
       navCargaMassiva.classList.add("hidden");
+      navPareceres.classList.add("hidden");
       btnAlterarSenha.classList.add("hidden");
       btnExportCsv.classList.add("hidden");
 
@@ -908,6 +928,7 @@
       if (["admin", "coordenador", "orientador"].includes(currentUser.role)) {
         navRegistrar.classList.remove("hidden");
         navContas.classList.remove("hidden");
+        navPareceres.classList.remove("hidden");
         btnExportCsv.classList.remove("hidden");
         document.getElementById("proj-orientador").value = currentUser.nome;
         populateRoleOptions();
@@ -1134,6 +1155,7 @@
       const res = await fetch("/api/projetos");
       allProjetos = await res.json();
       renderProjetos();
+      renderPareceres();
       if (currentUser && currentUser.role === "aluno") {
         renderAlunoGrupos();
       }
@@ -1206,7 +1228,7 @@
       const { visiveisPorPerfil, filtrados } = getProjetosFiltrados();
 
       document.getElementById("kpi-total").textContent = visiveisPorPerfil.length;
-      document.getElementById("kpi-andamento").textContent = visiveisPorPerfil.filter(p => p.status === "EM ANDAMENTO").length;
+      document.getElementById("kpi-andamento").textContent = visiveisPorPerfil.filter(p => ["EM ANDAMENTO", "DESENVOLVIMENTO"].includes(p.status)).length;
       document.getElementById("kpi-concluidos").textContent = visiveisPorPerfil.filter(p => p.status === "CONCLUIDO").length;
       document.getElementById("kpi-publicados").textContent = visiveisPorPerfil.filter(p => p.publicado).length;
 
@@ -1218,6 +1240,7 @@
       const statusColors = {
         "NOVO": "bg-sky-500/15 text-sky-400 border-sky-500/30",
         "EM ANDAMENTO": "bg-amber-500/15 text-amber-400 border-amber-500/30",
+        "DESENVOLVIMENTO": "bg-violet-500/15 text-violet-400 border-violet-500/30",
         "CONCLUIDO": "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
         "CANCELADO": "bg-red-500/15 text-red-400 border-red-500/30"
       };
@@ -1258,6 +1281,7 @@
               <select onchange="alterarStatusProjeto(${p.id}, this.value)" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-[11px] text-slate-200 focus:outline-none focus:border-indigo-500">
                 <option value="NOVO" ${p.status === "NOVO" ? "selected" : ""}>Status: NOVO</option>
                 <option value="EM ANDAMENTO" ${p.status === "EM ANDAMENTO" ? "selected" : ""}>Status: EM ANDAMENTO</option>
+                <option value="DESENVOLVIMENTO" ${p.status === "DESENVOLVIMENTO" ? "selected" : ""}>Status: DESENVOLVIMENTO</option>
                 <option value="CONCLUIDO" ${p.status === "CONCLUIDO" ? "selected" : ""}>Status: CONCLUÍDO</option>
                 <option value="CANCELADO" ${p.status === "CANCELADO" ? "selected" : ""}>Status: CANCELADO</option>
               </select>
@@ -2007,6 +2031,54 @@
         alert("Erro ao atualizar seu nome.");
       }
     }
-  </script>
+  
+    function escapeParecerHtml(value) {
+      return String(value ?? "").replace(/[&<>"']/g, ch => ({"&":"&amp;", "<":"&lt;", ">":"&gt;", "\"":"&quot;", "'":"&#39;"}[ch]));
+    }
+
+    function renderPareceres() {
+      const container = document.getElementById("pareceres-lista");
+      if (!container) return;
+      if (!currentUser || !["admin", "coordenador", "orientador"].includes(currentUser.role)) {
+        container.innerHTML = '<p class="text-xs text-slate-400">Entre com uma conta de gestão para consultar os pareceres.</p>';
+        return;
+      }
+      const projetos = allProjetos.filter(p => currentUser.role !== "orientador" || String(p.orientador_nome || "").toLowerCase().includes(String(currentUser.nome || "").toLowerCase()));
+      if (!projetos.length) {
+        container.innerHTML = '<div class="col-span-full rounded-xl border border-slate-800 bg-slate-950/40 p-6 text-center text-xs text-slate-400">Nenhum projeto disponível para análise.</div>';
+        return;
+      }
+      const card = (p, tipo, label) => {
+        const dado = p[tipo] || {status:"PENDENTE", parecer:"", por:""};
+        const id = `${tipo}-${p.id}`;
+        return `<div class="rounded-xl border border-slate-800 bg-slate-950/60 p-4 space-y-2">
+          <div class="flex items-center justify-between gap-2"><label for="${id}-status" class="text-xs font-bold text-slate-200">${label}</label><span class="text-[10px] text-slate-400">${escapeParecerHtml(dado.status)}</span></div>
+          <select id="${id}-status" class="w-full rounded-lg bg-slate-900 border border-slate-700 px-3 py-2 text-xs text-slate-100"><option value="PENDENTE" ${dado.status === "PENDENTE" ? "selected" : ""}>Pendente</option><option value="APROVADO" ${dado.status === "APROVADO" ? "selected" : ""}>Aprovado</option><option value="REPROVADO" ${dado.status === "REPROVADO" ? "selected" : ""}>Reprovado</option></select>
+          <textarea id="${id}-texto" rows="2" placeholder="Observações do parecer..." class="w-full rounded-lg bg-slate-900 border border-slate-700 px-3 py-2 text-xs text-slate-100">${escapeParecerHtml(dado.parecer)}</textarea>
+          <button onclick="salvarParecer(${p.id}, '${tipo}')" class="px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold">Salvar ${label}</button>
+        </div>`;
+      };
+      container.innerHTML = projetos.map(p => `<article class="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 space-y-3">
+        <div><div class="text-[10px] uppercase tracking-wider text-indigo-400">Projeto #${p.id}</div><h4 class="font-bold text-sm text-slate-100">${escapeParecerHtml(p.titulo)}</h4><p class="text-[11px] text-slate-400">Orientador: ${escapeParecerHtml(p.orientador_nome)}</p></div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">${card(p, "etica", "Ética")}${card(p, "conselho", "Conselho")}</div>
+        <p class="text-[10px] ${p.etica?.status === "APROVADO" && p.conselho?.status === "APROVADO" ? "text-emerald-400" : "text-amber-400"}">${p.etica?.status === "APROVADO" && p.conselho?.status === "APROVADO" ? "Dois pareceres aprovados: projeto apto para DESENVOLVIMENTO." : "Aguardando aprovação dos dois pareceres para liberar DESENVOLVIMENTO."}</p>
+      </article>`).join("");
+    }
+
+    async function salvarParecer(projetoId, tipo) {
+      const status = document.getElementById(`${tipo}-${projetoId}-status`).value;
+      const parecer = document.getElementById(`${tipo}-${projetoId}-texto`).value;
+      const res = await fetch(`/api/projetos/${projetoId}/pareceres`, {
+        method: "PATCH",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({tipo, status, parecer, por: currentUser?.nome || "Gestão", actor_role: currentUser?.role, actor_nome: currentUser?.nome})
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { alert(data.error || "Não foi possível salvar o parecer."); return; }
+      await loadProjetos();
+      alert("Parecer salvo com sucesso.");
+    }
+
+</script>
 </body>
 </html>
