@@ -2,7 +2,7 @@ import os
 import sqlite3
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, session
 
 import smtplib
 try:
@@ -11,12 +11,18 @@ try:
 except ImportError:
     sib_api_v3_sdk = None
     ApiException = Exception
+# A SECRET_KEY é obrigatória e fica guardada no arquivo privado segredos.py.
+from segredos import SECRET_KEY
+
+# A integração com a Brevo continua opcional.
 try:
     from segredos import BREVO_API_KEY
 except ImportError:
     BREVO_API_KEY = ""
 
 app = Flask(__name__)
+app.secret_key = SECRET_KEY
+app.config.update(SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SAMESITE='Lax')
 
 # Caminho do banco SQLite (criado automaticamente na mesma pasta do app.py)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -147,6 +153,31 @@ def init_db():
     conn.close()
 
 
+
+def usuario_logado():
+    """Obtém a identidade do usuário pela sessão assinada e pelo banco."""
+    user_id = session.get("user_id")
+    if not user_id:
+        return None
+    conn = get_db_connection()
+    try:
+        row = conn.execute(
+            "SELECT id, ra, nome, email, role, COALESCE(curso, '') AS curso, "
+            "COALESCE(primeiro_acesso, 0) AS primeiro_acesso "
+            "FROM usuarios WHERE id = ?", (user_id,)
+        ).fetchone()
+        return dict(row) if row else None
+    finally:
+        conn.close()
+
+
+def exigir_acesso_relatorios():
+    usuario = usuario_logado()
+    if usuario and usuario["role"] in ("admin", "coordenador", "orientador"):
+        return usuario
+    return None
+
+
 def enviar_notificacao_email(destinatario_email, nome_aluno, titulo_projeto, nome_grupo, orientador):
     assunto = f"Convite de Projeto Extensionista: {titulo_projeto}"
     corpo = f"""
@@ -250,6 +281,9 @@ def login():
     cursor.close()
     conn.close()
 
+    session.clear()
+    session["user_id"] = user["id"]
+
     return jsonify({
         "id": user["id"],
         "ra": user["ra"],
@@ -259,6 +293,22 @@ def login():
         "curso": user["curso"],
         "primeiro_acesso": bool(user["primeiro_acesso"])
     })
+
+
+
+@app.route("/api/session", methods=["GET"])
+def verificar_sessao():
+    usuario = usuario_logado()
+    if not usuario:
+        return jsonify({"authenticated": False}), 401
+    return jsonify({"authenticated": True, **usuario})
+
+
+@app.route("/api/logout", methods=["POST"])
+def logout():
+    session.clear()
+    return jsonify({"message": "Sessão encerrada."})
+
 
 
 @app.route("/api/usuarios/<int:user_id>/alterar-senha", methods=["PATCH"])
@@ -506,7 +556,20 @@ def listar_projetos():
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT * FROM projetos ORDER BY id DESC")
+    usuario = usuario_logado()
+    if usuario and usuario["role"] in ("admin", "coordenador", "orientador"):
+        cursor.execute("SELECT * FROM projetos ORDER BY id DESC")
+    elif usuario and usuario["role"] == "aluno":
+        cursor.execute(
+            """SELECT DISTINCT p.* FROM projetos p
+               LEFT JOIN grupos g ON g.projeto_id = p.id
+               LEFT JOIN grupo_membros gm ON gm.grupo_id = g.id
+               WHERE p.publicado = 1 OR LOWER(gm.ra) = LOWER(?)
+               ORDER BY p.id DESC""",
+            (usuario["ra"],)
+        )
+    else:
+        cursor.execute("SELECT * FROM projetos WHERE publicado = 1 ORDER BY id DESC")
     projetos = [dict(row) for row in cursor.fetchall()]
 
     for p in projetos:
@@ -536,6 +599,15 @@ def listar_projetos():
     cursor.close()
     conn.close()
     return jsonify(projetos)
+
+
+
+@app.route("/api/estatisticas", methods=["GET"])
+def obter_estatisticas():
+    if not exigir_acesso_relatorios():
+        return jsonify({"error": "Acesso restrito a Administradores, Coordenadores e Orientadores."}), 403
+    return jsonify(listar_projetos().get_json())
+
 
 
 @app.route("/api/projetos", methods=["POST"])
