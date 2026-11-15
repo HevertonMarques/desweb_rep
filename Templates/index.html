@@ -46,6 +46,10 @@
             <i class="fa-solid fa-magnifying-glass w-4 text-center"></i>
             <span>Consultar Projetos</span>
           </button>
+                    <button onclick="switchTab('estatisticas')" id="nav-estatisticas" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-900 transition-all">
+            <i class="fa-solid fa-chart-column w-4 text-center"></i>
+            <span>Estatísticas e Relatórios</span>
+          </button>
 
           <button onclick="switchTab('meus-grupos')" id="nav-meus-grupos" class="hidden w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-900 transition-all">
             <span class="flex items-center gap-3">
@@ -234,6 +238,44 @@
 
           <div id="projetos-cards-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <!-- Dynamically populated -->
+          </div>
+        </div>
+                <!-- VIEW: ESTATÍSTICAS E RELATÓRIOS (ESTILO TABELA DASHBOARD) -->
+        <div id="view-estatisticas" class="space-y-6 hidden">
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-slate-950/60 p-4 rounded-xl border border-slate-800/80">
+            <div>
+              <h3 class="text-base font-bold text-slate-100">Painel Geral e Relatório Analítico</h3>
+              <p class="text-xs text-slate-400">Listagem gerencial completa de todos os projetos extensionistas e status de conformidade.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="exportarProjetosCSV(true)" class="px-3.5 py-2 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5">
+                <i class="fa-solid fa-file-csv"></i>
+                <span>Exportar Relatório CSV</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Tabela Estilo Dashboard -->
+          <div class="bg-slate-950/70 rounded-xl border border-slate-800/80 overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="border-b border-slate-800 text-[11px] font-semibold text-slate-400 uppercase bg-slate-950/80">
+                    <th class="py-3 px-4">ID</th>
+                    <th class="py-3 px-4">Título</th>
+                    <th class="py-3 px-4">Orientador</th>
+                    <th class="py-3 px-4">Setor Externo</th>
+                    <th class="py-3 px-4">Status</th>
+                    <th class="py-3 px-4">Ética</th>
+                    <th class="py-3 px-4">Conselho</th>
+                    <th class="py-3 px-4">Membros Conf.</th>
+                  </tr>
+                </thead>
+                <tbody id="tabela-estatisticas-body" class="divide-y divide-slate-800/60 text-xs">
+                  <!-- Preenchido via JS -->
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
 
@@ -696,7 +738,7 @@
   </div>
 
   <script>
-    let currentUser = JSON.parse(localStorage.getItem("extensao_user") || "null");
+    let currentUser = null;
     let allProjetos = [];
     let allUsuarios = [];
     let cursosSelecionadosCreate = new Set();
@@ -792,6 +834,15 @@
       popularDropdownFiltroCursosUsuarios();
       atualizarSeletorDeCursos();
       updateJsonExample();
+
+      // O servidor confirma a identidade; localStorage não concede permissões.
+      try {
+        const sessao = await fetch("/api/session");
+        currentUser = sessao.ok ? await sessao.json() : null;
+        if (!currentUser) localStorage.removeItem("extensao_user");
+      } catch (e) {
+        currentUser = null;
+      }
       updateUIForUser();
 
       if (currentUser && currentUser.primeiro_acesso && currentUser.role !== "admin") {
@@ -879,7 +930,11 @@
     }
 
     function switchTab(tab) {
-      ["consultar", "meus-grupos", "registrar-trabalho", "gerenciar-contas", "carga-massiva", "pareceres"].forEach(t => {
+      if (tab === "estatisticas" && (!currentUser || !["admin", "coordenador", "orientador"].includes(currentUser.role))) {
+        alert("Acesso restrito a Administradores, Coordenadores e Orientadores.");
+        tab = "consultar";
+      }
+      ["consultar", "meus-grupos", "registrar-trabalho", "gerenciar-contas", "carga-massiva", "pareceres", "estatisticas"].forEach(t => {
         document.getElementById(`view-${t}`).classList.add("hidden");
         const navBtn = document.getElementById(`nav-${t}`);
         if (navBtn) {
@@ -901,13 +956,17 @@
         "registrar-trabalho": "Registrar Trabalho / Grupo Extensionista",
         "gerenciar-contas": "Gerenciar Acessos e Contas",
         "carga-massiva": "Carga Massiva de Acervo (JSON)",
-        "pareceres": "Pareceres de Ética e Conselho"
+        "pareceres": "Pareceres de Ética e Conselho",
+        "estatisticas": "Painel Geral e Relatório Analítico",
       };
       document.getElementById("page-title").textContent = titles[tab] || "Módulo 2: Controle";
 
       if (window.innerWidth < 768) {
         document.getElementById("sidebar").classList.add("-translate-x-full");
         document.getElementById("sidebar-backdrop").classList.add("hidden");
+      }
+      if (tab === "estatisticas") {
+        carregarEstatisticas().catch(err => alert(err.message));
       }
     }
 
@@ -921,12 +980,14 @@
       const navContas = document.getElementById("nav-gerenciar-contas");
       const navCargaMassiva = document.getElementById("nav-carga-massiva");
       const navPareceres = document.getElementById("nav-pareceres");
+      const navEstatisticas = document.getElementById("nav-estatisticas");
 
       navMeusGrupos.classList.add("hidden");
       navRegistrar.classList.add("hidden");
       navContas.classList.add("hidden");
       navCargaMassiva.classList.add("hidden");
       navPareceres.classList.add("hidden");
+      navEstatisticas.classList.add("hidden");
       btnAlterarSenha.classList.add("hidden");
       btnExportCsv.classList.add("hidden");
 
@@ -963,6 +1024,7 @@
         navRegistrar.classList.remove("hidden");
         navContas.classList.remove("hidden");
         navPareceres.classList.remove("hidden");
+        navEstatisticas.classList.remove("hidden");
         btnExportCsv.classList.remove("hidden");
         document.getElementById("proj-orientador").value = currentUser.nome;
         populateRoleOptions();
@@ -1177,7 +1239,8 @@
       }
     }
 
-    function logout() {
+    async function logout() {
+      try { await fetch("/api/logout", { method: "POST" }); } catch (e) {}
       currentUser = null;
       allUsuarios = [];
       localStorage.removeItem("extensao_user");
@@ -1193,6 +1256,60 @@
       if (currentUser && currentUser.role === "aluno") {
         renderAlunoGrupos();
       }
+    }
+        let projetosEstatisticas = [];
+
+    async function carregarEstatisticas() {
+      if (!currentUser || !["admin", "coordenador", "orientador"].includes(currentUser.role)) return;
+      const resposta = await fetch("/api/estatisticas");
+      if (!resposta.ok) {
+        alert("Sua sessão não tem permissão para acessar os relatórios.");
+        switchTab("consultar");
+        return;
+      }
+      projetosEstatisticas = await resposta.json();
+      renderTabelaEstatisticas();
+    }
+
+    function renderTabelaEstatisticas() {
+      const tbody = document.getElementById("tabela-estatisticas-body");
+      if (!tbody) return;
+      
+      if (!currentUser || !["admin", "coordenador", "orientador"].includes(currentUser.role)) return;
+      const visiveisPorPerfil = projetosEstatisticas;
+
+      if (visiveisPorPerfil.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="py-6 text-center text-xs text-slate-400">Nenhum projeto registado.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = visiveisPorPerfil.map(p => {
+        const eticaStatus = p.etica?.status || "PENDENTE";
+        const conselhoStatus = p.conselho?.status || "PENDENTE";
+        const totalMembros = p.grupo?.membros?.length || 0;
+        const confirmados = (p.grupo?.membros || []).filter(m => m.status_participacao === "CONFIRMADO").length;
+
+        const badgeEtica = eticaStatus === "APROVADO" 
+          ? '<span class="text-emerald-400"><i class="fa-solid fa-check mr-1"></i> Aprovado</span>' 
+          : '<span class="text-amber-400"><i class="fa-solid fa-clock mr-1"></i> Pendente</span>';
+          
+        const badgeConselho = conselhoStatus === "APROVADO" 
+          ? '<span class="text-emerald-400"><i class="fa-solid fa-check mr-1"></i> Aprovado</span>' 
+          : '<span class="text-amber-400"><i class="fa-solid fa-clock mr-1"></i> Pendente</span>';
+
+        return `
+          <tr class="hover:bg-slate-900/50">
+            <td class="py-3 px-4 font-mono text-slate-400">#${p.id}</td>
+            <td class="py-3 px-4 font-medium text-slate-100">${p.titulo}</td>
+            <td class="py-3 px-4 text-slate-300">${p.orientador_nome}</td>
+            <td class="py-3 px-4 text-slate-300">${p.setor_externo}</td>
+            <td class="py-3 px-4"><span class="px-2 py-0.5 text-[10px] font-bold rounded-md bg-slate-800 text-slate-300">${p.status}</span></td>
+            <td class="py-3 px-4 text-[11px]">${badgeEtica}</td>
+            <td class="py-3 px-4 text-[11px]">${badgeConselho}</td>
+            <td class="py-3 px-4 font-semibold text-indigo-300">${confirmados}/${totalMembros} confirmados</td>
+          </tr>
+        `;
+      }).join("");
     }
 
     function getProjetosFiltrados() {
@@ -1217,8 +1334,12 @@
       return { visiveisPorPerfil, filtrados };
     }
 
-    function exportarProjetosCSV() {
-      const { filtrados } = getProjetosFiltrados();
+    function exportarProjetosCSV(relatorioRestrito = false) {
+      if (relatorioRestrito && (!currentUser || !["admin", "coordenador", "orientador"].includes(currentUser.role))) {
+        alert("Você não tem permissão para exportar este relatório.");
+        return;
+      }
+      const filtrados = relatorioRestrito ? projetosEstatisticas : getProjetosFiltrados().filtrados;
       if (filtrados.length === 0) {
         alert("Não há projetos listados para exportar.");
         return;
@@ -2136,21 +2257,28 @@
         <p class="text-[10px] ${p.etica?.status === "APROVADO" && p.conselho?.status === "APROVADO" ? "text-emerald-400" : "text-amber-400"}">${p.etica?.status === "APROVADO" && p.conselho?.status === "APROVADO" ? "Dois pareceres aprovados: projeto apto para DESENVOLVIMENTO." : "Aguardando aprovação dos dois pareceres para liberar DESENVOLVIMENTO."}</p>
       </article>`).join("");
     }
-
-    async function salvarParecer(projetoId, tipo) {
+          async function salvarParecer(projetoId, tipo) {
       const status = document.getElementById(`${tipo}-${projetoId}-status`).value;
       const parecer = document.getElementById(`${tipo}-${projetoId}-texto`).value;
-      const res = await fetch(`/api/projetos/${projetoId}/pareceres`, {
-        method: "PATCH",
-        headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({tipo, status, parecer, por: currentUser?.nome || "Gestão", actor_role: currentUser?.role, actor_nome: currentUser?.nome})
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) { alert(data.error || "Não foi possível salvar o parecer."); return; }
-      await loadProjetos();
-      alert("Parecer salvo com sucesso.");
+      try {
+        const res = await fetch(`/api/projetos/${projetoId}/pareceres`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tipo, status, parecer })
+        });
+        if (!res.ok) {
+          const data = await res.json();
+          alert(data.error || "Erro ao salvar parecer.");
+          return;
+        }
+        await loadProjetos();
+        alert("Parecer salvo com sucesso.");
+      } catch (err) {
+        alert("Erro de conexão ao salvar parecer.");
+      }
     }
 
+      
 </script>
 </body>
 </html>
