@@ -1,45 +1,23 @@
 import os
 import sqlite3
-import threading
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 from flask import Flask, render_template, request, jsonify, session
 
-import smtplib
-try:
-    import sib_api_v3_sdk
-    from sib_api_v3_sdk.rest import ApiException
-except ImportError:
-    sib_api_v3_sdk = None
-    ApiException = Exception
 # A SECRET_KEY é obrigatória e fica guardada no arquivo privado segredos.py.
 from segredos import SECRET_KEY
-
-# A integração com a Brevo continua opcional.
-try:
-    from segredos import BREVO_API_KEY
-except ImportError:
-    BREVO_API_KEY = ""
 
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
 app.config.update(SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SAMESITE='Lax')
 
 # Caminho do banco SQLite (criado automaticamente na mesma pasta do app.py)
+
+# Caminho do banco SQLite
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "modulo2_extensionista.db")
 
-# ==========================================
-# CONFIGURAÇÕES DE E-MAIL (SMTP)
-# ==========================================
 
-SMTP_ENABLED = False
-SMTP_SERVER = "smtp.gmail.com"
-SMTP_PORT = 587
-SMTP_USER = ""
-SMTP_PASSWORD = ""
-BREVO_ENABLED = True
 SENHA_PROVISORIA_PADRAO = "123456"
+
 
 
 def get_db_connection():
@@ -47,6 +25,7 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON;")
     return conn
+
 
 
 def init_db():
@@ -108,14 +87,24 @@ def init_db():
             FOREIGN KEY (projeto_id) REFERENCES projetos(id) ON DELETE CASCADE
         );
 
-        CREATE TABLE IF NOT EXISTS pareceres_conselho (
+        CREATE TABLE IF NOT EXISTS conselho_membros (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            projeto_id INTEGER NOT NULL UNIQUE,
-            status TEXT DEFAULT 'PENDENTE' CHECK(status IN ('PENDENTE', 'APROVADO', 'REPROVADO')),
-            parecer TEXT DEFAULT '',
-            por TEXT DEFAULT '',
+            orientador_id INTEGER NOT NULL UNIQUE,
+            adicionado_por TEXT DEFAULT '',
+            criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (orientador_id) REFERENCES usuarios(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS votos_conselho (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            projeto_id INTEGER NOT NULL,
+            orientador_id INTEGER NOT NULL,
+            status TEXT NOT NULL CHECK(status IN ('APROVADO', 'REPROVADO')),
+            comentario TEXT DEFAULT '',
             atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (projeto_id) REFERENCES projetos(id) ON DELETE CASCADE
+            UNIQUE(projeto_id, orientador_id),
+            FOREIGN KEY (projeto_id) REFERENCES projetos(id) ON DELETE CASCADE,
+            FOREIGN KEY (orientador_id) REFERENCES usuarios(id) ON DELETE CASCADE
         );
     """)
 
@@ -138,7 +127,6 @@ def init_db():
 
     # Garante pareceres pendentes também para projetos que já existiam antes da atualização.
     cursor.execute("INSERT OR IGNORE INTO pareceres_etica (projeto_id, status) SELECT id, 'PENDENTE' FROM projetos")
-    cursor.execute("INSERT OR IGNORE INTO pareceres_conselho (projeto_id, status) SELECT id, 'PENDENTE' FROM projetos")
 
     # Insere APENAS o Administrador inicial caso ainda não exista
     cursor.execute("SELECT id FROM usuarios WHERE email = ?", ("admin@faccamp.com",))
@@ -172,6 +160,14 @@ def usuario_logado():
         conn.close()
 
 
+def ator_atual():
+    """Perfil e nome de quem está logado, lidos da sessão do servidor (nunca do corpo da requisição)."""
+    usuario = usuario_logado()
+    if not usuario:
+        return "", ""
+    return usuario["role"], usuario["nome"]
+
+
 def exigir_acesso_relatorios():
     usuario = usuario_logado()
     if usuario and usuario["role"] in ("admin", "coordenador", "orientador"):
@@ -179,77 +175,45 @@ def exigir_acesso_relatorios():
     return None
 
 
-def enviar_email_brevo(destinatario_email, assunto, html_content):
-    """Envia um e-mail transacional pela API da Brevo."""
-    if not BREVO_ENABLED:
-        print("[BREVO] Envio desativado pela configuração BREVO_ENABLED.")
-        return False
+def calcular_conselho(cursor, projeto_id):
+    """Monta o parecer do Conselho a partir do voto individual de cada orientador.
 
-    if sib_api_v3_sdk is None:
-        print("[BREVO] Biblioteca sib-api-v3-sdk não está instalada.")
-        return False
-
-    if not BREVO_API_KEY:
-        print("[BREVO] BREVO_API_KEY não foi configurada em segredos.py.")
-        return False
-
-    try:
-        configuration = sib_api_v3_sdk.Configuration()
-        configuration.api_key["api-key"] = BREVO_API_KEY
-        configuration.host = "https://api.brevo.com/v3"
-        api_instance = sib_api_v3_sdk.TransactionalEmailsApi(
-            sib_api_v3_sdk.ApiClient(configuration)
-        )
-
-        sender = {
-            "name": "Projeto Extensionista da Faccamp",
-            "email": "extensao.unifaccamp@gmail.com"
-        }
-        mensagem = sib_api_v3_sdk.SendSmtpEmail(
-            to=[{"email": destinatario_email}],
-            html_content=html_content,
-            sender=sender,
-            subject=assunto
-        )
-        resposta = api_instance.send_transac_email(mensagem)
-        print(f"[BREVO] E-mail aceito pela API para {destinatario_email}: {resposta}")
-        return True
-    except Exception as e:
-        print(f"[ERRO BREVO] Falha ao enviar para {destinatario_email}: {e}")
-        return False
-
-
-def enviar_email_brevo_em_segundo_plano(destinatario_email, assunto, html_content):
-    """Inicia o envio sem bloquear a resposta da rota Flask."""
-    try:
-        tarefa = threading.Thread(
-            target=enviar_email_brevo,
-            args=(destinatario_email, assunto, html_content),
-            daemon=True,
-            name="brevo-email"
-        )
-        tarefa.start()
-        print(f"[BREVO] Envio em segundo plano iniciado para {destinatario_email}.")
-        return True
-    except Exception as e:
-        print(f"[ERRO BREVO] Não foi possível iniciar o envio para {destinatario_email}: {e}")
-        return False
-
-
-def enviar_notificacao_email(destinatario_email, nome_aluno, titulo_projeto, nome_grupo, orientador):
-    """Envia convite somente ao aluno incluído em um projeto."""
-    assunto = f"Convite de Projeto Extensionista: {titulo_projeto}"
-    html_content = f"""
-        <div style="font-family: Arial, sans-serif; color: #333;">
-            <h2>Olá, {nome_aluno}!</h2>
-            <p>Você foi incluído(a) no grupo <b>{nome_grupo}</b> do projeto extensionista:</p>
-            <p><b>Projeto:</b> {titulo_projeto}<br>
-            <b>Orientador(a):</b> {orientador}</p>
-            <p>Acesse o sistema com seu RA ou e-mail para aceitar ou rejeitar sua participação.</p>
-            <p>Atenciosamente,<br>Equipe do DevTrack System</p>
-        </div>
+    Participam apenas os orientadores incluídos no Conselho por Coordenador/Administrador.
+    Regra: APROVADO quando mais da metade dos membros aprovou;
+    REPROVADO quando a aprovação deixou de ser possível; senão PENDENTE.
     """
-    return enviar_email_brevo_em_segundo_plano(destinatario_email, assunto, html_content)
+    cursor.execute(
+        """SELECT u.id AS orientador_id, u.nome AS nome,
+                  COALESCE(v.status, 'PENDENTE') AS status,
+                  COALESCE(v.comentario, '') AS comentario,
+                  v.atualizado_em AS atualizado_em
+           FROM conselho_membros cm
+           JOIN usuarios u ON u.id = cm.orientador_id AND u.role = 'orientador'
+           LEFT JOIN votos_conselho v ON v.orientador_id = u.id AND v.projeto_id = ?
+           ORDER BY u.nome COLLATE NOCASE""",
+        (projeto_id,)
+    )
+    votos = [dict(r) for r in cursor.fetchall()]
+    total = len(votos)
+    aprovados = sum(1 for v in votos if v["status"] == "APROVADO")
+    reprovados = sum(1 for v in votos if v["status"] == "REPROVADO")
+
+    if total == 0:
+        status = "PENDENTE"
+    elif aprovados * 2 > total:
+        status = "APROVADO"
+    elif reprovados * 2 >= total:
+        status = "REPROVADO"
+    else:
+        status = "PENDENTE"
+
+    return {
+        "status": status,
+        "total": total,
+        "aprovados": aprovados,
+        "reprovados": reprovados,
+        "votos": votos
+    }
 
 
 
@@ -360,10 +324,16 @@ def logout():
 
 @app.route("/api/usuarios/<int:user_id>/alterar-senha", methods=["PATCH"])
 def alterar_senha_usuario(user_id):
-    data = request.json or {}
-    nova_senha = data.get("nova_senha", "").strip()
-    senha_atual = data.get("senha_atual", "").strip()
-    forcar_primeiro_acesso = bool(data.get("forcar_primeiro_acesso", False))
+    usuario = usuario_logado()
+    if not usuario:
+        return jsonify({"error": "Faça login para continuar."}), 401
+    if usuario["id"] != user_id:
+        return jsonify({"error": "Você só pode alterar a sua própria senha."}), 403
+
+    data = request.get_json(silent=True) or {}
+    nova_senha = str(data.get("nova_senha", "")).strip()
+    senha_atual = str(data.get("senha_atual", "")).strip()
+    forcar_primeiro_acesso = bool(usuario["primeiro_acesso"])
 
     if len(nova_senha) < 6 or len(nova_senha) > 18:
         return jsonify({"error": "A nova senha deve ter entre 6 e 18 caracteres."}), 400
@@ -379,7 +349,7 @@ def alterar_senha_usuario(user_id):
         conn.close()
         return jsonify({"error": "Usuário não encontrado."}), 404
 
-    if not forcar_primeiro_acesso and senha_atual and row["senha"] != senha_atual:
+    if not forcar_primeiro_acesso and row["senha"] != senha_atual:
         cursor.close()
         conn.close()
         return jsonify({"error": "A senha atual informada está incorreta."}), 400
@@ -396,8 +366,8 @@ def alterar_senha_usuario(user_id):
 
 @app.route("/api/usuarios/<int:user_id>/redefinir-senha", methods=["PATCH"])
 def redefinir_senha_provisoria(user_id):
-    data = request.json or {}
-    actor_role = data.get("actor_role")
+    data = request.get_json(silent=True) or {}
+    actor_role, _ = ator_atual()
     if actor_role != "admin":
         return jsonify({"error": "Apenas o Administrador pode redefinir senhas para a provisória."}), 403
 
@@ -422,8 +392,8 @@ def redefinir_senha_provisoria(user_id):
 
 @app.route("/api/usuarios/<int:user_id>/desbloquear", methods=["PATCH"])
 def desbloquear_usuario(user_id):
-    data = request.json or {}
-    actor_role = data.get("actor_role")
+    data = request.get_json(silent=True) or {}
+    actor_role, _ = ator_atual()
     if actor_role not in ["admin", "coordenador"]:
         return jsonify({"error": "Apenas Coordenadores e Administrador podem desbloquear usuários."}), 403
 
@@ -441,7 +411,7 @@ def desbloquear_usuario(user_id):
 
 @app.route("/api/usuarios", methods=["GET"])
 def listar_usuarios():
-    actor_role = request.args.get("actor_role", "").strip().lower()
+    actor_role, _ = ator_atual()
 
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -476,14 +446,53 @@ def listar_usuarios():
         return jsonify([])
 
     users = [dict(row) for row in cursor.fetchall()]
+    cursor.execute("SELECT orientador_id FROM conselho_membros")
+    ids_conselho = {r["orientador_id"] for r in cursor.fetchall()}
+    for u in users:
+        u["conselho"] = u["id"] in ids_conselho
     cursor.close()
     conn.close()
     return jsonify(users)
 
+
+@app.route("/api/usuarios/<int:user_id>/conselho", methods=["PATCH"])
+def alterar_membro_conselho(user_id):
+    """Inclui ou remove um orientador do Conselho (somente Coordenador ou Administrador)."""
+    usuario = usuario_logado()
+    if not usuario:
+        return jsonify({"error": "Faça login para continuar."}), 401
+    if usuario["role"] not in ("admin", "coordenador"):
+        return jsonify({"error": "Apenas Coordenadores e o Administrador podem definir os membros do Conselho."}), 403
+
+    data = request.get_json(silent=True) or {}
+    membro = bool(data.get("membro", True))
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT role FROM usuarios WHERE id = ?", (user_id,))
+    alvo = cursor.fetchone()
+    if not alvo or alvo["role"] != "orientador":
+        cursor.close()
+        conn.close()
+        return jsonify({"error": "Somente contas de Orientador podem participar do Conselho."}), 400
+
+    if membro:
+        cursor.execute(
+            "INSERT OR IGNORE INTO conselho_membros (orientador_id, adicionado_por) VALUES (?, ?)",
+            (user_id, usuario["nome"])
+        )
+    else:
+        cursor.execute("DELETE FROM conselho_membros WHERE orientador_id = ?", (user_id,))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    return jsonify({"message": "Orientador incluído no Conselho." if membro else "Orientador removido do Conselho."})
+
+
 @app.route("/api/usuarios", methods=["POST"])
 def criar_usuario():
     data = request.get_json(silent=True) or {}
-    actor_role = data.get("actor_role")
+    actor_role, _ = ator_atual()
     role = data.get("role")
     ra = data.get("ra", "").strip()
     nome = data.get("nome", "").strip()
@@ -520,31 +529,12 @@ def criar_usuario():
     cursor.close()
     conn.close()
 
-    # Envia boas-vindas para TODA conta criada, independentemente do perfil.
-    # O cadastro permanece concluído mesmo se o provedor de e-mail estiver indisponível.
-    subject = "Bem-vindo ao DevTrack System - Suas Credenciais de Acesso"
-    html_content = f"""
-        <div style="font-family: Arial, sans-serif; color: #333;">
-            <h2>Olá, {nome}!</h2>
-            <p>Sua conta no DevTrack System foi criada com sucesso.</p>
-            <p><b>Seus dados de acesso:</b></p>
-            <ul>
-                <li><b>RA:</b> {ra}</li>
-                <li><b>E-mail:</b> {email}</li>
-                <li><b>Senha Provisória:</b> {SENHA_PROVISORIA_PADRAO}</li>
-            </ul>
-            <p>Recomendamos que altere sua senha após o primeiro acesso.</p>
-            <p>Atenciosamente,<br>Equipe do DevTrack System</p>
-        </div>
-    """
-    enviar_email_brevo_em_segundo_plano(email, subject, html_content)
-
     return jsonify({"id": new_id, "ra": ra, "name": nome, "email": email, "role": role, "curso": curso})
 
 @app.route("/api/usuarios/<int:user_id>", methods=["DELETE"])
 def deletar_usuario(user_id):
-    data = request.json or {}
-    actor_role = data.get("actor_role", "")
+    data = request.get_json(silent=True) or {}
+    actor_role, _ = ator_atual()
 
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -619,9 +609,7 @@ def listar_projetos():
         etica = cursor.fetchone()
         p["etica"] = dict(etica) if etica else {"status": "PENDENTE", "parecer": "", "por": "", "atualizado_em": None}
 
-        cursor.execute("SELECT status, parecer, por, atualizado_em FROM pareceres_conselho WHERE projeto_id = ?", (p["id"],))
-        conselho = cursor.fetchone()
-        p["conselho"] = dict(conselho) if conselho else {"status": "PENDENTE", "parecer": "", "por": "", "atualizado_em": None}
+        p["conselho"] = calcular_conselho(cursor, p["id"])
 
     cursor.close()
     conn.close()
@@ -686,10 +674,8 @@ def criar_projeto():
             "INSERT INTO grupo_membros (grupo_id, ra, nome, status_participacao, justificativa_recusa) VALUES (?, ?, ?, 'PENDENTE', '')",
             (grupo_id, aluno_acc["ra"], aluno_acc["nome"])
         )
-        enviar_notificacao_email(aluno_acc["email"], aluno_acc["nome"], titulo, grupo_nome, orientador_nome)
 
     cursor.execute("INSERT INTO pareceres_etica (projeto_id, status) VALUES (?, 'PENDENTE')", (projeto_id,))
-    cursor.execute("INSERT INTO pareceres_conselho (projeto_id, status) VALUES (?, 'PENDENTE')", (projeto_id,))
 
     conn.commit()
     cursor.close()
@@ -700,8 +686,7 @@ def criar_projeto():
 @app.route("/api/projetos/<int:projeto_id>", methods=["PUT"])
 def editar_projeto(projeto_id):
     data = request.get_json(silent=True) or {}
-    actor_role = data.get("actor_role")
-    actor_nome = data.get("actor_nome", "").strip()
+    actor_role, actor_nome = ator_atual()
 
     if actor_role not in ["admin", "coordenador", "orientador"]:
         return jsonify({"error": "Sem permissão para editar projeto"}), 403
@@ -771,13 +756,12 @@ def editar_projeto(projeto_id):
 @app.route("/api/projetos/<int:projeto_id>/status", methods=["PATCH"])
 def alterar_status_projeto(projeto_id):
     data = request.get_json(silent=True) or {}
-    actor_role = data.get("actor_role")
-    actor_nome = data.get("actor_nome", "").strip()
+    actor_role, actor_nome = ator_atual()
     novo_status = str(data.get("status", "")).strip().upper()
     if novo_status not in ["NOVO", "EM ANDAMENTO", "DESENVOLVIMENTO", "CONCLUIDO", "CANCELADO"]:
         return jsonify({"error": "Status de projeto inválido."}), 400
 
-    if actor_role in ["aluno", "public"]:
+    if actor_role not in ["admin", "coordenador", "orientador"]:
         return jsonify({"error": "Alunos e visitantes não podem alterar o status do projeto"}), 403
 
     conn = get_db_connection()
@@ -786,9 +770,8 @@ def alterar_status_projeto(projeto_id):
     if novo_status == "DESENVOLVIMENTO":
         cursor.execute("SELECT status FROM pareceres_etica WHERE projeto_id = ?", (projeto_id,))
         parecer_etica = cursor.fetchone()
-        cursor.execute("SELECT status FROM pareceres_conselho WHERE projeto_id = ?", (projeto_id,))
-        parecer_conselho = cursor.fetchone()
-        if (not parecer_etica or not parecer_conselho or
+        parecer_conselho = calcular_conselho(cursor, projeto_id)
+        if (not parecer_etica or
                 parecer_etica["status"] != "APROVADO" or parecer_conselho["status"] != "APROVADO"):
             cursor.close()
             conn.close()
@@ -814,8 +797,7 @@ def alterar_status_projeto(projeto_id):
 @app.route("/api/projetos/<int:projeto_id>/publicar", methods=["PATCH"])
 def publicar_projeto(projeto_id):
     data = request.get_json(silent=True) or {}
-    actor_role = data.get("actor_role")
-    actor_nome = data.get("actor_nome", "").strip()
+    actor_role, actor_nome = ator_atual()
     publicado = 1 if data.get("publicado", True) else 0
 
     if actor_role not in ["admin", "coordenador", "orientador"]:
@@ -843,9 +825,8 @@ def publicar_projeto(projeto_id):
 
 @app.route("/api/projetos/<int:projeto_id>", methods=["DELETE"])
 def deletar_projeto(projeto_id):
-    data = request.json or {}
-    actor_role = data.get("actor_role")
-    actor_nome = data.get("actor_nome", "").strip()
+    data = request.get_json(silent=True) or {}
+    actor_role, actor_nome = ator_atual()
 
     if actor_role not in ["admin", "coordenador", "orientador"]:
         return jsonify({"error": "Sem permissão para excluir projeto"}), 403
@@ -870,46 +851,87 @@ def deletar_projeto(projeto_id):
 
 @app.route("/api/projetos/<int:projeto_id>/pareceres", methods=["PATCH"])
 def atualizar_parecer(projeto_id):
+    """Parecer de Ética: somente Coordenador ou Administrador (identidade vem da sessão)."""
+    usuario = usuario_logado()
+    if not usuario:
+        return jsonify({"error": "Faça login para registrar pareceres."}), 401
+    if usuario["role"] not in ("admin", "coordenador"):
+        return jsonify({"error": "Apenas Coordenadores e o Administrador podem registrar o parecer de Ética."}), 403
+
     data = request.get_json(silent=True) or {}
-    tipo = str(data.get("tipo", "")).strip().lower()
     status = str(data.get("status", "")).strip().upper()
     parecer = str(data.get("parecer", "")).strip()
-    por = str(data.get("por", "Gestão")).strip() or "Gestão"
-    actor_role = str(data.get("actor_role", "")).strip().lower()
-    actor_nome = str(data.get("actor_nome", "")).strip()
 
-    if actor_role not in ["admin", "coordenador", "orientador"]:
-        return jsonify({"error": "Sem permissão para registrar pareceres."}), 403
-    if tipo not in ("etica", "conselho"):
-        return jsonify({"error": "Tipo de parecer inválido. Use 'etica' ou 'conselho'."}), 400
     if status not in ("PENDENTE", "APROVADO", "REPROVADO"):
         return jsonify({"error": "Status de parecer inválido."}), 400
 
-    tabela = "pareceres_etica" if tipo == "etica" else "pareceres_conselho"
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT id, orientador_nome FROM projetos WHERE id = ?", (projeto_id,))
-    projeto = cursor.fetchone()
-    if not projeto:
+    cursor.execute("SELECT id FROM projetos WHERE id = ?", (projeto_id,))
+    if not cursor.fetchone():
         cursor.close()
         conn.close()
         return jsonify({"error": "Projeto não encontrado."}), 404
-    if actor_role == "orientador" and (not actor_nome or actor_nome.lower() not in projeto["orientador_nome"].lower()):
-        cursor.close()
-        conn.close()
-        return jsonify({"error": "Você não é o orientador responsável por este projeto."}), 403
 
     cursor.execute(
-        f"INSERT INTO {tabela} (projeto_id, status, parecer, por, atualizado_em) "
+        "INSERT INTO pareceres_etica (projeto_id, status, parecer, por, atualizado_em) "
         "VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP) "
         "ON CONFLICT(projeto_id) DO UPDATE SET status=excluded.status, parecer=excluded.parecer, "
         "por=excluded.por, atualizado_em=CURRENT_TIMESTAMP",
-        (projeto_id, status, parecer, por)
+        (projeto_id, status, parecer, usuario["nome"])
     )
     conn.commit()
     cursor.close()
     conn.close()
-    return jsonify({"message": "Parecer atualizado com sucesso."})
+    return jsonify({"message": "Parecer de Ética atualizado com sucesso."})
+
+
+@app.route("/api/projetos/<int:projeto_id>/conselho/voto", methods=["PUT"])
+def votar_conselho(projeto_id):
+    """Voto do Conselho: cada orientador só registra o próprio voto (identidade vem da sessão)."""
+    usuario = usuario_logado()
+    if not usuario:
+        return jsonify({"error": "Faça login para votar."}), 401
+    if usuario["role"] != "orientador":
+        return jsonify({"error": "Apenas Orientadores incluídos no Conselho podem votar."}), 403
+
+    data = request.get_json(silent=True) or {}
+    status = str(data.get("status", "")).strip().upper()
+    comentario = str(data.get("comentario", "")).strip()
+
+    if status not in ("PENDENTE", "APROVADO", "REPROVADO"):
+        return jsonify({"error": "Voto inválido."}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT 1 FROM conselho_membros WHERE orientador_id = ?", (usuario["id"],))
+    if not cursor.fetchone():
+        cursor.close()
+        conn.close()
+        return jsonify({"error": "Você não foi incluído no Conselho. Solicite a um Coordenador ou ao Administrador."}), 403
+    cursor.execute("SELECT id FROM projetos WHERE id = ?", (projeto_id,))
+    if not cursor.fetchone():
+        cursor.close()
+        conn.close()
+        return jsonify({"error": "Projeto não encontrado."}), 404
+
+    if status == "PENDENTE":
+        cursor.execute(
+            "DELETE FROM votos_conselho WHERE projeto_id = ? AND orientador_id = ?",
+            (projeto_id, usuario["id"])
+        )
+    else:
+        cursor.execute(
+            "INSERT INTO votos_conselho (projeto_id, orientador_id, status, comentario, atualizado_em) "
+            "VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP) "
+            "ON CONFLICT(projeto_id, orientador_id) DO UPDATE SET status=excluded.status, "
+            "comentario=excluded.comentario, atualizado_em=CURRENT_TIMESTAMP",
+            (projeto_id, usuario["id"], status, comentario)
+        )
+    conn.commit()
+    cursor.close()
+    conn.close()
+    return jsonify({"message": "Seu voto no Conselho foi registrado."})
 
 
 # ==========================================
@@ -917,8 +939,8 @@ def atualizar_parecer(projeto_id):
 # ==========================================
 @app.route("/api/carga-massiva", methods=["POST"])
 def carga_massiva_json():
-    data = request.json or {}
-    actor_role = data.get("actor_role")
+    data = request.get_json(silent=True) or {}
+    actor_role, _ = ator_atual()
     tipo = data.get("tipo")
     registros = data.get("registros", [])
 
@@ -985,7 +1007,6 @@ def carga_massiva_json():
                 )
                 projeto_id = cursor.lastrowid
                 cursor.execute("INSERT INTO pareceres_etica (projeto_id, status) VALUES (?, 'PENDENTE')", (projeto_id,))
-                cursor.execute("INSERT INTO pareceres_conselho (projeto_id, status) VALUES (?, 'PENDENTE')", (projeto_id,))
                 cursor.execute("INSERT INTO grupos (projeto_id, nome) VALUES (?, ?)", (projeto_id, grupo_nome))
                 grupo_id = cursor.lastrowid
 
@@ -1019,6 +1040,10 @@ def carga_massiva_json():
 # ==========================================
 @app.route("/api/membros/<int:membro_id>/resposta", methods=["PATCH"])
 def responder_convite_aluno(membro_id):
+    usuario = usuario_logado()
+    if not usuario or usuario["role"] != "aluno":
+        return jsonify({"error": "Apenas o aluno convidado pode responder ao convite."}), 403
+
     data = request.get_json(silent=True) or {}
     status_participacao = data.get("status_participacao")
     justificativa = str(data.get("justificativa", "")).strip() if status_participacao == "RECUSADO" else ""
@@ -1028,6 +1053,12 @@ def responder_convite_aluno(membro_id):
 
     conn = get_db_connection()
     cursor = conn.cursor()
+    cursor.execute("SELECT ra FROM grupo_membros WHERE id = ?", (membro_id,))
+    membro = cursor.fetchone()
+    if not membro or membro["ra"].lower() != usuario["ra"].lower():
+        cursor.close()
+        conn.close()
+        return jsonify({"error": "Este convite não pertence a você."}), 403
     cursor.execute(
         "UPDATE grupo_membros SET status_participacao = ?, justificativa_recusa = ? WHERE id = ?",
         (status_participacao, justificativa, membro_id)
@@ -1040,9 +1071,12 @@ def responder_convite_aluno(membro_id):
 
 @app.route("/api/membros/<int:membro_id>/aluno-self", methods=["PATCH"])
 def editar_dados_proprios_aluno(membro_id):
+    usuario = usuario_logado()
+    if not usuario or usuario["role"] != "aluno":
+        return jsonify({"error": "Apenas o próprio aluno pode editar o seu nome."}), 403
+
     data = request.get_json(silent=True) or {}
-    user_id = data.get("user_id")
-    novo_nome = data.get("nome", "").strip()
+    novo_nome = str(data.get("nome", "")).strip()
 
     if not novo_nome:
         return jsonify({"error": "O nome não pode ficar em branco."}), 400
@@ -1052,10 +1086,13 @@ def editar_dados_proprios_aluno(membro_id):
 
     cursor.execute("SELECT ra FROM grupo_membros WHERE id = ?", (membro_id,))
     membro = cursor.fetchone()
-    if membro:
-        cursor.execute("UPDATE grupo_membros SET nome = ? WHERE LOWER(ra) = LOWER(?)", (novo_nome, membro["ra"]))
-    if user_id:
-        cursor.execute("UPDATE usuarios SET nome = ? WHERE id = ? AND role = 'aluno'", (novo_nome, user_id))
+    if not membro or membro["ra"].lower() != usuario["ra"].lower():
+        cursor.close()
+        conn.close()
+        return jsonify({"error": "Este vínculo não pertence a você."}), 403
+
+    cursor.execute("UPDATE grupo_membros SET nome = ? WHERE LOWER(ra) = LOWER(?)", (novo_nome, usuario["ra"]))
+    cursor.execute("UPDATE usuarios SET nome = ? WHERE id = ? AND role = 'aluno'", (novo_nome, usuario["id"]))
 
     conn.commit()
     cursor.close()
