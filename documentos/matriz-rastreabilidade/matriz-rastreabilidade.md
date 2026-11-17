@@ -18,6 +18,7 @@ Módulo 2: Controle (Registro). Cada linha corresponde a um caso de uso do [Diag
 | Informar áreas de atuação, interdisciplinaridade e setor externo | ✔ | ✔ | ✔ |  |  |
 | Realizar status: todos, exceto Avaliado | ✔ | ✔ | ✔ |  |  |
 | Realizar status Avaliado | ✔ | ✔ |  |  |  |
+| Reabrir projeto Finalizado (volta a Concluído ou Desenvolvimento) | ✔ | ✔ |  |  |  |
 | Realizar status: Pendente, Cancelado, Concluído |  |  |  | ✔ |  |
 | Confirmar participação no grupo (time) |  |  |  | ✔ |  |
 
@@ -26,7 +27,7 @@ Arquivo para planilha: [matriz-rastreabilidade.csv](matriz-rastreabilidade.csv)
 ## Observações
 
 - A matriz é coerente com o Diagrama de Caso de Uso: cada ✔ corresponde a uma associação entre ator e caso de uso.
-- Orientador só realiza status e edita os projetos em que consta como responsável. Aluno só realiza status nos projetos em que está confirmado.
+- Orientador só realiza status e edita os projetos em que consta como responsável. Um projeto Finalizado só é reaberto pela Coordenação ou pelo Administrador, para corrigir finalizações feitas por engano. Aluno só realiza status nos projetos em que está confirmado.
 - Coordenador não cria contas de Coordenador; Orientador cria apenas contas de Aluno; somente o Administrador redefine senhas.
 - Consultar projetos: Administrador, Coordenador e Orientador veem todos; Aluno vê os publicados e os seus; Acesso público vê os publicados. Alunos e público nunca veem o RA.
 - Votam no Conselho apenas os orientadores incluídos pela Coordenação ou pelo Administrador; cada um vota somente com o próprio login.

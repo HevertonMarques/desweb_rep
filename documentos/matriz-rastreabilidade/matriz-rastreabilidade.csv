@@ -13,5 +13,6 @@ Registrar trabalho, grupo e membros (CRUD de trabalhos);X;X;X;;
 Informar áreas de atuação, interdisciplinaridade e setor externo;X;X;X;;
 Realizar status: todos, exceto Avaliado;X;X;X;;
 Realizar status Avaliado;X;X;;;
+Reabrir projeto Finalizado (volta a Concluído ou Desenvolvimento);X;X;;;
 Realizar status: Pendente, Cancelado, Concluído;;;;X;
 Confirmar participação no grupo (time);;;;X;
