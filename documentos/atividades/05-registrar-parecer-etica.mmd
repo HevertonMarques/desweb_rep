@@ -1,0 +1,18 @@
+flowchart TD
+  ini(("Início")) --> x1["Comitê de ética avalia o projeto fora do sistema"]
+  x1 --> a1["Coordenador ou Administrador acessa Pareceres"]
+  a1 --> a2["Ator seleciona o projeto"]
+  a2 --> a3["Ator informa Aprovado, Reprovado ou Pendente e a observação"]
+  a3 --> d1{"Ator é Coordenador ou Administrador?"}
+  d1 -- Não --> e1["Sistema recusa: parecer de Ética restrito à coordenação"]
+  d1 -- Sim --> s1["Sistema grava o parecer, o nome de quem registrou e a data"]
+  s1 --> fim((Fim))
+  e1 --> fim
+  classDef ator fill:#E6F1FB,stroke:#185FA5,color:#0C447C
+  classDef sis fill:#F1EFE8,stroke:#5F5E5A,color:#2C2C2A
+  classDef dec fill:#FAEEDA,stroke:#854F0B,color:#633806
+  classDef err fill:#FCEBEB,stroke:#A32D2D,color:#791F1F
+  class a1,a2,a3 ator
+  class x1,s1 sis
+  class d1 dec
+  class e1 err

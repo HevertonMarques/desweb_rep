@@ -1,0 +1,19 @@
+flowchart TD
+  ini(("Início")) --> a1["Aluno acessa Meu perfil"]
+  a1 --> s1["Sistema mostra nome completo e RA, ambos sem edição"]
+  s1 --> a2["Aluno escolhe: nome completo ou primeiro nome e último sobrenome"]
+  a2 --> a3["Aluno salva a preferência"]
+  a3 --> d1{"Opção válida?"}
+  d1 -- Não --> e1["Sistema recusa a alteração"]
+  d1 -- Sim --> s2["Sistema grava somente a preferência de exibição"]
+  s2 --> s3["Público e outros alunos passam a ver o nome conforme a preferência; gestão continua vendo o nome completo"]
+  s3 --> fim((Fim))
+  e1 --> fim
+  classDef ator fill:#E6F1FB,stroke:#185FA5,color:#0C447C
+  classDef sis fill:#F1EFE8,stroke:#5F5E5A,color:#2C2C2A
+  classDef dec fill:#FAEEDA,stroke:#854F0B,color:#633806
+  classDef err fill:#FCEBEB,stroke:#A32D2D,color:#791F1F
+  class a1,a2,a3 ator
+  class s1,s2,s3 sis
+  class d1 dec
+  class e1 err

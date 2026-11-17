@@ -1,0 +1,24 @@
+flowchart TD
+  ini(("Início")) --> a1["Administrador acessa a carga massiva"]
+  a1 --> a2["Administrador escolhe o tipo: professores ou projetos"]
+  a2 --> a3["Administrador envia o arquivo"]
+  a3 --> d1{"Formato do arquivo válido?"}
+  d1 -- Não --> e1["Sistema rejeita o arquivo e informa o erro"]
+  d1 -- Sim --> s1["Sistema lê o próximo registro"]
+  s1 --> d2{"Registro válido?"}
+  d2 -- Sim --> s2["Sistema grava o registro"]
+  d2 -- Não --> s3["Sistema anota o registro como rejeitado"]
+  s2 --> d3{"Há mais registros?"}
+  s3 --> d3
+  d3 -- Sim --> s1
+  d3 -- Não --> s4["Sistema exibe o resumo: importados e rejeitados"]
+  s4 --> fim((Fim))
+  e1 --> fim
+  classDef ator fill:#E6F1FB,stroke:#185FA5,color:#0C447C
+  classDef sis fill:#F1EFE8,stroke:#5F5E5A,color:#2C2C2A
+  classDef dec fill:#FAEEDA,stroke:#854F0B,color:#633806
+  classDef err fill:#FCEBEB,stroke:#A32D2D,color:#791F1F
+  class a1,a2,a3 ator
+  class s1,s2,s3,s4 sis
+  class d1,d2,d3 dec
+  class e1 err

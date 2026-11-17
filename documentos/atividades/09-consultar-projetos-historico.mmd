@@ -1,0 +1,27 @@
+flowchart TD
+  ini(("Início")) --> a1["Ator acessa Consultar Projetos, Meus projetos ou Histórico"]
+  a1 --> a2["Ator informa filtros: projeto, aluno, RA, situação e período"]
+  a2 --> d1{"Ator tem perfil de gestão?"}
+  d1 -- Não --> d2{"Ator é aluno?"}
+  d2 -- Sim --> s1["Sistema considera os projetos publicados e os vinculados ao aluno"]
+  d2 -- Não --> s2["Sistema considera apenas os projetos publicados"]
+  d1 -- Sim --> s3["Sistema considera todos os projetos"]
+  s1 --> d3{"Há algum filtro ou pesquisa ativa?"}
+  s2 --> d3
+  s3 --> d3
+  d3 -- Não --> s4["Sistema oculta os projetos Finalizados da listagem principal"]
+  d3 -- Sim --> s5["Sistema inclui os Finalizados no resultado"]
+  s4 --> s6["Sistema ordena por data de criação, do mais recente ao mais antigo"]
+  s5 --> s6
+  s6 --> d4{"Ator tem perfil de gestão?"}
+  d4 -- Sim --> s7["Sistema exibe nome completo e RA dos alunos"]
+  d4 -- Não --> s8["Sistema omite o RA e exibe o nome conforme a preferência de cada aluno"]
+  s7 --> fim((Fim))
+  s8 --> fim
+  classDef ator fill:#E6F1FB,stroke:#185FA5,color:#0C447C
+  classDef sis fill:#F1EFE8,stroke:#5F5E5A,color:#2C2C2A
+  classDef dec fill:#FAEEDA,stroke:#854F0B,color:#633806
+  classDef err fill:#FCEBEB,stroke:#A32D2D,color:#791F1F
+  class a1,a2 ator
+  class s1,s2,s3,s4,s5,s6,s7,s8 sis
+  class d1,d2,d3,d4 dec

@@ -1,0 +1,35 @@
+flowchart TD
+  ini(("Início")) --> a1["Ator abre o projeto"]
+  a1 --> a2["Ator seleciona o novo status"]
+  a2 --> d1{"Ator é aluno?"}
+  d1 -- Sim --> d2{"Aluno é membro confirmado do grupo?"}
+  d2 -- Não --> e1["Sistema recusa: participação não confirmada"]
+  d2 -- Sim --> d3{"Status é Pendente, Cancelado ou Concluído?"}
+  d3 -- Não --> e2["Sistema recusa: status não permitido ao aluno"]
+  d3 -- Sim --> d6{"Transição válida a partir do status atual?"}
+  d1 -- "Não" --> d4{"Ator é Coordenador, Administrador ou o orientador responsável?"}
+  d4 -- Não --> e4["Sistema recusa: sem permissão sobre o projeto"]
+  d4 -- Sim --> d5{"Status é Avaliado e o ator não é Coordenador nem Administrador?"}
+  d5 -- Sim --> e5["Sistema recusa: Avaliado é registrado pela coordenação"]
+  d5 -- Não --> d6
+  d6 -- Não --> e3["Sistema recusa: transição inválida"]
+  d6 -- Sim --> d7{"Novo status é Desenvolvimento?"}
+  d7 -- Sim --> d8{"Ética e Conselho estão aprovados?"}
+  d8 -- Não --> e6["Sistema recusa: pareceres pendentes ou reprovados"]
+  d8 -- Sim --> s1["Sistema atualiza o status do projeto"]
+  d7 -- Não --> s1
+  s1 --> fim((Fim))
+  e1 --> fim
+  e2 --> fim
+  e3 --> fim
+  e4 --> fim
+  e5 --> fim
+  e6 --> fim
+  classDef ator fill:#E6F1FB,stroke:#185FA5,color:#0C447C
+  classDef sis fill:#F1EFE8,stroke:#5F5E5A,color:#2C2C2A
+  classDef dec fill:#FAEEDA,stroke:#854F0B,color:#633806
+  classDef err fill:#FCEBEB,stroke:#A32D2D,color:#791F1F
+  class a1,a2 ator
+  class s1 sis
+  class d1,d2,d3,d4,d5,d6,d7,d8 dec
+  class e1,e2,e3,e4,e5,e6 err
