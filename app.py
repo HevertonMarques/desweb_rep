@@ -35,6 +35,11 @@ TRANSICOES_STATUS = {
 }
 STATUS_ALUNO = {"PENDENTE", "CANCELADO", "CONCLUIDO"}
 STATUS_SO_GESTAO = {"AVALIADO"}
+# Reabertura: só Coordenador e Administrador devolvem um projeto FINALIZADO a um estado anterior
+# (corrige, por exemplo, uma finalização feita por engano pelo orientador).
+REABERTURA_GESTAO = {
+    "FINALIZADO": ["CONCLUIDO", "DESENVOLVIMENTO"],
+}
 
 
 
@@ -887,6 +892,7 @@ def alterar_status_projeto(projeto_id):
     - Orientador responsável, Coordenador e Administrador realizam os estados permitidos pela transição.
     - Aluno confirmado no grupo realiza apenas PENDENTE, CANCELADO e CONCLUIDO.
     - AVALIADO é restrito à gestão (Coordenador/Administrador).
+    - Só Coordenador e Administrador reabrem um projeto FINALIZADO (voltando a CONCLUIDO ou DESENVOLVIMENTO).
     """
     actor_role, actor_nome = ator_atual()
     usuario = usuario_logado()
@@ -938,12 +944,18 @@ def alterar_status_projeto(projeto_id):
         cursor.close()
         conn.close()
         return jsonify({"message": "O projeto já está neste status."})
-    if novo_status not in TRANSICOES_STATUS.get(atual, []):
+    permitidos = list(TRANSICOES_STATUS.get(atual, []))
+    if actor_role in ["admin", "coordenador"]:
+        permitidos += REABERTURA_GESTAO.get(atual, [])
+    if novo_status not in permitidos:
         cursor.close()
         conn.close()
+        if atual in REABERTURA_GESTAO and novo_status in REABERTURA_GESTAO[atual]:
+            return jsonify({"error": "Somente a Coordenação ou a Administração podem reabrir um projeto finalizado."}), 403
         return jsonify({"error": f"Transição inválida: {atual} não pode ir para {novo_status}."}), 400
 
-    if novo_status == "DESENVOLVIMENTO":
+    # Reabrir um projeto já finalizado não exige novos pareceres: eles foram aprovados antes de ele ir para Desenvolvimento.
+    if novo_status == "DESENVOLVIMENTO" and atual != "FINALIZADO":
         cursor.execute("SELECT status FROM pareceres_etica WHERE projeto_id = ?", (projeto_id,))
         parecer_etica = cursor.fetchone()
         parecer_conselho = calcular_conselho(cursor, projeto_id)
