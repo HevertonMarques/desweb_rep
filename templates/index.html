@@ -1563,7 +1563,7 @@
       tbody.innerHTML = lista.map(p => `
         <tr class="hover:bg-slate-900/50 align-top">
           <td class="py-3 px-4"><div class="font-medium text-slate-100">${escapeParecerHtml(p.titulo)}</div><div class="text-[10px] text-slate-500">#${p.id} • ${escapeParecerHtml(p.grupo?.nome || "Sem grupo")}</div></td>
-          <td class="py-3 px-4"><span class="px-2 py-0.5 text-[10px] font-bold rounded-md bg-slate-800 text-slate-300">${rotuloStatus(p.status)}</span></td>
+          <td class="py-3 px-4">${["admin", "coordenador"].includes(currentUser.role) && statusDisponiveis(p).length ? `<div class="w-44 flex" title="${p.status === "FINALIZADO" ? "Reabrir o projeto finalizado" : "Alterar o estado do projeto"}">${statusSelectHtml(p)}</div>` : `<span class="px-2 py-0.5 text-[10px] font-bold rounded-md bg-slate-800 text-slate-300">${rotuloStatus(p.status)}</span>`}</td>
           <td class="py-3 px-4 text-slate-300 whitespace-nowrap">${dataBrasileira(p.criado_em)}</td>
           <td class="py-3 px-4 text-slate-300">${escapeParecerHtml(p.orientador_nome)}</td>
           <td class="py-3 px-4">${integrantesResumo(p)}</td>
@@ -1708,9 +1708,12 @@
       return STATUS_ROTULOS[status] || status;
     }
 
+    const STATUS_REABERTURA = { FINALIZADO: ["CONCLUIDO", "DESENVOLVIMENTO"] };
+
     function statusDisponiveis(p) {
       if (!currentUser) return [];
-      let proximos = STATUS_TRANSICOES[p.status] || [];
+      let proximos = [...(STATUS_TRANSICOES[p.status] || [])];
+      if (["admin", "coordenador"].includes(currentUser.role)) proximos = proximos.concat(STATUS_REABERTURA[p.status] || []);
       if (currentUser.role === "aluno") proximos = proximos.filter(s => STATUS_ALUNO.includes(s));
       else if (currentUser.role === "orientador") proximos = proximos.filter(s => s !== "AVALIADO");
       return proximos;
