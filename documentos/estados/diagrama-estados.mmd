@@ -15,5 +15,7 @@ stateDiagram-v2
   Concluido --> Liberado
   Liberado --> Avaliado : coordenação registra
   Cancelado --> [*]
+  Finalizado --> Concluido : reabertura (coordenação)
+  Finalizado --> Desenvolvimento : reabertura (coordenação)
   Finalizado --> [*]
   Avaliado --> [*]
