@@ -8,7 +8,7 @@ Sistema web para registrar e controlar os projetos extensionistas desenvolvidos 
 
 | RA | Nome | Responsabilidade (NEG/DEV) |
 |---|---|---|
-| [33711] | [Heverton Maeques Oliveira] | [NEG] |
+| [33711] | [Heverton Marques Oliveira] | [NEG] |
 | [34001] | [Victor Augusto da Silva Hollanda] | [NEG] |
 | [33772] | [Raul Domingues da Silva Honorio] | [DEV] |
 
