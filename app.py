@@ -18,6 +18,24 @@ DB_PATH = os.path.join(BASE_DIR, "modulo2_extensionista.db")
 
 SENHA_PROVISORIA_PADRAO = "123456"
 
+# Estados do projeto e transições permitidas (diagrama de estados).
+STATUS_PROJETO = [
+    "NOVO", "PENDENTE", "DESENVOLVIMENTO", "CANCELADO",
+    "CONCLUIDO", "FINALIZADO", "LIBERADO_APRESENTACAO", "AVALIADO"
+]
+TRANSICOES_STATUS = {
+    "NOVO": ["PENDENTE", "DESENVOLVIMENTO", "CANCELADO"],
+    "PENDENTE": ["DESENVOLVIMENTO"],
+    "DESENVOLVIMENTO": ["PENDENTE", "CANCELADO", "CONCLUIDO"],
+    "CONCLUIDO": ["DESENVOLVIMENTO", "FINALIZADO", "LIBERADO_APRESENTACAO"],
+    "LIBERADO_APRESENTACAO": ["AVALIADO"],
+    "CANCELADO": [],
+    "FINALIZADO": [],
+    "AVALIADO": [],
+}
+STATUS_ALUNO = {"PENDENTE", "CANCELADO", "CONCLUIDO"}
+STATUS_SO_GESTAO = {"AVALIADO"}
+
 
 
 def get_db_connection():
@@ -45,6 +63,7 @@ def init_db():
             primeiro_acesso INTEGER DEFAULT 1,
             tentativas_falhas INTEGER DEFAULT 0,
             bloqueado INTEGER DEFAULT 0,
+            exibicao_nome TEXT DEFAULT 'completo',
             criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
 
@@ -119,11 +138,16 @@ def init_db():
         cursor.execute("ALTER TABLE usuarios ADD COLUMN tentativas_falhas INTEGER DEFAULT 0")
     if "bloqueado" not in colunas_user:
         cursor.execute("ALTER TABLE usuarios ADD COLUMN bloqueado INTEGER DEFAULT 0")
+    if "exibicao_nome" not in colunas_user:
+        cursor.execute("ALTER TABLE usuarios ADD COLUMN exibicao_nome TEXT DEFAULT 'completo'")
 
     cursor.execute("PRAGMA table_info(grupo_membros)")
     colunas_membros = [col["name"] for col in cursor.fetchall()]
     if "justificativa_recusa" not in colunas_membros:
         cursor.execute("ALTER TABLE grupo_membros ADD COLUMN justificativa_recusa TEXT DEFAULT ''")
+
+    # O estado antigo "EM ANDAMENTO" deixou de existir; esses projetos passam para DESENVOLVIMENTO.
+    cursor.execute("UPDATE projetos SET status = 'DESENVOLVIMENTO' WHERE status = 'EM ANDAMENTO'")
 
     # Garante pareceres pendentes também para projetos que já existiam antes da atualização.
     cursor.execute("INSERT OR IGNORE INTO pareceres_etica (projeto_id, status) SELECT id, 'PENDENTE' FROM projetos")
@@ -152,7 +176,8 @@ def usuario_logado():
     try:
         row = conn.execute(
             "SELECT id, ra, nome, email, role, COALESCE(curso, '') AS curso, "
-            "COALESCE(primeiro_acesso, 0) AS primeiro_acesso "
+            "COALESCE(primeiro_acesso, 0) AS primeiro_acesso, "
+            "COALESCE(exibicao_nome, 'completo') AS exibicao_nome "
             "FROM usuarios WHERE id = ?", (user_id,)
         ).fetchone()
         return dict(row) if row else None
@@ -166,6 +191,82 @@ def ator_atual():
     if not usuario:
         return "", ""
     return usuario["role"], usuario["nome"]
+
+
+PERFIS_GESTAO = ("admin", "coordenador", "orientador")
+EXIBICOES_NOME = ("completo", "abreviado")
+
+
+def nome_abreviado(nome_completo):
+    """Primeiro nome + último sobrenome. Nomes de uma ou duas palavras ficam como estão."""
+    partes = str(nome_completo or "").split()
+    if len(partes) <= 2:
+        return " ".join(partes)
+    return f"{partes[0]} {partes[-1]}"
+
+
+def montar_membros_do_grupo(cursor, grupo_id, usuario):
+    """Integrantes do grupo já com as regras de privacidade aplicadas no servidor.
+
+    - Orientador, Coordenador e Administrador: nome completo e RA.
+    - Público e alunos: sem RA e com o nome conforme a preferência de cada aluno.
+      A própria linha do aluno logado vem com `proprio = True` e com o nome completo.
+    """
+    cursor.execute(
+        """SELECT gm.id, gm.ra, gm.nome, gm.status_participacao,
+                  COALESCE(gm.justificativa_recusa, '') AS justificativa_recusa,
+                  u.nome AS nome_conta,
+                  COALESCE(u.exibicao_nome, 'completo') AS exibicao_nome,
+                  CASE WHEN u.id IS NULL THEN 0 ELSE 1 END AS conta_existe
+           FROM grupo_membros gm
+           LEFT JOIN usuarios u ON LOWER(u.ra) = LOWER(gm.ra) AND u.role = 'aluno'
+           WHERE gm.grupo_id = ?
+           ORDER BY gm.id""",
+        (grupo_id,)
+    )
+    gestao = bool(usuario and usuario["role"] in PERFIS_GESTAO)
+    ra_logado = usuario["ra"].lower() if usuario and usuario["role"] == "aluno" else None
+
+    membros = []
+    for m in cursor.fetchall():
+        nome_completo = m["nome_conta"] or m["nome"]
+        membro = {
+            "id": m["id"],
+            "status_participacao": m["status_participacao"],
+            "justificativa_recusa": m["justificativa_recusa"],
+        }
+        if gestao:
+            membro["ra"] = m["ra"]
+            membro["nome"] = nome_completo
+        elif ra_logado and m["ra"].lower() == ra_logado:
+            membro["proprio"] = True
+            membro["nome"] = nome_completo
+        else:
+            # Conta removida: sem preferência registrada, então a exibição segue abreviada.
+            abreviar = m["exibicao_nome"] == "abreviado" or not m["conta_existe"]
+            membro["nome"] = nome_abreviado(nome_completo) if abreviar else nome_completo
+        membros.append(membro)
+    return membros
+
+
+def montar_projeto(cursor, linha, usuario):
+    p = dict(linha)
+    p["publicado"] = bool(p["publicado"])
+    cursor.execute("SELECT * FROM grupos WHERE projeto_id = ?", (p["id"],))
+    grupo_row = cursor.fetchone()
+    if grupo_row:
+        grupo = dict(grupo_row)
+        grupo["membros"] = montar_membros_do_grupo(cursor, grupo["id"], usuario)
+        p["grupo"] = grupo
+    else:
+        p["grupo"] = {"id": None, "nome": "", "membros": []}
+
+    cursor.execute("SELECT status, parecer, por, atualizado_em FROM pareceres_etica WHERE projeto_id = ?", (p["id"],))
+    etica = cursor.fetchone()
+    p["etica"] = dict(etica) if etica else {"status": "PENDENTE", "parecer": "", "por": "", "atualizado_em": None}
+
+    p["conselho"] = calcular_conselho(cursor, p["id"])
+    return p
 
 
 def exigir_acesso_relatorios():
@@ -313,6 +414,42 @@ def verificar_sessao():
     if not usuario:
         return jsonify({"authenticated": False}), 401
     return jsonify({"authenticated": True, **usuario})
+
+
+@app.route("/api/perfil", methods=["GET"])
+def obter_perfil():
+    usuario = usuario_logado()
+    if not usuario or usuario["role"] != "aluno":
+        return jsonify({"error": "O perfil de exibição é exclusivo de alunos."}), 403
+    return jsonify({
+        "nome": usuario["nome"],
+        "ra": usuario["ra"],
+        "exibicao_nome": usuario["exibicao_nome"],
+        "nome_exibido": nome_abreviado(usuario["nome"]) if usuario["exibicao_nome"] == "abreviado" else usuario["nome"],
+    })
+
+
+@app.route("/api/perfil", methods=["PATCH"])
+def atualizar_perfil():
+    """O aluno só escolhe como o nome aparece. O RA não pode ser alterado por esta rota."""
+    usuario = usuario_logado()
+    if not usuario or usuario["role"] != "aluno":
+        return jsonify({"error": "O perfil de exibição é exclusivo de alunos."}), 403
+
+    data = request.get_json(silent=True) or {}
+    exibicao = str(data.get("exibicao_nome", "")).strip().lower()
+    if exibicao not in EXIBICOES_NOME:
+        return jsonify({"error": "Escolha 'completo' ou 'abreviado'."}), 400
+
+    conn = get_db_connection()
+    conn.execute("UPDATE usuarios SET exibicao_nome = ? WHERE id = ?", (exibicao, usuario["id"]))
+    conn.commit()
+    conn.close()
+    return jsonify({
+        "message": "Preferência de exibição salva.",
+        "exibicao_nome": exibicao,
+        "nome_exibido": nome_abreviado(usuario["nome"]) if exibicao == "abreviado" else usuario["nome"],
+    })
 
 
 @app.route("/api/logout", methods=["POST"])
@@ -574,42 +711,23 @@ def listar_projetos():
     cursor = conn.cursor()
 
     usuario = usuario_logado()
-    if usuario and usuario["role"] in ("admin", "coordenador", "orientador"):
-        cursor.execute("SELECT * FROM projetos ORDER BY id DESC")
+    ordem = "ORDER BY p.criado_em DESC, p.id DESC"
+    if usuario and usuario["role"] in PERFIS_GESTAO:
+        cursor.execute(f"SELECT p.* FROM projetos p {ordem}")
     elif usuario and usuario["role"] == "aluno":
         cursor.execute(
-            """SELECT DISTINCT p.* FROM projetos p
-               LEFT JOIN grupos g ON g.projeto_id = p.id
-               LEFT JOIN grupo_membros gm ON gm.grupo_id = g.id
-               WHERE p.publicado = 1 OR LOWER(gm.ra) = LOWER(?)
-               ORDER BY p.id DESC""",
+            f"""SELECT p.* FROM projetos p
+                WHERE p.publicado = 1
+                   OR EXISTS (SELECT 1 FROM grupos g
+                              JOIN grupo_membros gm ON gm.grupo_id = g.id
+                              WHERE g.projeto_id = p.id AND LOWER(gm.ra) = LOWER(?))
+                {ordem}""",
             (usuario["ra"],)
         )
     else:
-        cursor.execute("SELECT * FROM projetos WHERE publicado = 1 ORDER BY id DESC")
-    projetos = [dict(row) for row in cursor.fetchall()]
+        cursor.execute(f"SELECT p.* FROM projetos p WHERE p.publicado = 1 {ordem}")
 
-    for p in projetos:
-        p["publicado"] = bool(p["publicado"])
-        cursor.execute("SELECT * FROM grupos WHERE projeto_id = ?", (p["id"],))
-        grupo_row = cursor.fetchone()
-        if grupo_row:
-            grupo = dict(grupo_row)
-            cursor.execute(
-                """SELECT id, ra, nome, status_participacao, COALESCE(justificativa_recusa, '') AS justificativa_recusa
-                   FROM grupo_membros WHERE grupo_id = ?""",
-                (grupo["id"],)
-            )
-            grupo["membros"] = [dict(m) for m in cursor.fetchall()]
-            p["grupo"] = grupo
-        else:
-            p["grupo"] = {"id": None, "nome": "", "membros": []}
-
-        cursor.execute("SELECT status, parecer, por, atualizado_em FROM pareceres_etica WHERE projeto_id = ?", (p["id"],))
-        etica = cursor.fetchone()
-        p["etica"] = dict(etica) if etica else {"status": "PENDENTE", "parecer": "", "por": "", "atualizado_em": None}
-
-        p["conselho"] = calcular_conselho(cursor, p["id"])
+    projetos = [montar_projeto(cursor, linha, usuario) for linha in cursor.fetchall()]
 
     cursor.close()
     conn.close()
@@ -627,14 +745,23 @@ def obter_estatisticas():
 
 @app.route("/api/projetos", methods=["POST"])
 def criar_projeto():
+    usuario = usuario_logado()
+    if not usuario:
+        return jsonify({"error": "Faça login para registrar projetos."}), 401
+    if usuario["role"] not in PERFIS_GESTAO:
+        return jsonify({"error": "Apenas Administradores, Coordenadores e Orientadores podem registrar projetos."}), 403
+
     data = request.get_json(silent=True) or {}
-    titulo = data.get("titulo")
-    setor_externo = data.get("setor_externo")
-    areas_atuacao = data.get("areas_atuacao")
-    interdisciplinaridade = data.get("interdisciplinaridade")
-    orientador_nome = data.get("orientador_nome")
-    grupo_nome = data.get("grupo_nome")
+    titulo = str(data.get("titulo") or "").strip()
+    setor_externo = str(data.get("setor_externo") or "").strip()
+    areas_atuacao = str(data.get("areas_atuacao") or "").strip()
+    interdisciplinaridade = str(data.get("interdisciplinaridade") or "").strip()
+    orientador_nome = str(data.get("orientador_nome") or "").strip()
+    grupo_nome = str(data.get("grupo_nome") or "").strip()
     membros = data.get("membros", [])
+
+    if not all([titulo, setor_externo, areas_atuacao, interdisciplinaridade, orientador_nome, grupo_nome]):
+        return jsonify({"error": "Preencha título, setor externo, áreas de atuação, interdisciplinaridade, orientador e nome do grupo."}), 400
 
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -755,17 +882,66 @@ def editar_projeto(projeto_id):
 
 @app.route("/api/projetos/<int:projeto_id>/status", methods=["PATCH"])
 def alterar_status_projeto(projeto_id):
-    data = request.get_json(silent=True) or {}
-    actor_role, actor_nome = ator_atual()
-    novo_status = str(data.get("status", "")).strip().upper()
-    if novo_status not in ["NOVO", "EM ANDAMENTO", "DESENVOLVIMENTO", "CONCLUIDO", "CANCELADO"]:
-        return jsonify({"error": "Status de projeto inválido."}), 400
+    """Muda o estado do projeto seguindo o diagrama de estados.
 
-    if actor_role not in ["admin", "coordenador", "orientador"]:
-        return jsonify({"error": "Alunos e visitantes não podem alterar o status do projeto"}), 403
+    - Orientador responsável, Coordenador e Administrador realizam os estados permitidos pela transição.
+    - Aluno confirmado no grupo realiza apenas PENDENTE, CANCELADO e CONCLUIDO.
+    - AVALIADO é restrito à gestão (Coordenador/Administrador).
+    """
+    actor_role, actor_nome = ator_atual()
+    usuario = usuario_logado()
+    if actor_role not in ["admin", "coordenador", "orientador", "aluno"]:
+        return jsonify({"error": "Visitantes não podem alterar o status do projeto"}), 403
+
+    data = request.get_json(silent=True) or {}
+    novo_status = str(data.get("status", "")).strip().upper().replace(" ", "_")
+    if novo_status not in STATUS_PROJETO:
+        return jsonify({"error": "Status de projeto inválido."}), 400
 
     conn = get_db_connection()
     cursor = conn.cursor()
+    cursor.execute("SELECT status, orientador_nome FROM projetos WHERE id = ?", (projeto_id,))
+    proj = cursor.fetchone()
+    if not proj:
+        cursor.close()
+        conn.close()
+        return jsonify({"error": "Projeto não encontrado."}), 404
+
+    if actor_role == "orientador":
+        if not actor_nome or actor_nome.lower() not in proj["orientador_nome"].lower():
+            cursor.close()
+            conn.close()
+            return jsonify({"error": "Você não tem permissão para alterar este projeto, pois não consta como orientador responsável."}), 403
+    elif actor_role == "aluno":
+        cursor.execute(
+            """SELECT 1 FROM grupo_membros gm
+               JOIN grupos g ON g.id = gm.grupo_id
+               WHERE g.projeto_id = ? AND LOWER(gm.ra) = LOWER(?) AND gm.status_participacao = 'CONFIRMADO'""",
+            (projeto_id, usuario["ra"])
+        )
+        if not cursor.fetchone():
+            cursor.close()
+            conn.close()
+            return jsonify({"error": "Apenas alunos com participação confirmada no grupo podem alterar o status."}), 403
+        if novo_status not in STATUS_ALUNO:
+            cursor.close()
+            conn.close()
+            return jsonify({"error": "O aluno pode realizar apenas os status Pendente, Cancelado e Concluído."}), 403
+
+    if novo_status in STATUS_SO_GESTAO and actor_role not in ["admin", "coordenador"]:
+        cursor.close()
+        conn.close()
+        return jsonify({"error": "O status AVALIADO é registrado pela Coordenação ou Administração após a avaliação na mostra."}), 403
+
+    atual = proj["status"]
+    if novo_status == atual:
+        cursor.close()
+        conn.close()
+        return jsonify({"message": "O projeto já está neste status."})
+    if novo_status not in TRANSICOES_STATUS.get(atual, []):
+        cursor.close()
+        conn.close()
+        return jsonify({"error": f"Transição inválida: {atual} não pode ir para {novo_status}."}), 400
 
     if novo_status == "DESENVOLVIMENTO":
         cursor.execute("SELECT status FROM pareceres_etica WHERE projeto_id = ?", (projeto_id,))
@@ -777,17 +953,7 @@ def alterar_status_projeto(projeto_id):
             conn.close()
             return jsonify({"error": "O projeto só pode ir para DESENVOLVIMENTO com os pareceres de Ética e Conselho APROVADOS."}), 400
 
-    if actor_role in ["admin", "coordenador"]:
-        cursor.execute("UPDATE projetos SET status = ? WHERE id = ?", (novo_status, projeto_id))
-    else:
-        cursor.execute("SELECT orientador_nome FROM projetos WHERE id = ?", (projeto_id,))
-        proj = cursor.fetchone()
-        if not proj or actor_nome.lower() not in proj["orientador_nome"].lower():
-            cursor.close()
-            conn.close()
-            return jsonify({"error": "Você não tem permissão para alterar este projeto, pois não consta como orientador responsável."}), 403
-        cursor.execute("UPDATE projetos SET status = ? WHERE id = ?", (novo_status, projeto_id))
-
+    cursor.execute("UPDATE projetos SET status = ? WHERE id = ?", (novo_status, projeto_id))
     conn.commit()
     cursor.close()
     conn.close()
@@ -989,8 +1155,8 @@ def carga_massiva_json():
                 areas_atuacao = str(p.get("areas_atuacao", "Geral")).strip()
                 interdisciplinaridade = str(p.get("interdisciplinaridade", "Não especificada")).strip()
                 orientador_nome = str(p.get("orientador_nome", "Orientador")).strip()
-                status = str(p.get("status", "NOVO")).strip().upper()
-                if status not in ["NOVO", "EM ANDAMENTO", "CONCLUIDO", "CANCELADO"] or status == "DESENVOLVIMENTO":
+                status = str(p.get("status", "NOVO")).strip().upper().replace(" ", "_")
+                if status not in STATUS_PROJETO or status == "DESENVOLVIMENTO":
                     status = "NOVO"
                 publicado = 1 if p.get("publicado", False) else 0
                 grupo_nome = str(p.get("grupo_nome", f"Grupo - {titulo[:25]}")).strip()
