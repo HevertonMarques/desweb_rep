@@ -46,14 +46,14 @@ flowchart TD
   d2 -- Não --> e1["Sistema recusa: participação não confirmada"]
   d2 -- Sim --> d3{"Status é Pendente, Cancelado ou Concluído?"}
   d3 -- Não --> e2["Sistema recusa: status não permitido ao aluno"]
-  d3 -- Sim --> d6{"Transição válida a partir do status atual?"}
+  d3 -- Sim --> d6{"Transição válida a partir do status atual? (reabrir Finalizado só pela coordenação)"}
   d1 -- "Não" --> d4{"Ator é Coordenador, Administrador ou o orientador responsável?"}
   d4 -- Não --> e4["Sistema recusa: sem permissão sobre o projeto"]
   d4 -- Sim --> d5{"Status é Avaliado e o ator não é Coordenador nem Administrador?"}
   d5 -- Sim --> e5["Sistema recusa: Avaliado é registrado pela coordenação"]
   d5 -- Não --> d6
-  d6 -- Não --> e3["Sistema recusa: transição inválida"]
-  d6 -- Sim --> d7{"Novo status é Desenvolvimento?"}
+  d6 -- Não --> e3["Sistema recusa: transição inválida ou reabertura sem permissão"]
+  d6 -- Sim --> d7{"Novo status é Desenvolvimento e o projeto não estava Finalizado?"}
   d7 -- Sim --> d8{"Ética e Conselho estão aprovados?"}
   d8 -- Não --> e6["Sistema recusa: pareceres pendentes ou reprovados"]
   d8 -- Sim --> s1["Sistema atualiza o status do projeto"]
