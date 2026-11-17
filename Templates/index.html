@@ -531,7 +531,7 @@
         <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
           <div>
             <h3 class="text-lg font-bold text-slate-100">Análise de pareceres</h3>
-            <p class="text-xs text-slate-400 mt-1">Registre a decisão da Ética e do Conselho. Ambos precisam estar aprovados para liberar o status DESENVOLVIMENTO.</p>
+            <p class="text-xs text-slate-400 mt-1">Ética: decisão registrada por Coordenador ou Administrador. Conselho: cada membro (orientador incluído pela Coordenação/Administração) vota com o próprio login. Ambos precisam estar aprovados para liberar DESENVOLVIMENTO.</p>
           </div>
           <button onclick="loadProjetos();" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200"><i class="fa-solid fa-rotate mr-1"></i> Atualizar lista</button>
         </div>
@@ -1289,13 +1289,8 @@
         const totalMembros = p.grupo?.membros?.length || 0;
         const confirmados = (p.grupo?.membros || []).filter(m => m.status_participacao === "CONFIRMADO").length;
 
-        const badgeEtica = eticaStatus === "APROVADO" 
-          ? '<span class="text-emerald-400"><i class="fa-solid fa-check mr-1"></i> Aprovado</span>' 
-          : '<span class="text-amber-400"><i class="fa-solid fa-clock mr-1"></i> Pendente</span>';
-          
-        const badgeConselho = conselhoStatus === "APROVADO" 
-          ? '<span class="text-emerald-400"><i class="fa-solid fa-check mr-1"></i> Aprovado</span>' 
-          : '<span class="text-amber-400"><i class="fa-solid fa-clock mr-1"></i> Pendente</span>';
+        const badgeEtica = badgeStatusParecer(eticaStatus);
+        const badgeConselho = badgeStatusParecer(conselhoStatus);
 
         return `
           <tr class="hover:bg-slate-900/50">
@@ -1472,11 +1467,11 @@
           <div class="pt-3 mt-3 border-t border-slate-800/80 space-y-2.5">
             <div class="flex items-center justify-between gap-2">
               <select onchange="alterarStatusProjeto(${p.id}, this.value)" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-[11px] text-slate-200 focus:outline-none focus:border-indigo-500">
-                <option value="NOVO" ${p.status === "NOVO" ? "selected" : ""}>Status: NOVO</option>
-                <option value="EM ANDAMENTO" ${p.status === "EM ANDAMENTO" ? "selected" : ""}>Status: EM ANDAMENTO</option>
-                <option value="DESENVOLVIMENTO" ${p.status === "DESENVOLVIMENTO" ? "selected" : ""}>Status: DESENVOLVIMENTO</option>
-                <option value="CONCLUIDO" ${p.status === "CONCLUIDO" ? "selected" : ""}>Status: CONCLUÍDO</option>
-                <option value="CANCELADO" ${p.status === "CANCELADO" ? "selected" : ""}>Status: CANCELADO</option>
+                <option value="NOVO" ${p.status === "NOVO" ? "selected" : ""}>NOVO</option>
+                <option value="EM ANDAMENTO" ${p.status === "EM ANDAMENTO" ? "selected" : ""}>EM ANDAMENTO</option>
+                <option value="DESENVOLVIMENTO" ${p.status === "DESENVOLVIMENTO" ? "selected" : ""}>DESENVOLVIMENTO</option>
+                <option value="CONCLUIDO" ${p.status === "CONCLUIDO" ? "selected" : ""}>CONCLUÍDO</option>
+                <option value="CANCELADO" ${p.status === "CANCELADO" ? "selected" : ""}>CANCELADO</option>
               </select>
 
               <button onclick="togglePublicarProjeto(${p.id}, ${!p.publicado})" class="px-2.5 py-1.5 ${p.publicado ? "bg-slate-800 hover:bg-slate-700 text-amber-400 border-slate-700" : "bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-500"} text-[11px] font-semibold rounded-lg border transition-colors flex items-center gap-1.5" title="${p.publicado ? "Ocultar do mural público" : "Publicar projeto no mural público"}">
@@ -2005,6 +2000,10 @@
           ? `<button onclick="redefinirSenhaUsuario(${u.id}, '${u.nome.replace(/'/g, "\\'")}')" class="px-2.5 py-1 bg-slate-800 hover:bg-indigo-600 text-slate-200 hover:text-white border border-slate-700 text-[11px] font-semibold rounded-lg transition-colors" title="Voltar senha para a provisória (123456)"><i class="fa-solid fa-rotate-left mr-1"></i> Redefinir Senha</button>`
           : "";
 
+        const btnConselho = (canUnlock && u.role === "orientador")
+          ? `<button onclick="alternarMembroConselho(${u.id}, '${u.nome.replace(/'/g, "\\'")}', ${!u.conselho})" class="px-2.5 py-1 ${u.conselho ? "bg-violet-600/20 text-violet-300 border-violet-500/40 hover:bg-red-950/60 hover:text-red-300" : "bg-slate-800 text-slate-200 border-slate-700 hover:bg-violet-600 hover:text-white"} border text-[11px] font-semibold rounded-lg transition-colors" title="${u.conselho ? "Remover do Conselho" : "Incluir no Conselho"}"><i class="fa-solid ${u.conselho ? "fa-user-minus" : "fa-user-plus"} mr-1"></i> ${u.conselho ? "Remover do Conselho" : "Incluir no Conselho"}</button>`
+          : "";
+
         const btnExcluir = (u.role !== "admin")
           ? `<button onclick="deletarUsuario(${u.id})" class="p-1.5 text-red-400 hover:text-red-300 hover:bg-red-950/50 rounded-lg transition-colors" title="Excluir conta"><i class="fa-solid fa-trash"></i></button>`
           : `<span class="text-[10px] text-slate-600">Protegido</span>`;
@@ -2017,13 +2016,14 @@
               <div class="text-[11px] text-slate-400">${u.email}</div>
             </td>
             <td class="py-2.5 px-4">
-              <div class="uppercase text-[10px] font-bold text-indigo-400">${u.role}</div>
+              <div class="uppercase text-[10px] font-bold text-indigo-400">${u.role}${u.conselho ? ' <span class="ml-1 px-1.5 py-0.5 rounded bg-violet-500/20 text-violet-300 border border-violet-500/40">Conselho</span>' : ""}</div>
               <div class="text-[11px] text-slate-300">${u.curso || "—"}</div>
             </td>
             <td class="py-2.5 px-4">${statusBadge}</td>
             <td class="py-2.5 px-4 text-right">
               <div class="inline-flex flex-wrap items-center justify-end gap-1.5">
                 ${btnDesbloquear}
+                ${btnConselho}
                 ${btnRedefinirSenha}
                 ${btnExcluir}
               </div>
@@ -2047,6 +2047,23 @@
       }
       await loadUsuarios();
       alert(data.message);
+    }
+
+    async function alternarMembroConselho(id, nome, incluir) {
+      const acao = incluir ? "incluir no" : "remover do";
+      if (!confirm(`Deseja ${acao} Conselho o(a) orientador(a) "${nome}"?`)) return;
+      const res = await fetch(`/api/usuarios/${id}/conselho`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ membro: incluir })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Erro ao atualizar o Conselho.");
+        return;
+      }
+      await loadUsuarios();
+      await loadProjetos();
     }
 
     async function redefinirSenhaUsuario(id, nome) {
@@ -2229,6 +2246,16 @@
       return String(value ?? "").replace(/[&<>"']/g, ch => ({"&":"&amp;", "<":"&lt;", ">":"&gt;", "\"":"&quot;", "'":"&#39;"}[ch]));
     }
 
+    function badgeStatusParecer(status) {
+      const mapa = {
+        APROVADO: ["text-emerald-400", "fa-check", "Aprovado"],
+        REPROVADO: ["text-red-400", "fa-xmark", "Reprovado"],
+        PENDENTE: ["text-amber-400", "fa-clock", "Pendente"]
+      };
+      const [cls, icone, rotulo] = mapa[status] || mapa.PENDENTE;
+      return `<span class="text-[11px] font-semibold ${cls}"><i class="fa-solid ${icone} mr-1"></i>${rotulo}</span>`;
+    }
+
     function renderPareceres() {
       const container = document.getElementById("pareceres-lista");
       if (!container) return;
@@ -2236,35 +2263,70 @@
         container.innerHTML = '<p class="text-xs text-slate-400">Entre com uma conta de gestão para consultar os pareceres.</p>';
         return;
       }
-      const projetos = allProjetos.filter(p => currentUser.role !== "orientador" || String(p.orientador_nome || "").toLowerCase().includes(String(currentUser.nome || "").toLowerCase()));
-      if (!projetos.length) {
+      if (!allProjetos.length) {
         container.innerHTML = '<div class="col-span-full rounded-xl border border-slate-800 bg-slate-950/40 p-6 text-center text-xs text-slate-400">Nenhum projeto disponível para análise.</div>';
         return;
       }
-      const card = (p, tipo, label) => {
-        const dado = p[tipo] || {status:"PENDENTE", parecer:"", por:""};
-        const id = `${tipo}-${p.id}`;
+
+      const podeEditarEtica = ["admin", "coordenador"].includes(currentUser.role);
+      const campo = "w-full rounded-lg bg-slate-900 border border-slate-700 px-3 py-2 text-xs text-slate-100";
+
+      const cardEtica = (p) => {
+        const dado = p.etica || { status: "PENDENTE", parecer: "", por: "" };
+        const id = `etica-${p.id}`;
+        if (!podeEditarEtica) {
+          return `<div class="rounded-xl border border-slate-800 bg-slate-950/60 p-4 space-y-2">
+            <div class="flex items-center justify-between gap-2"><span class="text-xs font-bold text-slate-200">Ética</span>${badgeStatusParecer(dado.status)}</div>
+            <p class="text-[11px] text-slate-300 whitespace-pre-line">${dado.parecer ? escapeParecerHtml(dado.parecer) : "Sem observações registradas."}</p>
+            <p class="text-[10px] text-slate-500 italic">Decisão registrada pela Coordenação ou Administração após avaliação externa.${dado.por ? " Última atualização por " + escapeParecerHtml(dado.por) + "." : ""}</p>
+          </div>`;
+        }
         return `<div class="rounded-xl border border-slate-800 bg-slate-950/60 p-4 space-y-2">
-          <div class="flex items-center justify-between gap-2"><label for="${id}-status" class="text-xs font-bold text-slate-200">${label}</label><span class="text-[10px] text-slate-400">${escapeParecerHtml(dado.status)}</span></div>
-          <select id="${id}-status" class="w-full rounded-lg bg-slate-900 border border-slate-700 px-3 py-2 text-xs text-slate-100"><option value="PENDENTE" ${dado.status === "PENDENTE" ? "selected" : ""}>Pendente</option><option value="APROVADO" ${dado.status === "APROVADO" ? "selected" : ""}>Aprovado</option><option value="REPROVADO" ${dado.status === "REPROVADO" ? "selected" : ""}>Reprovado</option></select>
-          <textarea id="${id}-texto" rows="2" placeholder="Observações do parecer..." class="w-full rounded-lg bg-slate-900 border border-slate-700 px-3 py-2 text-xs text-slate-100">${escapeParecerHtml(dado.parecer)}</textarea>
-          <button onclick="salvarParecer(${p.id}, '${tipo}')" class="px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold">Salvar ${label}</button>
+          <div class="flex items-center justify-between gap-2"><label for="${id}-status" class="text-xs font-bold text-slate-200">Ética</label>${badgeStatusParecer(dado.status)}</div>
+          <select id="${id}-status" class="${campo}"><option value="PENDENTE" ${dado.status === "PENDENTE" ? "selected" : ""}>Pendente</option><option value="APROVADO" ${dado.status === "APROVADO" ? "selected" : ""}>Aprovado</option><option value="REPROVADO" ${dado.status === "REPROVADO" ? "selected" : ""}>Reprovado</option></select>
+          <textarea id="${id}-texto" rows="2" placeholder="Observações do parecer de Ética..." class="${campo}">${escapeParecerHtml(dado.parecer)}</textarea>
+          <button onclick="salvarParecer(${p.id})" class="px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold">Salvar Ética</button>
+          ${dado.por ? `<p class="text-[10px] text-slate-500">Última atualização por ${escapeParecerHtml(dado.por)}.</p>` : ""}
         </div>`;
       };
-      container.innerHTML = projetos.map(p => `<article class="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 space-y-3">
+
+      const cardConselho = (p) => {
+        const c = p.conselho || { status: "PENDENTE", total: 0, aprovados: 0, reprovados: 0, votos: [] };
+        const linhas = (c.votos || []).map(v => {
+          const meuVoto = currentUser.role === "orientador" && v.orientador_id === currentUser.id;
+          const cabecalho = `<div class="flex items-center justify-between gap-2"><span class="text-[11px] font-semibold text-slate-200">${escapeParecerHtml(v.nome)}${meuVoto ? ' <span class="text-indigo-400">(você)</span>' : ""}</span>${badgeStatusParecer(v.status)}</div>`;
+          if (!meuVoto) {
+            return `<li class="rounded-lg border border-slate-800 bg-slate-900/60 p-2.5 space-y-1">${cabecalho}${v.comentario ? `<p class="text-[11px] text-slate-400 whitespace-pre-line">${escapeParecerHtml(v.comentario)}</p>` : ""}</li>`;
+          }
+          const id = `conselho-${p.id}`;
+          return `<li class="rounded-lg border border-indigo-500/40 bg-indigo-500/5 p-2.5 space-y-2">${cabecalho}
+            <select id="${id}-status" class="${campo}"><option value="PENDENTE" ${v.status === "PENDENTE" ? "selected" : ""}>Sem voto</option><option value="APROVADO" ${v.status === "APROVADO" ? "selected" : ""}>Aprovado</option><option value="REPROVADO" ${v.status === "REPROVADO" ? "selected" : ""}>Reprovado</option></select>
+            <textarea id="${id}-texto" rows="2" placeholder="Observação: por que aprovou ou reprovou este projeto..." class="${campo}">${escapeParecerHtml(v.comentario)}</textarea>
+            <button onclick="votarConselho(${p.id})" class="px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold">Salvar meu voto</button>
+          </li>`;
+        }).join("");
+        return `<div class="rounded-xl border border-slate-800 bg-slate-950/60 p-4 space-y-2">
+          <div class="flex items-center justify-between gap-2"><span class="text-xs font-bold text-slate-200">Conselho</span>${badgeStatusParecer(c.status)}</div>
+          <p class="text-[10px] text-slate-400">${c.aprovados} aprovado(s), ${c.reprovados} reprovado(s) de ${c.total} membro(s) do Conselho. Aprovação com mais da metade dos votos.</p>
+          <ul class="space-y-2">${linhas || '<li class="text-[11px] text-slate-500">Nenhum orientador foi incluído no Conselho. Coordenador ou Administrador define os membros em Criar Acessos / Contas.</li>'}</ul>
+        </div>`;
+      };
+
+      container.innerHTML = allProjetos.map(p => `<article class="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 space-y-3">
         <div><div class="text-[10px] uppercase tracking-wider text-indigo-400">Projeto #${p.id}</div><h4 class="font-bold text-sm text-slate-100">${escapeParecerHtml(p.titulo)}</h4><p class="text-[11px] text-slate-400">Orientador: ${escapeParecerHtml(p.orientador_nome)}</p></div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">${card(p, "etica", "Ética")}${card(p, "conselho", "Conselho")}</div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 items-start">${cardEtica(p)}${cardConselho(p)}</div>
         <p class="text-[10px] ${p.etica?.status === "APROVADO" && p.conselho?.status === "APROVADO" ? "text-emerald-400" : "text-amber-400"}">${p.etica?.status === "APROVADO" && p.conselho?.status === "APROVADO" ? "Dois pareceres aprovados: projeto apto para DESENVOLVIMENTO." : "Aguardando aprovação dos dois pareceres para liberar DESENVOLVIMENTO."}</p>
       </article>`).join("");
     }
-          async function salvarParecer(projetoId, tipo) {
-      const status = document.getElementById(`${tipo}-${projetoId}-status`).value;
-      const parecer = document.getElementById(`${tipo}-${projetoId}-texto`).value;
+
+    async function salvarParecer(projetoId) {
+      const status = document.getElementById(`etica-${projetoId}-status`).value;
+      const parecer = document.getElementById(`etica-${projetoId}-texto`).value;
       try {
         const res = await fetch(`/api/projetos/${projetoId}/pareceres`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ tipo, status, parecer })
+          body: JSON.stringify({ status, parecer })
         });
         if (!res.ok) {
           const data = await res.json();
@@ -2272,13 +2334,33 @@
           return;
         }
         await loadProjetos();
-        alert("Parecer salvo com sucesso.");
+        alert("Parecer de Ética salvo com sucesso.");
       } catch (err) {
         alert("Erro de conexão ao salvar parecer.");
       }
     }
 
-      
+    async function votarConselho(projetoId) {
+      const status = document.getElementById(`conselho-${projetoId}-status`).value;
+      const comentario = document.getElementById(`conselho-${projetoId}-texto`).value;
+      try {
+        const res = await fetch(`/api/projetos/${projetoId}/conselho/voto`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status, comentario })
+        });
+        if (!res.ok) {
+          const data = await res.json();
+          alert(data.error || "Erro ao registrar voto.");
+          return;
+        }
+        await loadProjetos();
+        alert("Seu voto no Conselho foi salvo.");
+      } catch (err) {
+        alert("Erro de conexão ao registrar voto.");
+      }
+    }
+
 </script>
 </body>
 </html>
