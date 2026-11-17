@@ -1,0 +1,17 @@
+﻿Funcionalidade;Administrador;Coordenador;Orientador;Aluno;Acesso público
+Carga massiva de projetos;X;X;;;
+Carga massiva de contas (professores e alunos);X;X;;;
+Gerenciar contas de acesso;X;X;X;;
+Definir membros do Conselho;X;X;;;
+Registrar parecer de Ética;X;X;;;
+Votar no Conselho (membros incluídos);;;X;;
+Consultar projetos;X;X;X;X;X
+Consultar histórico de projetos (do aluno: somente os próprios);X;X;X;X;
+Visualizar RA e nome completo dos alunos;X;X;X;;
+Escolher exibição do nome (Meu perfil);;;;X;
+Registrar trabalho, grupo e membros (CRUD de trabalhos);X;X;X;;
+Informar áreas de atuação, interdisciplinaridade e setor externo;X;X;X;;
+Realizar status: todos, exceto Avaliado;X;X;X;;
+Realizar status Avaliado;X;X;;;
+Realizar status: Pendente, Cancelado, Concluído;;;;X;
+Confirmar participação no grupo (time);;;;X;
