@@ -1,0 +1,109 @@
+classDiagram
+  direction LR
+  class Professor {
+    +int id
+    +String nome
+    +String email
+    +Perfil perfil
+    +boolean membroConselho
+    +registrarProjeto()
+    +informarAreas()
+    +alterarStatus()
+    +votarConselho()
+    +registrarParecerEtica()
+    +definirMembroConselho()
+  }
+  class Aluno {
+    +int id
+    +String ra
+    +String nome
+    +String email
+    +ExibicaoNome exibicaoNome
+    +confirmarParticipacao()
+    +alterarStatus()
+    +escolherExibicaoNome()
+    +consultarMeusProjetos()
+  }
+  class Projeto {
+    +int id
+    +String titulo
+    +String areasAtuacao
+    +String interdisciplinaridade
+    +String setorExterno
+    +StatusProjeto status
+    +boolean publicado
+    +DateTime criadoEm
+    +alterarStatus()
+    +publicar()
+  }
+  class Grupo {
+    +int id
+    +String nome
+    +adicionarMembro()
+  }
+  class Participacao {
+    +StatusParticipacao status
+    +String justificativaRecusa
+    +confirmar()
+    +recusar()
+  }
+  class ParecerEtica {
+    +StatusParecer status
+    +String observacao
+    +String registradoPor
+    +DateTime atualizadoEm
+    +registrar()
+  }
+  class VotoConselho {
+    +StatusParecer status
+    +String comentario
+    +DateTime atualizadoEm
+    +votar()
+  }
+  class StatusProjeto {
+    <<enumeration>>
+    NOVO
+    PENDENTE
+    DESENVOLVIMENTO
+    CANCELADO
+    CONCLUIDO
+    FINALIZADO
+    LIBERADO_APRESENTACAO
+    AVALIADO
+  }
+  class StatusParticipacao {
+    <<enumeration>>
+    PENDENTE
+    CONFIRMADO
+    RECUSADO
+  }
+  class StatusParecer {
+    <<enumeration>>
+    PENDENTE
+    APROVADO
+    REPROVADO
+  }
+  class ExibicaoNome {
+    <<enumeration>>
+    COMPLETO
+    ABREVIADO
+  }
+  class Perfil {
+    <<enumeration>>
+    ADMINISTRADOR
+    COORDENADOR
+    ORIENTADOR
+  }
+  Professor "1" --> "0..*" Projeto : orienta
+  Projeto "1" *-- "1" Grupo : possui
+  Grupo "1" *-- "1..*" Participacao : composto por
+  Participacao "0..*" --> "1" Aluno : refere-se a
+  Projeto "1" *-- "1" ParecerEtica : tem
+  Projeto "1" *-- "0..*" VotoConselho : recebe
+  VotoConselho "0..*" --> "1" Professor : emitido por membro do Conselho
+  Projeto ..> StatusProjeto
+  Participacao ..> StatusParticipacao
+  ParecerEtica ..> StatusParecer
+  VotoConselho ..> StatusParecer
+  Aluno ..> ExibicaoNome
+  Professor ..> Perfil
