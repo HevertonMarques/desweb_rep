@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1360" height="1868" viewBox="0 0 680 934" font-family="Arial, Helvetica, sans-serif">
+<rect width="680" height="934" fill="#ffffff"/>
+<rect x="150" y="36" width="380" height="870" rx="12" fill="none" stroke="#888780" stroke-width="1" stroke-dasharray="5 4"/>
+<text x="340" y="56" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" fill="#2C2C2A">Módulo controle (registro)</text>
+<g stroke="#5F5E5A" stroke-width="0.8" fill="none">
+<line x1="89" y1="395" x2="170" y2="100"/>
+<line x1="89" y1="545" x2="170" y2="100"/>
+<line x1="89" y1="395" x2="170" y2="162"/>
+<line x1="89" y1="545" x2="170" y2="162"/>
+<line x1="89" y1="395" x2="170" y2="224"/>
+<line x1="89" y1="545" x2="170" y2="224"/>
+<line x1="591" y1="541" x2="510" y2="224"/>
+<line x1="89" y1="395" x2="170" y2="286"/>
+<line x1="89" y1="545" x2="170" y2="286"/>
+<line x1="89" y1="395" x2="170" y2="348"/>
+<line x1="89" y1="545" x2="170" y2="348"/>
+<line x1="89" y1="695" x2="170" y2="410"/>
+<line x1="89" y1="395" x2="170" y2="410"/>
+<line x1="89" y1="545" x2="170" y2="410"/>
+<line x1="591" y1="541" x2="510" y2="410"/>
+<line x1="591" y1="691" x2="510" y2="410"/>
+<line x1="89" y1="395" x2="170" y2="472"/>
+<line x1="89" y1="545" x2="170" y2="472"/>
+<line x1="591" y1="541" x2="510" y2="472"/>
+<line x1="591" y1="691" x2="510" y2="472"/>
+<line x1="89" y1="395" x2="170" y2="534"/>
+<line x1="89" y1="545" x2="170" y2="534"/>
+<line x1="591" y1="541" x2="510" y2="534"/>
+<line x1="89" y1="395" x2="170" y2="596"/>
+<line x1="89" y1="545" x2="170" y2="596"/>
+<line x1="591" y1="541" x2="510" y2="596"/>
+<line x1="89" y1="395" x2="170" y2="658"/>
+<line x1="89" y1="545" x2="170" y2="658"/>
+<line x1="591" y1="541" x2="510" y2="658"/>
+<line x1="591" y1="691" x2="510" y2="658"/>
+<line x1="591" y1="691" x2="510" y2="720"/>
+<line x1="591" y1="541" x2="510" y2="782"/>
+<line x1="591" y1="691" x2="510" y2="844"/>
+</g>
+<ellipse cx="340" cy="100" rx="170" ry="24" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.8"/>
+<text x="340" y="100" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" fill="#3C3489">Carga massiva de projetos</text>
+<ellipse cx="340" cy="162" rx="170" ry="28" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.8"/>
+<text x="340" y="153" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" fill="#3C3489">Carga massiva de contas</text>
+<text x="340" y="171" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" fill="#3C3489">(professores e alunos)</text>
+<ellipse cx="340" cy="224" rx="170" ry="24" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.8"/>
+<text x="340" y="224" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" fill="#3C3489">Gerenciar contas de acesso</text>
+<ellipse cx="340" cy="286" rx="170" ry="24" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.8"/>
+<text x="340" y="286" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" fill="#3C3489">Definir membros do Conselho</text>
+<ellipse cx="340" cy="348" rx="170" ry="24" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.8"/>
+<text x="340" y="348" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" fill="#3C3489">Registrar parecer de Ética</text>
+<ellipse cx="340" cy="410" rx="170" ry="24" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.8"/>
+<text x="340" y="410" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" fill="#3C3489">Consultar projetos</text>
+<ellipse cx="340" cy="472" rx="170" ry="24" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.8"/>
+<text x="340" y="472" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" fill="#3C3489">Consultar histórico de projetos</text>
+<ellipse cx="340" cy="534" rx="170" ry="24" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.8"/>
+<text x="340" y="534" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" fill="#3C3489">Registrar trabalho, grupo e membros</text>
+<ellipse cx="340" cy="596" rx="170" ry="28" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.8"/>
+<text x="340" y="587" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" fill="#3C3489">Informar áreas,</text>
+<text x="340" y="605" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" fill="#3C3489">interdisciplinaridade e setor externo</text>
+<ellipse cx="340" cy="658" rx="170" ry="28" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.8"/>
+<text x="340" y="649" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" fill="#3C3489">Realizar status do projeto</text>
+<text x="340" y="667" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="normal" fill="#3C3489">Aluno: pendente, cancelado, concluído</text>
+<ellipse cx="340" cy="720" rx="170" ry="24" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.8"/>
+<text x="340" y="720" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" fill="#3C3489">Confirmar participação no grupo</text>
+<ellipse cx="340" cy="782" rx="170" ry="24" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.8"/>
+<text x="340" y="782" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" fill="#3C3489">Votar no Conselho</text>
+<ellipse cx="340" cy="844" rx="170" ry="24" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.8"/>
+<text x="340" y="844" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" fill="#3C3489">Escolher exibição do nome (Meu perfil)</text>
+<g stroke="#2C2C2A" stroke-width="1.5" fill="none" stroke-linecap="round">
+<circle cx="75" cy="379" r="8"/><line x1="75" y1="387" x2="75" y2="411"/><line x1="63" y1="395" x2="87" y2="395"/><line x1="75" y1="411" x2="65" y2="427"/><line x1="75" y1="411" x2="85" y2="427"/>
+<circle cx="75" cy="529" r="8"/><line x1="75" y1="537" x2="75" y2="561"/><line x1="63" y1="545" x2="87" y2="545"/><line x1="75" y1="561" x2="65" y2="577"/><line x1="75" y1="561" x2="85" y2="577"/>
+<circle cx="75" cy="679" r="8"/><line x1="75" y1="687" x2="75" y2="711"/><line x1="63" y1="695" x2="87" y2="695"/><line x1="75" y1="711" x2="65" y2="727"/><line x1="75" y1="711" x2="85" y2="727"/>
+<circle cx="605" cy="525" r="8"/><line x1="605" y1="533" x2="605" y2="557"/><line x1="593" y1="541" x2="617" y2="541"/><line x1="605" y1="557" x2="595" y2="573"/><line x1="605" y1="557" x2="615" y2="573"/>
+<circle cx="605" cy="675" r="8"/><line x1="605" y1="683" x2="605" y2="707"/><line x1="593" y1="691" x2="617" y2="691"/><line x1="605" y1="707" x2="595" y2="723"/><line x1="605" y1="707" x2="615" y2="723"/>
+</g>
+<text x="75" y="448" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" fill="#2C2C2A" stroke="#ffffff" stroke-width="4" paint-order="stroke">Administrador</text>
+<text x="75" y="598" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" fill="#2C2C2A" stroke="#ffffff" stroke-width="4" paint-order="stroke">Coordenador</text>
+<text x="75" y="748" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" fill="#2C2C2A" stroke="#ffffff" stroke-width="4" paint-order="stroke">Acesso público</text>
+<text x="605" y="594" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" fill="#2C2C2A" stroke="#ffffff" stroke-width="4" paint-order="stroke">Orientador</text>
+<text x="605" y="611" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="normal" fill="#2C2C2A" stroke="#ffffff" stroke-width="4" paint-order="stroke">(professor)</text>
+<text x="605" y="744" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" fill="#2C2C2A" stroke="#ffffff" stroke-width="4" paint-order="stroke">Aluno</text>
+<text x="605" y="761" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="normal" fill="#2C2C2A" stroke="#ffffff" stroke-width="4" paint-order="stroke">(membro de time)</text>
+</svg>
