@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     ra TEXT NOT NULL UNIQUE,
     nome TEXT NOT NULL,
     email TEXT NOT NULL UNIQUE,
-    senha TEXT NOT NULL,
+    senha TEXT NOT NULL,                 -- hash PBKDF2-SHA256 com sal; nunca texto puro
     role TEXT NOT NULL CHECK(role IN ('admin', 'coordenador', 'orientador', 'aluno')),
     curso TEXT DEFAULT '',
     primeiro_acesso INTEGER DEFAULT 1,

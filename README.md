@@ -18,6 +18,25 @@ Grupo: [4]. Orientador: [André Marcos].
 
 A modelagem da Etapa 1 está na pasta [documentos](documentos/README.md): caso de uso, atividades, classes, estados e matriz de rastreabilidade.
 
+## Nomes e orientador
+
+- Cada pessoa escolhe em **Meu perfil** como o próprio nome aparece (completo, ou primeiro nome e último sobrenome). A escolha vale para todos os perfis nas telas de consulta, inclusive para a própria pessoa.
+- O nome completo e o RA só aparecem para a gestão nos formulários de criar e editar projeto, na exportação CSV e em Gerenciar Contas. Público e alunos nunca recebem o RA.
+- O orientador responsável de cada projeto é escolhido entre as contas de Orientador e Coordenador cadastradas. Na carga massiva de projetos, `orientador_nome` precisa ser o nome completo de uma dessas contas, senão o projeto é ignorado e entra na contagem de ignorados.
+
+## Configuração local (segredos.py)
+
+O arquivo `segredos.py` não vai para o GitHub (veja `.gitignore`) e fica na mesma pasta do `app.py`:
+
+```python
+SECRET_KEY = "uma-chave-longa-e-aleatoria"
+ADMIN_SENHA_INICIAL = "senha-do-primeiro-acesso"   # opcional
+```
+
+`ADMIN_SENHA_INICIAL` só é usada quando o banco ainda não existe e o Administrador é criado. Sem ela, o sistema gera uma senha aleatória e a mostra uma única vez no log do servidor. Um banco já existente não é alterado. A senha do Administrador não fica no código-fonte.
+
+Todas as senhas ficam no banco apenas como hash (PBKDF2-SHA256 com sal individual); ninguém, nem o Administrador, consegue ver a senha de outra pessoa. Quem esquece a senha tem a conta redefinida pelo Administrador para a provisória. Senhas antigas em texto puro são convertidas sozinhas na primeira vez em que o site abre com esta versão, e essa conversão não tem volta: antes de atualizar, faça uma cópia do arquivo `.db`.
+
 ## Cronograma
 
 | Etapa | Entrega | Prazo |
