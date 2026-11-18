@@ -1,8 +1,8 @@
 flowchart TD
   ini(("Início")) --> a1["Orientador acessa o sistema"]
   a1 --> a2["Orientador informa os dados do trabalho"]
-  a2 --> a3["Orientador informa áreas de atuação, interdisciplinaridade e setor externo"]
-  a3 --> d1{"Dados válidos?"}
+  a2 --> a3["Orientador informa áreas de atuação, interdisciplinaridade e setor externo e seleciona o orientador responsável entre os cadastrados"]
+  a3 --> d1{"Dados válidos e orientador cadastrado?"}
   d1 -- Não --> s1["Sistema exibe os erros"]
   s1 --> a2
   d1 -- Sim --> s2["Sistema registra o projeto com status NOVO"]

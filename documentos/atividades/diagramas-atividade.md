@@ -10,8 +10,8 @@ Ator: Orientador. Imagem: [01-registrar-trabalho-grupo-membros.png](01-registrar
 flowchart TD
   ini(("Início")) --> a1["Orientador acessa o sistema"]
   a1 --> a2["Orientador informa os dados do trabalho"]
-  a2 --> a3["Orientador informa áreas de atuação, interdisciplinaridade e setor externo"]
-  a3 --> d1{"Dados válidos?"}
+  a2 --> a3["Orientador informa áreas de atuação, interdisciplinaridade e setor externo e seleciona o orientador responsável entre os cadastrados"]
+  a3 --> d1{"Dados válidos e orientador cadastrado?"}
   d1 -- Não --> s1["Sistema exibe os erros"]
   s1 --> a2
   d1 -- Sim --> s2["Sistema registra o projeto com status NOVO"]
@@ -220,18 +220,18 @@ flowchart TD
 
 ## 8. Escolher a exibição do nome (Meu perfil)
 
-Ator: Aluno. Imagem: [08-exibicao-nome-perfil.png](08-exibicao-nome-perfil.png)
+Ator: qualquer usuário logado (Aluno, Orientador, Coordenador ou Administrador). Imagem: [08-exibicao-nome-perfil.png](08-exibicao-nome-perfil.png)
 
 ```mermaid
 flowchart TD
-  ini(("Início")) --> a1["Aluno acessa Meu perfil"]
+  ini(("Início")) --> a1["Usuário logado acessa Meu perfil"]
   a1 --> s1["Sistema mostra nome completo e RA, ambos sem edição"]
-  s1 --> a2["Aluno escolhe: nome completo ou primeiro nome e último sobrenome"]
-  a2 --> a3["Aluno salva a preferência"]
+  s1 --> a2["Usuário escolhe: nome completo ou primeiro nome e último sobrenome"]
+  a2 --> a3["Usuário salva a preferência"]
   a3 --> d1{"Opção válida?"}
   d1 -- Não --> e1["Sistema recusa a alteração"]
   d1 -- Sim --> s2["Sistema grava somente a preferência de exibição"]
-  s2 --> s3["Público e outros alunos passam a ver o nome conforme a preferência; gestão continua vendo o nome completo"]
+  s2 --> s3["Todos os perfis passam a ver o nome conforme a preferência (aluno, orientador responsável, votos do Conselho e parecer de Ética); nome completo e RA ficam só nos formulários de criar e editar projeto, na exportação CSV e em Gerenciar Contas"]
   s3 --> fim((Fim))
   e1 --> fim
   classDef ator fill:#E6F1FB,stroke:#185FA5,color:#0C447C
@@ -251,7 +251,7 @@ Ator: Todos os atores. Imagem: [09-consultar-projetos-historico.png](09-consulta
 ```mermaid
 flowchart TD
   ini(("Início")) --> a1["Ator acessa Consultar Projetos, Meus projetos ou Histórico"]
-  a1 --> a2["Ator informa filtros: projeto, aluno, RA, situação e período"]
+  a1 --> a2["Ator informa filtros: projeto, aluno, RA (somente gestão), situação e período"]
   a2 --> d1{"Ator tem perfil de gestão?"}
   d1 -- Não --> d2{"Ator é aluno?"}
   d2 -- Sim --> s1["Sistema considera os projetos publicados e os vinculados ao aluno"]
@@ -264,16 +264,13 @@ flowchart TD
   d3 -- Sim --> s5["Sistema inclui os Finalizados no resultado"]
   s4 --> s6["Sistema ordena por data de criação, do mais recente ao mais antigo"]
   s5 --> s6
-  s6 --> d4{"Ator tem perfil de gestão?"}
-  d4 -- Sim --> s7["Sistema exibe nome completo e RA dos alunos"]
-  d4 -- Não --> s8["Sistema omite o RA e exibe o nome conforme a preferência de cada aluno"]
+  s6 --> s7["Sistema exibe, para todos os perfis, o nome conforme a preferência de cada pessoa e sem RA"]
   s7 --> fim((Fim))
-  s8 --> fim
   classDef ator fill:#E6F1FB,stroke:#185FA5,color:#0C447C
   classDef sis fill:#F1EFE8,stroke:#5F5E5A,color:#2C2C2A
   classDef dec fill:#FAEEDA,stroke:#854F0B,color:#633806
   classDef err fill:#FCEBEB,stroke:#A32D2D,color:#791F1F
   class a1,a2 ator
-  class s1,s2,s3,s4,s5,s6,s7,s8 sis
-  class d1,d2,d3,d4 dec
+  class s1,s2,s3,s4,s5,s6,s7 sis
+  class d1,d2,d3 dec
 ```

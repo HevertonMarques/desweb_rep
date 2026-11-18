@@ -1,12 +1,12 @@
 flowchart TD
-  ini(("Início")) --> a1["Aluno acessa Meu perfil"]
+  ini(("Início")) --> a1["Usuário logado acessa Meu perfil"]
   a1 --> s1["Sistema mostra nome completo e RA, ambos sem edição"]
-  s1 --> a2["Aluno escolhe: nome completo ou primeiro nome e último sobrenome"]
-  a2 --> a3["Aluno salva a preferência"]
+  s1 --> a2["Usuário escolhe: nome completo ou primeiro nome e último sobrenome"]
+  a2 --> a3["Usuário salva a preferência"]
   a3 --> d1{"Opção válida?"}
   d1 -- Não --> e1["Sistema recusa a alteração"]
   d1 -- Sim --> s2["Sistema grava somente a preferência de exibição"]
-  s2 --> s3["Público e outros alunos passam a ver o nome conforme a preferência; gestão continua vendo o nome completo"]
+  s2 --> s3["Todos os perfis passam a ver o nome conforme a preferência (aluno, orientador responsável, votos do Conselho e parecer de Ética); nome completo e RA ficam só nos formulários de criar e editar projeto, na exportação CSV e em Gerenciar Contas"]
   s3 --> fim((Fim))
   e1 --> fim
   classDef ator fill:#E6F1FB,stroke:#185FA5,color:#0C447C
