@@ -12,8 +12,8 @@ Módulo 2: Controle (Registro). Cada linha corresponde a um caso de uso do [Diag
 | Votar no Conselho (membros incluídos) |  |  | ✔ |  |  |
 | Consultar projetos | ✔ | ✔ | ✔ | ✔ | ✔ |
 | Consultar histórico de projetos (do aluno: somente os próprios) | ✔ | ✔ | ✔ | ✔ |  |
-| Visualizar RA e nome completo dos alunos | ✔ | ✔ | ✔ |  |  |
-| Escolher exibição do nome (Meu perfil) |  |  |  | ✔ |  |
+| Visualizar nome completo e RA dos alunos (formulários de projeto, exportação CSV e Gerenciar Contas) | ✔ | ✔ | ✔ |  |  |
+| Escolher exibição do nome (Meu perfil) | ✔ | ✔ | ✔ | ✔ |  |
 | Registrar trabalho, grupo e membros (CRUD de trabalhos) | ✔ | ✔ | ✔ |  |  |
 | Informar áreas de atuação, interdisciplinaridade e setor externo | ✔ | ✔ | ✔ |  |  |
 | Realizar status: todos, exceto Avaliado | ✔ | ✔ | ✔ |  |  |
@@ -32,3 +32,5 @@ Arquivo para planilha: [matriz-rastreabilidade.csv](matriz-rastreabilidade.csv)
 - Consultar projetos: Administrador, Coordenador e Orientador veem todos; Aluno vê os publicados e os seus; Acesso público vê os publicados. Alunos e público nunca veem o RA.
 - Votam no Conselho apenas os orientadores incluídos pela Coordenação ou pelo Administrador; cada um vota somente com o próprio login.
 - Um professor pode acumular os perfis de Coordenador e Orientador.
+- Meu perfil: todo usuário logado escolhe como o próprio nome aparece, e a escolha vale para todos os perfis nas telas de consulta, inclusive para a própria pessoa. O nome completo e o RA aparecem só para a gestão nos formulários de criar e editar projeto, na exportação CSV e em Gerenciar Contas.
+- O orientador responsável de um projeto é escolhido entre as contas de Orientador e Coordenador cadastradas; a edição do projeto exige que o nome da conta conste inteiro no campo Orientador.
