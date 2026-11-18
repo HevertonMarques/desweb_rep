@@ -10,6 +10,7 @@ classDiagram
     +String nome
     +String email
     +Perfil perfil
+    +ExibicaoNome exibicaoNome
     +boolean membroConselho
     +registrarProjeto()
     +informarAreas()
@@ -17,6 +18,7 @@ classDiagram
     +votarConselho()
     +registrarParecerEtica()
     +definirMembroConselho()
+    +escolherExibicaoNome()
   }
   class Aluno {
     +int id
@@ -99,7 +101,7 @@ classDiagram
     COORDENADOR
     ORIENTADOR
   }
-  Professor "1" --> "0..*" Projeto : orienta
+  Professor "1" --> "0..*" Projeto : orienta (escolhido na lista de cadastrados)
   Projeto "1" *-- "1" Grupo : possui
   Grupo "1" *-- "1..*" Participacao : composto por
   Participacao "0..*" --> "1" Aluno : refere-se a
@@ -111,6 +113,7 @@ classDiagram
   ParecerEtica ..> StatusParecer
   VotoConselho ..> StatusParecer
   Aluno ..> ExibicaoNome
+  Professor ..> ExibicaoNome
   Professor ..> Perfil
 ```
 
@@ -119,7 +122,7 @@ classDiagram
 | Entidade | Papel no módulo |
 |---|---|
 | Projeto | Trabalho extensionista registrado pelo orientador, com áreas de atuação, interdisciplinaridade, setor externo, status, publicação e data de criação |
-| Professor | Orientador, Coordenador ou Administrador; o atributo perfil indica qual. Orientadores incluídos no Conselho (membroConselho) votam nos projetos |
+| Professor | Orientador, Coordenador ou Administrador; o atributo perfil indica qual. Orientadores incluídos no Conselho (membroConselho) votam nos projetos. Também escolhe como o nome é exibido (exibicaoNome); o nome completo continua gravado |
 | Grupo | Time vinculado ao projeto |
 | Aluno | Membro de time. Escolhe como o nome é exibido (exibicaoNome); o RA não pode ser alterado |
 | Participacao | Vínculo entre aluno e grupo, com o status (pendente, confirmado ou recusado) e a justificativa de recusa. É preservado mesmo depois de o projeto ser finalizado |
@@ -130,7 +133,8 @@ classDiagram
 
 - O parecer do Conselho é calculado a partir dos votos: **Aprovado** quando mais da metade dos membros aprova, **Reprovado** quando a aprovação deixa de ser possível e **Pendente** nos demais casos.
 - O projeto só pode ir para Desenvolvimento com Ética e Conselho aprovados.
-- A exibição do nome vale para o público e para outros alunos. Orientadores, Coordenadores e Administradores sempre veem o nome completo e o RA; público e alunos nunca veem o RA.
+- A exibição do nome é escolhida por cada pessoa (Aluno, Orientador, Coordenador e Administrador) e vale para todos os perfis nas telas de consulta, inclusive para a própria pessoa. O nome completo e o RA aparecem apenas para a gestão em formulários de criar e editar projeto, na exportação CSV e em Gerenciar Contas; público e alunos nunca recebem o RA.
+- O orientador responsável de um projeto é escolhido entre as contas de Orientador e Coordenador cadastradas, tanto no formulário quanto na carga massiva; um nome que não corresponde a uma conta é recusado (ignorado na carga massiva).
 - Projetos finalizados não são apagados: saem da listagem principal e continuam na pesquisa e no histórico.
 
 ## Observação

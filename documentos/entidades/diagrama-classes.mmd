@@ -5,6 +5,7 @@ classDiagram
     +String nome
     +String email
     +Perfil perfil
+    +ExibicaoNome exibicaoNome
     +boolean membroConselho
     +registrarProjeto()
     +informarAreas()
@@ -12,6 +13,7 @@ classDiagram
     +votarConselho()
     +registrarParecerEtica()
     +definirMembroConselho()
+    +escolherExibicaoNome()
   }
   class Aluno {
     +int id
@@ -94,7 +96,7 @@ classDiagram
     COORDENADOR
     ORIENTADOR
   }
-  Professor "1" --> "0..*" Projeto : orienta
+  Professor "1" --> "0..*" Projeto : orienta (escolhido na lista de cadastrados)
   Projeto "1" *-- "1" Grupo : possui
   Grupo "1" *-- "1..*" Participacao : composto por
   Participacao "0..*" --> "1" Aluno : refere-se a
@@ -106,4 +108,5 @@ classDiagram
   ParecerEtica ..> StatusParecer
   VotoConselho ..> StatusParecer
   Aluno ..> ExibicaoNome
+  Professor ..> ExibicaoNome
   Professor ..> Perfil
