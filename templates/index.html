@@ -303,11 +303,11 @@
           </div>
         </div>
 
-        <!-- VIEW: MEU PERFIL (ALUNO) -->
+        <!-- VIEW: MEU PERFIL (TODOS OS PERFIS LOGADOS) -->
         <div id="view-meu-perfil" class="space-y-6 hidden">
           <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80">
             <h3 class="text-base font-bold text-slate-100 mb-1">Meu perfil</h3>
-            <p class="text-xs text-slate-400">Escolha como seu nome aparece para o público e para os outros alunos.</p>
+            <p id="perfil-subtitulo" class="text-xs text-slate-400">Escolha como seu nome aparece para o público e para os outros alunos.</p>
           </div>
 
           <div class="bg-slate-950/60 rounded-xl border border-slate-800/80 p-4 space-y-4 max-w-2xl">
@@ -334,7 +334,7 @@
               </label>
             </fieldset>
 
-            <p class="text-[11px] text-slate-500">Orientadores, coordenadores e administradores sempre veem o nome completo e o RA. A criação de projetos também usa sempre o nome completo.</p>
+            <p id="perfil-nota" class="text-[11px] text-slate-500">Orientadores, coordenadores e administradores sempre veem o nome completo e o RA. A criação de projetos também usa sempre o nome completo.</p>
 
             <button onclick="salvarPerfil()" class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold">Salvar preferência</button>
           </div>
@@ -408,8 +408,8 @@
                   <input type="text" id="proj-grupo" required placeholder="Ex: Equipe Alfa Extensionista" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
                 </div>
                 <div>
-                  <label class="block text-xs font-medium text-slate-300 mb-1">Orientador(es) Responsável(is) *</label>
-                  <input type="text" id="proj-orientador" required placeholder="Ex: Prof. André Marcos" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
+                  <label class="block text-xs font-medium text-slate-300 mb-1">Orientador responsável *</label>
+                  <select id="proj-orientador" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500"><option value="">Selecione um orientador cadastrado</option></select>
                 </div>
               </div>
 
@@ -766,8 +766,8 @@
             <input type="text" id="edit-proj-grupo" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100" />
           </div>
           <div>
-            <label class="block text-xs font-medium text-slate-300 mb-1">Orientador(es)</label>
-            <input type="text" id="edit-proj-orientador" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100" />
+            <label class="block text-xs font-medium text-slate-300 mb-1">Orientador responsável</label>
+            <select id="edit-proj-orientador" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100"><option value="">Selecione um orientador cadastrado</option></select>
           </div>
         </div>
 
@@ -881,7 +881,7 @@
           setor_externo: "Associação de Moradores",
           areas_atuacao: "Tecnologia e Engenharia",
           interdisciplinaridade: "Ciência da Computação + Elétrica",
-          orientador_nome: "Prof. André Marcos",
+          orientador_nome: "Nome completo de um orientador cadastrado",
           status: "PENDENTE",
           publicado: true,
           grupo_nome: "Equipe Tech Extensão",
@@ -1009,9 +1009,10 @@
     }
 
     function switchTab(tab) {
-      const tabsDeAluno = ["meu-perfil", "meus-projetos"];
+      const tabsDeAluno = ["meus-projetos"];
       const tabsDeGestao = ["historico", "estatisticas"];
       if (tabsDeAluno.includes(tab) && (!currentUser || currentUser.role !== "aluno")) tab = "consultar";
+      if (tab === "meu-perfil" && !currentUser) tab = "consultar";
       if (tab === "historico" && (!currentUser || !["admin", "coordenador", "orientador"].includes(currentUser.role))) tab = "consultar";
       if (tab === "estatisticas" && (!currentUser || !["admin", "coordenador", "orientador"].includes(currentUser.role))) {
         alert("Acesso restrito a Administradores, Coordenadores e Orientadores.");
@@ -1101,7 +1102,7 @@
       btnLogin.classList.add("hidden");
       btnLogout.classList.remove("hidden");
       btnAlterarSenha.classList.remove("hidden");
-      document.getElementById("user-name").textContent = currentUser.nome;
+      document.getElementById("user-name").textContent = nomeDeExibicaoAtual();
       const roleLabels = {
         admin: "Administrador",
         coordenador: "Coordenador",
@@ -1109,13 +1110,14 @@
         aluno: "Aluno"
       };
       document.getElementById("user-role-badge").textContent = `Ator: ${roleLabels[currentUser.role] || currentUser.role}`;
-      document.getElementById("user-avatar").textContent = currentUser.nome.substring(0, 2).toUpperCase();
+      document.getElementById("user-avatar").textContent = nomeDeExibicaoAtual().substring(0, 2).toUpperCase();
       document.getElementById("consultar-subtitle").textContent = "Visualizando todos os projetos cadastrados no sistema";
+
+      navMeuPerfil.classList.remove("hidden");
 
       if (currentUser.role === "aluno") {
         navMeusGrupos.classList.remove("hidden");
         navMeusProjetos.classList.remove("hidden");
-        navMeuPerfil.classList.remove("hidden");
       }
 
       if (["admin", "coordenador", "orientador"].includes(currentUser.role)) {
@@ -1125,7 +1127,7 @@
         navEstatisticas.classList.remove("hidden");
         navHistorico.classList.remove("hidden");
         btnExportCsv.classList.remove("hidden");
-        document.getElementById("proj-orientador").value = currentUser.nome;
+        carregarOrientadores().then(() => preencherSelectOrientador("proj-orientador", currentUser.nome));
         populateRoleOptions();
 
         const listTitle = document.getElementById("usuarios-list-title");
@@ -1397,7 +1399,7 @@
           <tr class="hover:bg-slate-900/50">
             <td class="py-3 px-4 font-mono text-slate-400">#${p.id}</td>
             <td class="py-3 px-4 font-medium text-slate-100">${p.titulo}</td>
-            <td class="py-3 px-4 text-slate-300">${p.orientador_nome}</td>
+            <td class="py-3 px-4 text-slate-300">${p.orientador_exibicao}</td>
             <td class="py-3 px-4 text-slate-300">${p.setor_externo}</td>
             <td class="py-3 px-4"><span class="px-2 py-0.5 text-[10px] font-bold rounded-md bg-slate-800 text-slate-300">${rotuloStatus(p.status)}</span></td>
             <td class="py-3 px-4 text-[11px]">${badgeEtica}</td>
@@ -1497,11 +1499,11 @@
       return lista.filter(p => {
         if (f.status !== "TODOS" && p.status !== f.status) return false;
         if (f.q) {
-          const alvo = amplo ? `${p.titulo} ${p.areas_atuacao} ${p.setor_externo} ${p.orientador_nome}` : p.titulo;
+          const alvo = amplo ? `${p.titulo} ${p.areas_atuacao} ${p.setor_externo} ${p.orientador_nome} ${p.orientador_exibicao || ""}` : p.titulo;
           if (!normalizarTexto(alvo).includes(f.q)) return false;
         }
         const membros = p.grupo?.membros || [];
-        if (f.aluno && !membros.some(m => normalizarTexto(m.nome).includes(f.aluno))) return false;
+        if (f.aluno && !membros.some(m => normalizarTexto(`${m.nome} ${m.nome_completo || ""}`).includes(f.aluno))) return false;
         if (f.ra && !membros.some(m => (m.ra || "").toLowerCase().includes(f.ra))) return false;
         if (f.de || f.ate) {
           const dia = dataLocalISO(p.criado_em);
@@ -1546,7 +1548,7 @@
       const gestao = perfilDeGestao();
       const membros = p.grupo?.membros || [];
       if (!membros.length) return '<span class="text-slate-500">Nenhum aluno vinculado</span>';
-      return membros.map(m => `<div class="text-[11px] text-slate-300">${escapeParecerHtml(m.nome)}${gestao && m.ra ? ` <span class="font-mono text-slate-500">(${escapeParecerHtml(m.ra)})</span>` : ""}${m.status_participacao === "RECUSADO" ? ' <span class="text-red-400">• recusou</span>' : m.status_participacao === "PENDENTE" ? ' <span class="text-amber-400">• pendente</span>' : ""}</div>`).join("");
+      return membros.map(m => `<div class="text-[11px] text-slate-300">${escapeParecerHtml(m.nome)}${m.status_participacao === "RECUSADO" ? ' <span class="text-red-400">• recusou</span>' : m.status_participacao === "PENDENTE" ? ' <span class="text-amber-400">• pendente</span>' : ""}</div>`).join("");
     }
 
     function renderHistorico() {
@@ -1565,7 +1567,7 @@
           <td class="py-3 px-4"><div class="font-medium text-slate-100">${escapeParecerHtml(p.titulo)}</div><div class="text-[10px] text-slate-500">#${p.id} • ${escapeParecerHtml(p.grupo?.nome || "Sem grupo")}</div></td>
           <td class="py-3 px-4">${["admin", "coordenador"].includes(currentUser.role) && statusDisponiveis(p).length ? `<div class="w-44 flex" title="${p.status === "FINALIZADO" ? "Reabrir o projeto finalizado" : "Alterar o estado do projeto"}">${statusSelectHtml(p)}</div>` : `<span class="px-2 py-0.5 text-[10px] font-bold rounded-md bg-slate-800 text-slate-300">${rotuloStatus(p.status)}</span>`}</td>
           <td class="py-3 px-4 text-slate-300 whitespace-nowrap">${dataBrasileira(p.criado_em)}</td>
-          <td class="py-3 px-4 text-slate-300">${escapeParecerHtml(p.orientador_nome)}</td>
+          <td class="py-3 px-4 text-slate-300">${escapeParecerHtml(p.orientador_exibicao)}</td>
           <td class="py-3 px-4">${integrantesResumo(p)}</td>
         </tr>`).join("");
     }
@@ -1592,7 +1594,7 @@
         return `<div class="bg-slate-950/70 border border-slate-800/80 rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div class="min-w-0">
             <div class="text-sm font-bold text-slate-100">${escapeParecerHtml(p.titulo)}</div>
-            <div class="text-[11px] text-slate-400">Grupo: <span class="text-indigo-400">${escapeParecerHtml(p.grupo?.nome || "—")}</span> • Orientador: ${escapeParecerHtml(p.orientador_nome)} • Criado em ${dataBrasileira(p.criado_em)}</div>
+            <div class="text-[11px] text-slate-400">Grupo: <span class="text-indigo-400">${escapeParecerHtml(p.grupo?.nome || "—")}</span> • Orientador: ${escapeParecerHtml(p.orientador_exibicao)} • Criado em ${dataBrasileira(p.criado_em)}</div>
             <div class="text-[11px] mt-1">Minha participação: <span class="font-bold ${corParticipacao[eu?.status_participacao] || "text-slate-400"}">${eu?.status_participacao || "—"}</span></div>
           </div>
           <span class="shrink-0 px-2 py-0.5 text-[10px] font-bold rounded-md bg-slate-800 text-slate-300 self-start md:self-center">${rotuloStatus(p.status)}</span>
@@ -1609,10 +1611,17 @@
     }
 
     async function carregarPerfil() {
-      if (!currentUser || currentUser.role !== "aluno") return;
+      if (!currentUser) return;
       const res = await fetch("/api/perfil");
       if (!res.ok) return;
       const perfil = await res.json();
+      const gestao = ["admin", "coordenador", "orientador"].includes(perfil.role);
+      document.getElementById("perfil-subtitulo").textContent = gestao
+        ? "Escolha como seu nome aparece para o público e para os alunos."
+        : "Escolha como seu nome aparece para o público e para os outros alunos.";
+      document.getElementById("perfil-nota").textContent = gestao
+        ? "Administrador, coordenadores e orientadores continuam vendo o nome completo de todos. Público e alunos veem o nome escolhido aqui, inclusive no campo Orientador dos projetos e nos votos do Conselho. A criação de projetos usa sempre o nome completo."
+        : "Orientadores, coordenadores e administradores sempre veem o nome completo e o RA. A criação de projetos também usa sempre o nome completo.";
       document.getElementById("perfil-nome").value = perfil.nome;
       document.getElementById("perfil-ra").value = perfil.ra;
       document.querySelectorAll('input[name="perfil-exibicao"]').forEach(r => { r.checked = r.value === perfil.exibicao_nome; });
@@ -1625,6 +1634,58 @@
       document.getElementById("perfil-previa-abreviado").textContent = `Aparecerá como: ${abreviarNome(nome)}`;
     }
 
+    // Nome de exibição: mesma regra do servidor (primeiro nome + último sobrenome).
+    function abreviarNome(nome) {
+      const partes = String(nome || "").trim().split(/\s+/).filter(Boolean);
+      return partes.length <= 2 ? partes.join(" ") : `${partes[0]} ${partes[partes.length - 1]}`;
+    }
+
+    // O nome da conta precisa aparecer inteiro no campo Orientador (o servidor aplica a mesma regra).
+    function ehOrientadorDoProjeto(nome, texto) {
+      const alvo = String(nome || "").trim().replace(/\s+/g, " ");
+      if (!alvo) return false;
+      const escapado = alvo.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      return new RegExp(`(?<![\\p{L}\\p{N}_])${escapado}(?![\\p{L}\\p{N}_])`, "iu").test(String(texto || "").replace(/\s+/g, " "));
+    }
+
+    function nomeDeExibicaoAtual() {
+      if (!currentUser) return "Visitante";
+      return currentUser.exibicao_nome === "abreviado" ? abreviarNome(currentUser.nome) : currentUser.nome;
+    }
+
+    // Lista de orientadores para os formulários de projeto (nome completo; só a gestão tem acesso).
+    let orientadoresCache = [];
+    async function carregarOrientadores() {
+      try {
+        const res = await fetch("/api/orientadores");
+        orientadoresCache = res.ok ? await res.json() : [];
+      } catch (e) { orientadoresCache = []; }
+      return orientadoresCache;
+    }
+
+    function preencherSelectOrientador(selectId, valorAtual) {
+      const sel = document.getElementById(selectId);
+      if (!sel) return;
+      const alvo = String(valorAtual || "").trim().toLowerCase();
+      const nomes = orientadoresCache.map(o => o.nome);
+      sel.innerHTML = '<option value="">Selecione um orientador cadastrado</option>';
+      nomes.forEach(n => {
+        const opt = document.createElement("option");
+        opt.value = n; opt.textContent = n;
+        sel.appendChild(opt);
+      });
+      const igual = nomes.find(n => n.toLowerCase() === alvo);
+      if (igual) {
+        sel.value = igual;
+      } else if (alvo && selectId === "edit-proj-orientador") {
+        // Projeto antigo com texto livre no campo: mantém o valor para não forçar uma troca ao editar.
+        const opt = document.createElement("option");
+        opt.value = valorAtual; opt.textContent = `${valorAtual} (texto antigo)`;
+        sel.appendChild(opt);
+        sel.value = valorAtual;
+      }
+    }
+
     async function salvarPerfil() {
       const marcado = document.querySelector('input[name="perfil-exibicao"]:checked');
       if (!marcado) { alert("Escolha uma das opções de exibição."); return; }
@@ -1635,6 +1696,10 @@
       });
       const data = await res.json();
       if (!res.ok) { alert(data.error || "Erro ao salvar a preferência."); return; }
+      currentUser.exibicao_nome = data.exibicao_nome;
+      document.getElementById("user-name").textContent = nomeDeExibicaoAtual();
+      document.getElementById("user-avatar").textContent = nomeDeExibicaoAtual().substring(0, 2).toUpperCase();
+      await loadProjetos();
       alert("Preferência de exibição salva.");
     }
 
@@ -1652,7 +1717,7 @@
       const headers = ["ID", "Título", "Setor Externo", "Áreas de Atuação", "Interdisciplinaridade", "Orientador", "Status", "Visibilidade", "Criado em", "Grupo", "Integrantes"];
       const linhas = filtrados.map(p => {
         const integrantesStr = (p.grupo?.membros || [])
-          .map(m => `${m.nome} (${m.ra ? m.ra + " - " : ""}${m.status_participacao}${m.justificativa_recusa ? ": " + m.justificativa_recusa : ""})`)
+          .map(m => `${m.nome_completo || m.nome} (${m.ra ? m.ra + " - " : ""}${m.status_participacao}${m.justificativa_recusa ? ": " + m.justificativa_recusa : ""})`)
           .join(" | ");
 
         return [
@@ -1808,7 +1873,7 @@
         const podeGerenciarEsteProjeto = currentUser && (
           currentUser.role === "admin" ||
           currentUser.role === "coordenador" ||
-          (currentUser.role === "orientador" && p.orientador_nome.toLowerCase().includes(currentUser.nome.toLowerCase()))
+          (currentUser.role === "orientador" && ehOrientadorDoProjeto(currentUser.nome, p.orientador_nome))
         );
 
         const alunoConfirmado = currentUser && currentUser.role === "aluno" &&
@@ -1833,7 +1898,7 @@
 
           return `<li class="text-[11px] text-slate-300 bg-slate-900/80 px-2.5 py-1.5 rounded-md border border-slate-800/80">
             <div class="flex items-center justify-between gap-2">
-              <span class="truncate">${escapeParecerHtml(m.nome)}${isManager && m.ra ? ` <span class="text-slate-500">(${escapeParecerHtml(m.ra)})</span>` : ""}</span>
+              <span class="truncate">${escapeParecerHtml(m.nome)}</span>
               ${stIcon}
             </div>
             ${motivoHtml}
@@ -1862,7 +1927,7 @@
               </button>
             </div>
           </div>
-        ` : (isManager ? `<div class="pt-2 mt-2 border-t border-slate-800/80 text-[10px] text-slate-500 italic text-center">Apenas o orientador responsável (${p.orientador_nome}), Coordenador ou Admin podem gerenciar este projeto.</div>` : "");
+        ` : (isManager ? `<div class="pt-2 mt-2 border-t border-slate-800/80 text-[10px] text-slate-500 italic text-center">Apenas o orientador responsável (${p.orientador_exibicao}), Coordenador ou Admin podem gerenciar este projeto.</div>` : "");
 
         return `
           <div class="bg-slate-950/70 border border-slate-800/80 rounded-xl p-4 flex flex-col justify-between hover:border-slate-700 transition-all">
@@ -1878,7 +1943,7 @@
               <div class="space-y-1 text-[11px] text-slate-300 mb-3">
                 <div><span class="text-slate-500">Áreas:</span> ${p.areas_atuacao}</div>
                 <div><span class="text-slate-500">Interdisciplinaridade:</span> ${p.interdisciplinaridade}</div>
-                <div><span class="text-slate-500">Orientador(es):</span> ${p.orientador_nome}</div>
+                <div><span class="text-slate-500">Orientador(es):</span> ${p.orientador_exibicao}</div>
               </div>
 
               <div class="bg-slate-900/50 rounded-lg p-2.5 border border-slate-800/60">
@@ -2124,7 +2189,7 @@
         renderCursosEAlunosFiltro("create");
         document.getElementById("membros-list-create").innerHTML = "";
         addMembroField("membros-list-create");
-        document.getElementById("proj-orientador").value = currentUser.nome;
+        preencherSelectOrientador("proj-orientador", currentUser.nome);
         await loadProjetos();
         switchTab("consultar");
       } else {
@@ -2133,20 +2198,21 @@
       }
     }
 
-    function openEditProjetoModal(projetoId) {
+    async function openEditProjetoModal(projetoId) {
       const p = allProjetos.find(item => item.id === projetoId);
       if (!p) return;
+      if (orientadoresCache.length === 0) await carregarOrientadores();
       document.getElementById("edit-proj-id").value = p.id;
       document.getElementById("edit-proj-titulo").value = p.titulo;
       document.getElementById("edit-proj-setor").value = p.setor_externo;
       document.getElementById("edit-proj-areas").value = p.areas_atuacao;
       document.getElementById("edit-proj-inter").value = p.interdisciplinaridade;
       document.getElementById("edit-proj-grupo").value = p.grupo?.nome || "";
-      document.getElementById("edit-proj-orientador").value = p.orientador_nome;
+      preencherSelectOrientador("edit-proj-orientador", p.orientador_nome);
 
       const list = document.getElementById("membros-list-edit");
       list.innerHTML = "";
-      (p.grupo?.membros || []).forEach(m => addMembroField("membros-list-edit", m.ra, m.nome, m.status_participacao));
+      (p.grupo?.membros || []).forEach(m => addMembroField("membros-list-edit", m.ra, m.nome_completo || m.nome, m.status_participacao));
       document.getElementById("edit-projeto-modal").classList.remove("hidden");
     }
 
@@ -2539,13 +2605,13 @@
         <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
             <div class="text-xs font-bold text-slate-100">${projeto.titulo}</div>
-            <div class="text-[11px] text-slate-400">Grupo: <span class="text-indigo-400 font-medium">${projeto.grupo.nome}</span> • Orientador: ${projeto.orientador_nome}</div>
+            <div class="text-[11px] text-slate-400">Grupo: <span class="text-indigo-400 font-medium">${projeto.grupo.nome}</span> • Orientador: ${projeto.orientador_exibicao}</div>
             <div class="text-[11px] text-slate-300 mt-1">Registrado como: <span class="font-semibold">${escapeParecerHtml(membro.nome)}</span></div>
             <div class="mt-1 text-[11px]">Status da sua participação: <span class="font-bold ${membro.status_participacao === "CONFIRMADO" ? "text-emerald-400" : membro.status_participacao === "RECUSADO" ? "text-red-400" : "text-amber-400"}">${membro.status_participacao}</span></div>
             ${membro.status_participacao === "RECUSADO" && membro.justificativa_recusa ? `<div class="text-[11px] text-red-300 mt-0.5">Justificativa informada: ${membro.justificativa_recusa}</div>` : ""}
           </div>
           <div class="flex flex-wrap items-center gap-2">
-            <button onclick="openEditAlunoSelfModal(${membro.id}, '${membro.nome.replace(/'/g, "\\'")}')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold rounded-lg transition-colors">
+            <button onclick="openEditAlunoSelfModal(${membro.id}, '${(membro.nome_completo || membro.nome).replace(/'/g, "\\'")}')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold rounded-lg transition-colors">
               <i class="fa-solid fa-user-pen mr-1"></i> Editar Meu Nome
             </button>
             <button onclick="responderConvite(${membro.id}, 'CONFIRMADO')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg transition-colors">
