@@ -1,9 +1,20 @@
+import hmac
 import os
+import re
+import secrets
 import sqlite3
 from flask import Flask, render_template, request, jsonify, session
+from werkzeug.security import generate_password_hash, check_password_hash
 
 # A SECRET_KEY é obrigatória e fica guardada no arquivo privado segredos.py.
+import segredos
 from segredos import SECRET_KEY
+
+# Senha do primeiro acesso do Administrador (opcional). Fica só no segredos.py, nunca neste arquivo:
+#   ADMIN_SENHA_INICIAL = "uma-senha-sua"
+# Se não existir, o sistema gera uma senha aleatória ao criar o Administrador pela primeira vez
+# e a mostra uma única vez no log do servidor. Só vale para um banco novo; um banco já existente não é alterado.
+ADMIN_SENHA_INICIAL = getattr(segredos, "ADMIN_SENHA_INICIAL", None)
 
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
@@ -17,6 +28,42 @@ DB_PATH = os.path.join(BASE_DIR, "modulo2_extensionista.db")
 
 
 SENHA_PROVISORIA_PADRAO = "123456"
+
+# Senhas ficam gravadas apenas como hash (PBKDF2-SHA256 com sal individual), nunca em texto puro.
+# O número de iterações vem dentro do próprio hash, então pode ser aumentado no futuro sem quebrar logins.
+ITERACOES_SENHA = 200000
+# A senha provisória é pública (123456) e a pessoa precisa trocá-la no primeiro acesso;
+# um custo alto não protegeria nada e deixaria lenta a criação de contas em massa.
+ITERACOES_PROVISORIA = 1000
+
+
+def hash_senha(senha):
+    iteracoes = ITERACOES_PROVISORIA if senha == SENHA_PROVISORIA_PADRAO else ITERACOES_SENHA
+    return generate_password_hash(senha, method=f"pbkdf2:sha256:{iteracoes}")
+
+
+def senha_ja_e_hash(valor):
+    v = str(valor or "")
+    return v.startswith(("pbkdf2:", "scrypt:")) and v.count("$") == 2 and len(v) > 40
+
+
+def conferir_senha(armazenada, digitada):
+    """Confere a senha digitada. Valores antigos em texto puro ainda são aceitos (e convertidos no login)."""
+    if senha_ja_e_hash(armazenada):
+        return check_password_hash(armazenada, str(digitada))
+    return hmac.compare_digest(str(armazenada or "").encode("utf-8"), str(digitada).encode("utf-8"))
+
+
+def migrar_senhas_para_hash(cursor):
+    """Converte senhas antigas em texto puro para hash. Roda a cada inicialização e ignora o que já é hash."""
+    cursor.execute("SELECT id, senha FROM usuarios")
+    convertidas = 0
+    for linha in cursor.fetchall():
+        if not senha_ja_e_hash(linha["senha"]):
+            cursor.execute("UPDATE usuarios SET senha = ? WHERE id = ?", (hash_senha(str(linha["senha"])), linha["id"]))
+            convertidas += 1
+    if convertidas:
+        print(f"[SETUP] {convertidas} senha(s) convertida(s) para hash.", flush=True)
 
 # Estados do projeto e transições permitidas (diagrama de estados).
 STATUS_PROJETO = [
@@ -157,14 +204,24 @@ def init_db():
     # Garante pareceres pendentes também para projetos que já existiam antes da atualização.
     cursor.execute("INSERT OR IGNORE INTO pareceres_etica (projeto_id, status) SELECT id, 'PENDENTE' FROM projetos")
 
-    # Insere APENAS o Administrador inicial caso ainda não exista
+    # O nome antigo do Administrador continha "FACCAMP"; só é trocado se ainda estiver exatamente assim.
+    cursor.execute("UPDATE usuarios SET nome = 'Administrador' WHERE email = 'admin@faccamp.com' AND nome = 'Administrador FACCAMP'")
+    cursor.execute("UPDATE pareceres_etica SET por = 'Administrador' WHERE por = 'Administrador FACCAMP'")
+    cursor.execute("UPDATE projetos SET orientador_nome = 'Administrador' WHERE orientador_nome = 'Administrador FACCAMP'")
+
+    # Insere APENAS o Administrador inicial caso ainda não exista (a senha não fica no código-fonte)
     cursor.execute("SELECT id FROM usuarios WHERE email = ?", ("admin@faccamp.com",))
     if not cursor.fetchone():
+        senha_admin = ADMIN_SENHA_INICIAL or secrets.token_urlsafe(9)
         cursor.execute(
             """INSERT INTO usuarios (ra, nome, email, senha, role, curso, primeiro_acesso, tentativas_falhas, bloqueado)
                VALUES (?, ?, ?, ?, ?, ?, 0, 0, 0)""",
-            ("ADMIN01", "Administrador FACCAMP", "admin@faccamp.com", "adminhrv2026", "admin", "")
+            ("ADMIN01", "Administrador", "admin@faccamp.com", hash_senha(senha_admin), "admin", "")
         )
+        if not ADMIN_SENHA_INICIAL:
+            print(f"[SETUP] Administrador criado: login admin@faccamp.com | senha inicial: {senha_admin} | troque-a logo após entrar.", flush=True)
+
+    migrar_senhas_para_hash(cursor)
 
     conn.commit()
     cursor.close()
@@ -210,12 +267,66 @@ def nome_abreviado(nome_completo):
     return f"{partes[0]} {partes[-1]}"
 
 
-def montar_membros_do_grupo(cursor, grupo_id, usuario):
-    """Integrantes do grupo já com as regras de privacidade aplicadas no servidor.
+def nome_para_exibicao(nome, exibicao):
+    return nome_abreviado(nome) if exibicao == "abreviado" else nome
 
-    - Orientador, Coordenador e Administrador: nome completo e RA.
-    - Público e alunos: sem RA e com o nome conforme a preferência de cada aluno.
-      A própria linha do aluno logado vem com `proprio = True` e com o nome completo.
+
+def mascarar_nomes_gestao(cursor, texto):
+    """Troca o nome completo de quem da gestão escolheu exibição abreviada pelo nome de exibição.
+
+    Vale para todos os usuários. O valor gravado no banco nunca muda; a troca acontece só na resposta.
+    """
+    if not texto:
+        return texto
+    cursor.execute(
+        "SELECT nome FROM usuarios WHERE role IN ('admin', 'coordenador', 'orientador') AND exibicao_nome = 'abreviado'"
+    )
+    resultado = texto
+    for linha in cursor.fetchall():
+        completo = linha["nome"]
+        abreviado = nome_abreviado(completo)
+        if abreviado != completo:
+            resultado = re.sub(re.escape(completo), abreviado, resultado, flags=re.IGNORECASE)
+    return resultado
+
+
+def eh_orientador_do_projeto(nome_ator, orientador_nome):
+    """O nome da conta precisa aparecer como nome inteiro no campo Orientador (sem casar com pedaço de outro nome).
+
+    Projetos antigos podem ter vários nomes ou um título antes do nome ("Prof. Maria Lima"); isso continua valendo.
+    """
+    alvo = " ".join(str(nome_ator or "").split())
+    if not alvo:
+        return False
+    padrao = r"(?<!\w)" + re.escape(alvo) + r"(?!\w)"
+    return re.search(padrao, " ".join(str(orientador_nome or "").split()), flags=re.IGNORECASE) is not None
+
+
+def orientadores_cadastrados(cursor):
+    """Contas que podem ser indicadas como orientador de um projeto (nome completo, para os formulários)."""
+    cursor.execute(
+        "SELECT id, nome FROM usuarios WHERE role IN ('orientador', 'coordenador') ORDER BY nome COLLATE NOCASE"
+    )
+    return [dict(r) for r in cursor.fetchall()]
+
+
+def resolver_orientador(cursor, nome):
+    """Devolve o nome exato da conta cadastrada que corresponde ao texto informado, ou None."""
+    alvo = " ".join(str(nome or "").split()).casefold()
+    if not alvo:
+        return None
+    for o in orientadores_cadastrados(cursor):
+        if " ".join(o["nome"].split()).casefold() == alvo:
+            return o["nome"]
+    return None
+
+
+def montar_membros_do_grupo(cursor, grupo_id, usuario):
+    """Integrantes do grupo. Todos veem o nome de exibição escolhido por cada aluno e ninguém recebe o RA aqui.
+
+    Campos extras, que a tela só usa em formulários, filtros e exportação:
+    - Orientador, Coordenador e Administrador recebem `nome_completo` e `ra`.
+    - O próprio aluno recebe `proprio = True` e o seu `nome_completo` (para editar o próprio nome).
     """
     cursor.execute(
         """SELECT gm.id, gm.ra, gm.nome, gm.status_participacao,
@@ -235,21 +346,20 @@ def montar_membros_do_grupo(cursor, grupo_id, usuario):
     membros = []
     for m in cursor.fetchall():
         nome_completo = m["nome_conta"] or m["nome"]
+        # Conta removida: sem preferência registrada, então a exibição segue abreviada.
+        abreviar = m["exibicao_nome"] == "abreviado" or not m["conta_existe"]
         membro = {
             "id": m["id"],
+            "nome": nome_abreviado(nome_completo) if abreviar else nome_completo,
             "status_participacao": m["status_participacao"],
             "justificativa_recusa": m["justificativa_recusa"],
         }
         if gestao:
+            membro["nome_completo"] = nome_completo
             membro["ra"] = m["ra"]
-            membro["nome"] = nome_completo
         elif ra_logado and m["ra"].lower() == ra_logado:
             membro["proprio"] = True
-            membro["nome"] = nome_completo
-        else:
-            # Conta removida: sem preferência registrada, então a exibição segue abreviada.
-            abreviar = m["exibicao_nome"] == "abreviado" or not m["conta_existe"]
-            membro["nome"] = nome_abreviado(nome_completo) if abreviar else nome_completo
+            membro["nome_completo"] = nome_completo
         membros.append(membro)
     return membros
 
@@ -257,6 +367,11 @@ def montar_membros_do_grupo(cursor, grupo_id, usuario):
 def montar_projeto(cursor, linha, usuario):
     p = dict(linha)
     p["publicado"] = bool(p["publicado"])
+    # `orientador_exibicao` é o que a tela mostra. A gestão também recebe o nome completo em `orientador_nome`
+    # (usado em formulários, na verificação de "projeto meu" e na exportação); os demais só recebem o de exibição.
+    p["orientador_exibicao"] = mascarar_nomes_gestao(cursor, p["orientador_nome"])
+    if not (usuario and usuario["role"] in PERFIS_GESTAO):
+        p["orientador_nome"] = p["orientador_exibicao"]
     cursor.execute("SELECT * FROM grupos WHERE projeto_id = ?", (p["id"],))
     grupo_row = cursor.fetchone()
     if grupo_row:
@@ -269,8 +384,9 @@ def montar_projeto(cursor, linha, usuario):
     cursor.execute("SELECT status, parecer, por, atualizado_em FROM pareceres_etica WHERE projeto_id = ?", (p["id"],))
     etica = cursor.fetchone()
     p["etica"] = dict(etica) if etica else {"status": "PENDENTE", "parecer": "", "por": "", "atualizado_em": None}
+    p["etica"]["por"] = mascarar_nomes_gestao(cursor, p["etica"]["por"])
 
-    p["conselho"] = calcular_conselho(cursor, p["id"])
+    p["conselho"] = calcular_conselho(cursor, p["id"], mascarar=True)
     return p
 
 
@@ -281,7 +397,7 @@ def exigir_acesso_relatorios():
     return None
 
 
-def calcular_conselho(cursor, projeto_id):
+def calcular_conselho(cursor, projeto_id, mascarar=False):
     """Monta o parecer do Conselho a partir do voto individual de cada orientador.
 
     Participam apenas os orientadores incluídos no Conselho por Coordenador/Administrador.
@@ -290,6 +406,7 @@ def calcular_conselho(cursor, projeto_id):
     """
     cursor.execute(
         """SELECT u.id AS orientador_id, u.nome AS nome,
+                  COALESCE(u.exibicao_nome, 'completo') AS exibicao_nome,
                   COALESCE(v.status, 'PENDENTE') AS status,
                   COALESCE(v.comentario, '') AS comentario,
                   v.atualizado_em AS atualizado_em
@@ -300,6 +417,11 @@ def calcular_conselho(cursor, projeto_id):
         (projeto_id,)
     )
     votos = [dict(r) for r in cursor.fetchall()]
+    # Na tela, o nome de cada orientador segue a preferência de exibição dele, para todos.
+    for v in votos:
+        if mascarar:
+            v["nome"] = nome_para_exibicao(v["nome"], v["exibicao_nome"])
+        del v["exibicao_nome"]
     total = len(votos)
     aprovados = sum(1 for v in votos if v["status"] == "APROVADO")
     reprovados = sum(1 for v in votos if v["status"] == "REPROVADO")
@@ -347,6 +469,7 @@ def login():
     cursor = conn.cursor()
     cursor.execute(
         """SELECT id, ra, nome, email, senha, role, COALESCE(curso, '') AS curso,
+                  COALESCE(exibicao_nome, 'completo') AS exibicao_nome,
                   COALESCE(primeiro_acesso, 0) AS primeiro_acesso,
                   COALESCE(tentativas_falhas, 0) AS tentativas_falhas,
                   COALESCE(bloqueado, 0) AS bloqueado
@@ -366,7 +489,7 @@ def login():
         conn.close()
         return jsonify({"error": "Acesso bloqueado após 5 tentativas incorretas. Solicite o desbloqueio a um Coordenador ou Administrador."}), 403
 
-    if user["senha"] != senha:
+    if not conferir_senha(user["senha"], senha):
         if user["role"] == "aluno":
             novas_tentativas = user["tentativas_falhas"] + 1
             if novas_tentativas >= 5:
@@ -394,6 +517,8 @@ def login():
             return jsonify({"error": "Credenciais inválidas."}), 401
 
     cursor.execute("UPDATE usuarios SET tentativas_falhas = 0 WHERE id = ?", (user["id"],))
+    if not senha_ja_e_hash(user["senha"]):
+        cursor.execute("UPDATE usuarios SET senha = ? WHERE id = ?", (hash_senha(senha), user["id"]))
     conn.commit()
     cursor.close()
     conn.close()
@@ -408,7 +533,8 @@ def login():
         "email": user["email"],
         "role": user["role"],
         "curso": user["curso"],
-        "primeiro_acesso": bool(user["primeiro_acesso"])
+        "primeiro_acesso": bool(user["primeiro_acesso"]),
+        "exibicao_nome": user["exibicao_nome"]
     })
 
 
@@ -424,22 +550,23 @@ def verificar_sessao():
 @app.route("/api/perfil", methods=["GET"])
 def obter_perfil():
     usuario = usuario_logado()
-    if not usuario or usuario["role"] != "aluno":
-        return jsonify({"error": "O perfil de exibição é exclusivo de alunos."}), 403
+    if not usuario:
+        return jsonify({"error": "Faça login para acessar o seu perfil."}), 401
     return jsonify({
         "nome": usuario["nome"],
         "ra": usuario["ra"],
+        "role": usuario["role"],
         "exibicao_nome": usuario["exibicao_nome"],
-        "nome_exibido": nome_abreviado(usuario["nome"]) if usuario["exibicao_nome"] == "abreviado" else usuario["nome"],
+        "nome_exibido": nome_para_exibicao(usuario["nome"], usuario["exibicao_nome"]),
     })
 
 
 @app.route("/api/perfil", methods=["PATCH"])
 def atualizar_perfil():
-    """O aluno só escolhe como o nome aparece. O RA não pode ser alterado por esta rota."""
+    """Qualquer conta logada escolhe só como o próprio nome aparece. Nome completo, RA e perfil não mudam por aqui."""
     usuario = usuario_logado()
-    if not usuario or usuario["role"] != "aluno":
-        return jsonify({"error": "O perfil de exibição é exclusivo de alunos."}), 403
+    if not usuario:
+        return jsonify({"error": "Faça login para alterar o seu perfil."}), 401
 
     data = request.get_json(silent=True) or {}
     exibicao = str(data.get("exibicao_nome", "")).strip().lower()
@@ -453,7 +580,7 @@ def atualizar_perfil():
     return jsonify({
         "message": "Preferência de exibição salva.",
         "exibicao_nome": exibicao,
-        "nome_exibido": nome_abreviado(usuario["nome"]) if exibicao == "abreviado" else usuario["nome"],
+        "nome_exibido": nome_para_exibicao(usuario["nome"], exibicao),
     })
 
 
@@ -491,14 +618,14 @@ def alterar_senha_usuario(user_id):
         conn.close()
         return jsonify({"error": "Usuário não encontrado."}), 404
 
-    if not forcar_primeiro_acesso and row["senha"] != senha_atual:
+    if not forcar_primeiro_acesso and not conferir_senha(row["senha"], senha_atual):
         cursor.close()
         conn.close()
         return jsonify({"error": "A senha atual informada está incorreta."}), 400
 
     cursor.execute(
         "UPDATE usuarios SET senha = ?, primeiro_acesso = 0, tentativas_falhas = 0 WHERE id = ?",
-        (nova_senha, user_id)
+        (hash_senha(nova_senha), user_id)
     )
     conn.commit()
     cursor.close()
@@ -524,7 +651,7 @@ def redefinir_senha_provisoria(user_id):
 
     cursor.execute(
         "UPDATE usuarios SET senha = ?, primeiro_acesso = 1, tentativas_falhas = 0 WHERE id = ?",
-        (SENHA_PROVISORIA_PADRAO, user_id)
+        (hash_senha(SENHA_PROVISORIA_PADRAO), user_id)
     )
     conn.commit()
     cursor.close()
@@ -659,7 +786,7 @@ def criar_usuario():
         cursor.execute(
             """INSERT INTO usuarios (ra, nome, email, senha, role, curso, primeiro_acesso, tentativas_falhas, bloqueado)
                VALUES (?, ?, ?, ?, ?, ?, 1, 0, 0)""",
-            (ra, nome, email, senha, role, curso)
+            (ra, nome, email, hash_senha(senha), role, curso)
         )
         conn.commit()
         new_id = cursor.lastrowid
@@ -740,6 +867,19 @@ def listar_projetos():
 
 
 
+@app.route("/api/orientadores", methods=["GET"])
+def listar_orientadores():
+    """Lista para o campo Orientador dos formulários de projeto (nome completo, só para a gestão)."""
+    if not exigir_acesso_relatorios():
+        return jsonify({"error": "Acesso restrito a Administradores, Coordenadores e Orientadores."}), 403
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    lista = orientadores_cadastrados(cursor)
+    cursor.close()
+    conn.close()
+    return jsonify(lista)
+
+
 @app.route("/api/estatisticas", methods=["GET"])
 def obter_estatisticas():
     if not exigir_acesso_relatorios():
@@ -770,6 +910,12 @@ def criar_projeto():
 
     conn = get_db_connection()
     cursor = conn.cursor()
+
+    orientador_nome = resolver_orientador(cursor, orientador_nome)
+    if not orientador_nome:
+        cursor.close()
+        conn.close()
+        return jsonify({"error": "Selecione um orientador cadastrado no sistema."}), 400
 
     membros_validados = []
     ras_vistos = set()
@@ -829,10 +975,28 @@ def editar_projeto(projeto_id):
     if actor_role == "orientador":
         cursor.execute("SELECT orientador_nome FROM projetos WHERE id = ?", (projeto_id,))
         proj = cursor.fetchone()
-        if not proj or actor_nome.lower() not in proj["orientador_nome"].lower():
+        if not proj or not eh_orientador_do_projeto(actor_nome, proj["orientador_nome"]):
             cursor.close()
             conn.close()
             return jsonify({"error": "Apenas o orientador responsável por este projeto pode editá-lo."}), 403
+
+    cursor.execute("SELECT orientador_nome FROM projetos WHERE id = ?", (projeto_id,))
+    proj_atual = cursor.fetchone()
+    if not proj_atual:
+        cursor.close()
+        conn.close()
+        return jsonify({"error": "Projeto não encontrado."}), 404
+
+    # Orientador: mantém o atual quando não vier (ou vier igual); uma troca precisa ser por um orientador cadastrado.
+    pedido = str(data.get("orientador_nome") or "").strip()
+    if not pedido or " ".join(pedido.split()).casefold() == " ".join(proj_atual["orientador_nome"].split()).casefold():
+        novo_orientador = proj_atual["orientador_nome"]
+    else:
+        novo_orientador = resolver_orientador(cursor, pedido)
+        if not novo_orientador:
+            cursor.close()
+            conn.close()
+            return jsonify({"error": "Selecione um orientador cadastrado no sistema."}), 400
 
     membros_validados = []
     ras_vistos = set()
@@ -855,7 +1019,6 @@ def editar_projeto(projeto_id):
             "justificativa_recusa": m.get("justificativa_recusa", "")
         })
 
-    novo_orientador = data.get("orientador_nome", actor_nome).strip()
     cursor.execute(
         """UPDATE projetos SET titulo=?, setor_externo=?, areas_atuacao=?, interdisciplinaridade=?, orientador_nome=?
            WHERE id=?""",
@@ -914,7 +1077,7 @@ def alterar_status_projeto(projeto_id):
         return jsonify({"error": "Projeto não encontrado."}), 404
 
     if actor_role == "orientador":
-        if not actor_nome or actor_nome.lower() not in proj["orientador_nome"].lower():
+        if not actor_nome or not eh_orientador_do_projeto(actor_nome, proj["orientador_nome"]):
             cursor.close()
             conn.close()
             return jsonify({"error": "Você não tem permissão para alterar este projeto, pois não consta como orientador responsável."}), 403
@@ -989,7 +1152,7 @@ def publicar_projeto(projeto_id):
     else:
         cursor.execute("SELECT orientador_nome FROM projetos WHERE id = ?", (projeto_id,))
         proj = cursor.fetchone()
-        if not proj or actor_nome.lower() not in proj["orientador_nome"].lower():
+        if not proj or not eh_orientador_do_projeto(actor_nome, proj["orientador_nome"]):
             cursor.close()
             conn.close()
             return jsonify({"error": "Você não tem permissão para publicar este projeto."}), 403
@@ -1015,7 +1178,7 @@ def deletar_projeto(projeto_id):
     if actor_role == "orientador":
         cursor.execute("SELECT orientador_nome FROM projetos WHERE id = ?", (projeto_id,))
         proj = cursor.fetchone()
-        if not proj or actor_nome.lower() not in proj["orientador_nome"].lower():
+        if not proj or not eh_orientador_do_projeto(actor_nome, proj["orientador_nome"]):
             cursor.close()
             conn.close()
             return jsonify({"error": "Apenas o orientador responsável por este projeto pode excluí-lo."}), 403
@@ -1154,7 +1317,7 @@ def carga_massiva_json():
                     cursor.execute(
                         """INSERT INTO usuarios (ra, nome, email, senha, role, curso, primeiro_acesso, tentativas_falhas, bloqueado)
                            VALUES (?, ?, ?, ?, ?, ?, 1, 0, 0)""",
-                        (ra, nome, email, senha, role, curso)
+                        (ra, nome, email, hash_senha(senha), role, curso)
                     )
                     inseridos += 1
                 except sqlite3.IntegrityError:
@@ -1175,6 +1338,12 @@ def carga_massiva_json():
                 membros = p.get("membros", [])
 
                 if not titulo:
+                    ignorados += 1
+                    continue
+
+                # O orientador precisa ser uma conta cadastrada; o nome gravado é o da conta.
+                orientador_nome = resolver_orientador(cursor, orientador_nome)
+                if not orientador_nome:
                     ignorados += 1
                     continue
 
