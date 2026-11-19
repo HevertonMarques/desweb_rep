@@ -402,15 +402,17 @@
                 </div>
               </div>
 
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Nome do Grupo *</label>
+                <input type="text" id="proj-grupo" required placeholder="Ex: Equipe Alfa Extensionista" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
+              </div>
+
+              <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-4 space-y-2">
                 <div>
-                  <label class="block text-xs font-medium text-slate-300 mb-1">Nome do Grupo *</label>
-                  <input type="text" id="proj-grupo" required placeholder="Ex: Equipe Alfa Extensionista" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
+                  <label class="block text-xs font-bold text-indigo-300"><i class="fa-solid fa-chalkboard-user mr-1.5"></i> Orientador(es) Responsável(is) *</label>
+                  <p class="text-[11px] text-slate-400">Marque um ou mais orientadores/coordenadores cadastrados que participarão do projeto.</p>
                 </div>
-                <div>
-                  <label class="block text-xs font-medium text-slate-300 mb-1">Orientador responsável *</label>
-                  <select id="proj-orientador" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500"><option value="">Selecione um orientador cadastrado</option></select>
-                </div>
+                <div id="orientadores-checklist-create" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-44 overflow-y-auto custom-scrollbar pr-1"></div>
               </div>
 
               <!-- SELEÇÃO DE ALUNOS POR CURSOS (MÚLTIPLOS CURSOS + CHECKBOXES) -->
@@ -581,10 +583,18 @@
             <!-- Bloco Visual de Exemplo da Estrutura JSON -->
             <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4">
               <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
-                <span class="text-xs font-semibold text-indigo-400"><i class="fa-solid fa-circle-info mr-1"></i> Modelo de Estrutura Obrigatória do JSON:</span>
-                <button type="button" onclick="preencherComExemploJson()" class="px-3 py-1 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 text-[11px] font-semibold rounded-lg transition-colors">
-                  <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Preencher Caixa com Este Exemplo
-                </button>
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="text-xs font-semibold text-indigo-400"><i class="fa-solid fa-circle-info mr-1"></i> Modelo de Estrutura Obrigatória do JSON:</span>
+                  <span id="json-variacao-badge" class="px-2 py-0.5 text-[10px] font-semibold rounded-md bg-slate-800 text-slate-300 border border-slate-700">Variação 1</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                  <button type="button" onclick="alternarTipoExemploJson()" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-[11px] font-semibold rounded-lg transition-colors">
+                    <i class="fa-solid fa-shuffle mr-1 text-amber-400"></i> Alternar Tipo de Exemplo
+                  </button>
+                  <button type="button" onclick="preencherComExemploJson()" class="px-3 py-1 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 text-[11px] font-semibold rounded-lg transition-colors">
+                    <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Preencher Caixa com Este Exemplo
+                  </button>
+                </div>
               </div>
               <pre id="json-example-preview" class="text-[11px] font-mono text-emerald-300 bg-slate-950 p-3 rounded-lg border border-slate-800/80 overflow-x-auto custom-scrollbar leading-relaxed"></pre>
             </div>
@@ -761,14 +771,15 @@
             <label class="block text-xs font-medium text-slate-300 mb-1">Interdisciplinaridade</label>
             <input type="text" id="edit-proj-inter" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100" />
           </div>
-          <div>
+          <div class="md:col-span-2">
             <label class="block text-xs font-medium text-slate-300 mb-1">Nome do Grupo</label>
             <input type="text" id="edit-proj-grupo" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100" />
           </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-300 mb-1">Orientador responsável</label>
-            <select id="edit-proj-orientador" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100"><option value="">Selecione um orientador cadastrado</option></select>
-          </div>
+        </div>
+
+        <div class="border-t border-slate-800 pt-3 space-y-2">
+          <label class="block text-xs font-semibold text-slate-200">Orientador(es) Responsável(is) *</label>
+          <div id="orientadores-checklist-edit" class="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-slate-950/70 border border-slate-800 rounded-xl p-3 max-h-40 overflow-y-auto custom-scrollbar"></div>
         </div>
 
         <div class="border-t border-slate-800 pt-3">
@@ -912,7 +923,6 @@
       popularDropdownCursosCadastro();
       popularDropdownFiltroCursosUsuarios();
       atualizarSeletorDeCursos();
-      updateJsonExample();
 
       // O servidor confirma a identidade; localStorage não concede permissões.
       try {
@@ -931,6 +941,7 @@
       if (currentUser && ["admin", "coordenador", "orientador"].includes(currentUser.role)) {
         await loadUsuarios();
       }
+      await updateJsonExample();
       addMembroField("membros-list-create");
       await loadProjetos();
     });
@@ -1127,7 +1138,7 @@
         navEstatisticas.classList.remove("hidden");
         navHistorico.classList.remove("hidden");
         btnExportCsv.classList.remove("hidden");
-        carregarOrientadores().then(() => preencherSelectOrientador("proj-orientador", currentUser.nome));
+        carregarOrientadores().then(() => resetOrientadoresCreate());
         populateRoleOptions();
 
         const listTitle = document.getElementById("usuarios-list-title");
@@ -1603,13 +1614,8 @@
     }
 
     // ==========================================
-    // MEU PERFIL (ALUNO)
+    // MEU PERFIL
     // ==========================================
-    function abreviarNome(nome) {
-      const partes = String(nome || "").trim().split(/\s+/).filter(Boolean);
-      return partes.length <= 2 ? partes.join(" ") : `${partes[0]} ${partes[partes.length - 1]}`;
-    }
-
     async function carregarPerfil() {
       if (!currentUser) return;
       const res = await fetch("/api/perfil");
@@ -1663,27 +1669,58 @@
       return orientadoresCache;
     }
 
-    function preencherSelectOrientador(selectId, valorAtual) {
-      const sel = document.getElementById(selectId);
-      if (!sel) return;
-      const alvo = String(valorAtual || "").trim().toLowerCase();
-      const nomes = orientadoresCache.map(o => o.nome);
-      sel.innerHTML = '<option value="">Selecione um orientador cadastrado</option>';
-      nomes.forEach(n => {
-        const opt = document.createElement("option");
-        opt.value = n; opt.textContent = n;
-        sel.appendChild(opt);
-      });
-      const igual = nomes.find(n => n.toLowerCase() === alvo);
-      if (igual) {
-        sel.value = igual;
-      } else if (alvo && selectId === "edit-proj-orientador") {
-        // Projeto antigo com texto livre no campo: mantém o valor para não forçar uma troca ao editar.
-        const opt = document.createElement("option");
-        opt.value = valorAtual; opt.textContent = `${valorAtual} (texto antigo)`;
-        sel.appendChild(opt);
-        sel.value = valorAtual;
+    function renderChecklistOrientadores(containerId, selecionados = []) {
+      const box = document.getElementById(containerId);
+      if (!box) return;
+
+      const marcadosSet = new Set(
+        (selecionados || []).map(n => String(n || "").trim().toLowerCase()).filter(Boolean)
+      );
+
+      if (!orientadoresCache.length) {
+        box.innerHTML = `<p class="col-span-full text-[11px] text-slate-400">Nenhum orientador cadastrado.</p>`;
+        return;
       }
+
+      const roleLabels = { orientador: "Orientador", coordenador: "Coordenador" };
+      box.innerHTML = orientadoresCache.map(o => {
+        const checked = marcadosSet.has(o.nome.trim().toLowerCase()) ? "checked" : "";
+        const papel = roleLabels[o.role] || o.role || "Orientador";
+        const badgeClass = o.role === "coordenador"
+          ? "bg-amber-500/15 text-amber-300 border-amber-500/30"
+          : "bg-indigo-500/15 text-indigo-300 border-indigo-500/30";
+        return `
+          <label class="flex items-center justify-between gap-2 bg-slate-950/90 hover:bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 cursor-pointer transition-colors">
+            <span class="flex items-center gap-2.5 min-w-0">
+              <input type="checkbox" value="${escapeParecerHtml(o.nome)}" ${checked} class="orientador-checkbox w-4 h-4 shrink-0 rounded border-slate-600 text-indigo-600 focus:ring-indigo-500 bg-slate-900" />
+              <span class="text-xs font-medium text-slate-100 truncate">${escapeParecerHtml(o.nome)}</span>
+            </span>
+            <span class="shrink-0 px-2 py-0.5 text-[10px] font-semibold rounded border ${badgeClass}">${papel}</span>
+          </label>
+        `;
+      }).join("");
+    }
+
+    function collectOrientadores(containerId) {
+      const checks = document.querySelectorAll(`#${containerId} .orientador-checkbox:checked`);
+      const lista = [];
+      const vistos = new Set();
+      checks.forEach(cb => {
+        const val = cb.value.trim();
+        const chave = val.toLowerCase();
+        if (val && !vistos.has(chave)) {
+          vistos.add(chave);
+          lista.push(val);
+        }
+      });
+      return lista;
+    }
+
+    function resetOrientadoresCreate() {
+      const inicial = (currentUser && ["orientador", "coordenador"].includes(currentUser.role))
+        ? [currentUser.nome]
+        : [];
+      renderChecklistOrientadores("orientadores-checklist-create", inicial);
     }
 
     async function salvarPerfil() {
@@ -2157,6 +2194,12 @@
 
     async function handleCriarProjeto(e) {
       e.preventDefault();
+      const orientadores = collectOrientadores("orientadores-checklist-create");
+      if (orientadores.length === 0) {
+        alert("Selecione pelo menos 1 orientador responsável.");
+        return;
+      }
+
       const resultadoMembros = collectMembros("membros-list-create");
       if (resultadoMembros.error) {
         alert(resultadoMembros.error);
@@ -2173,7 +2216,7 @@
         areas_atuacao: document.getElementById("proj-areas").value,
         interdisciplinaridade: document.getElementById("proj-inter").value,
         grupo_nome: document.getElementById("proj-grupo").value,
-        orientador_nome: document.getElementById("proj-orientador").value,
+        orientadores: orientadores,
         membros: resultadoMembros.membros
       };
 
@@ -2189,7 +2232,7 @@
         renderCursosEAlunosFiltro("create");
         document.getElementById("membros-list-create").innerHTML = "";
         addMembroField("membros-list-create");
-        preencherSelectOrientador("proj-orientador", currentUser.nome);
+        resetOrientadoresCreate();
         await loadProjetos();
         switchTab("consultar");
       } else {
@@ -2208,7 +2251,8 @@
       document.getElementById("edit-proj-areas").value = p.areas_atuacao;
       document.getElementById("edit-proj-inter").value = p.interdisciplinaridade;
       document.getElementById("edit-proj-grupo").value = p.grupo?.nome || "";
-      preencherSelectOrientador("edit-proj-orientador", p.orientador_nome);
+      const nomesOri = String(p.orientador_nome || "").split(",").map(s => s.trim()).filter(Boolean);
+      renderChecklistOrientadores("orientadores-checklist-edit", nomesOri);
 
       const list = document.getElementById("membros-list-edit");
       list.innerHTML = "";
@@ -2222,6 +2266,12 @@
 
     async function handleEditarProjeto(e) {
       e.preventDefault();
+      const orientadores = collectOrientadores("orientadores-checklist-edit");
+      if (orientadores.length === 0) {
+        alert("Selecione pelo menos 1 orientador responsável.");
+        return;
+      }
+
       const resultadoMembros = collectMembros("membros-list-edit");
       if (resultadoMembros.error) {
         alert(resultadoMembros.error);
@@ -2230,14 +2280,12 @@
 
       const id = document.getElementById("edit-proj-id").value;
       const payload = {
-        actor_role: currentUser.role,
-        actor_nome: currentUser.nome,
         titulo: document.getElementById("edit-proj-titulo").value,
         setor_externo: document.getElementById("edit-proj-setor").value,
         areas_atuacao: document.getElementById("edit-proj-areas").value,
         interdisciplinaridade: document.getElementById("edit-proj-inter").value,
         grupo_nome: document.getElementById("edit-proj-grupo").value,
-        orientador_nome: document.getElementById("edit-proj-orientador").value,
+        orientadores: orientadores,
         membros: resultadoMembros.membros
       };
 
@@ -2316,15 +2364,48 @@
     // ==========================================
     // CARGA MASSIVA VIA JSON
     // ==========================================
-    function updateJsonExample() {
+    let variacaoExemploJson = 0;
+    let totalVariacoesJson = 3;
+
+    async function obterExemploAtualJson(tipo, variacao = 0) {
+      try {
+        const res = await fetch(`/api/carga-massiva/exemplo?tipo=${encodeURIComponent(tipo)}&variacao=${encodeURIComponent(variacao)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.exemplo) {
+            variacaoExemploJson = Number(data.variacao_index || 0);
+            totalVariacoesJson = Number(data.total_variacoes || 3);
+            const badge = document.getElementById("json-variacao-badge");
+            if (badge) {
+              const rotulo = data.variacao_label ? ` — ${data.variacao_label}` : "";
+              badge.textContent = `Tipo ${variacaoExemploJson + 1}/${totalVariacoesJson}${rotulo}`;
+            }
+            return JSON.stringify(data.exemplo, null, 2);
+          }
+        }
+      } catch (e) {}
+      return JSON_EXEMPLOS[tipo];
+    }
+
+    async function updateJsonExample(resetVariacao = true) {
+      if (resetVariacao) variacaoExemploJson = 0;
       const tipo = document.getElementById("json-tipo-acervo").value;
-      document.getElementById("json-example-preview").textContent = JSON_EXEMPLOS[tipo];
+      const preview = document.getElementById("json-example-preview");
+      preview.textContent = "Carregando exemplo com dados cadastrados...";
+      preview.textContent = await obterExemploAtualJson(tipo, variacaoExemploJson);
       document.getElementById("json-import-feedback").textContent = "";
     }
 
-    function preencherComExemploJson() {
+    async function alternarTipoExemploJson() {
+      variacaoExemploJson = (variacaoExemploJson + 1) % Math.max(totalVariacoesJson, 1);
+      await updateJsonExample(false);
+    }
+
+    async function preencherComExemploJson() {
       const tipo = document.getElementById("json-tipo-acervo").value;
-      document.getElementById("json-raw-input").value = JSON_EXEMPLOS[tipo];
+      const texto = await obterExemploAtualJson(tipo, variacaoExemploJson);
+      document.getElementById("json-raw-input").value = texto;
+      document.getElementById("json-example-preview").textContent = texto;
       document.getElementById("json-import-feedback").textContent = "";
     }
 
