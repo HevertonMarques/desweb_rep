@@ -303,9 +303,9 @@ def eh_orientador_do_projeto(nome_ator, orientador_nome):
 
 
 def orientadores_cadastrados(cursor):
-    """Contas que podem ser indicadas como orientador de um projeto (nome completo, para os formulários)."""
+    """Contas que podem ser indicadas como orientador de um projeto (nome completo e papel, para os formulários)."""
     cursor.execute(
-        "SELECT id, nome FROM usuarios WHERE role IN ('orientador', 'coordenador') ORDER BY nome COLLATE NOCASE"
+        "SELECT id, nome, role FROM usuarios WHERE role IN ('orientador', 'coordenador') ORDER BY nome COLLATE NOCASE"
     )
     return [dict(r) for r in cursor.fetchall()]
 
@@ -319,6 +319,26 @@ def resolver_orientador(cursor, nome):
         if " ".join(o["nome"].split()).casefold() == alvo:
             return o["nome"]
     return None
+
+
+def resolver_orientadores(cursor, entrada):
+    """Aceita lista de nomes ou string separada por vírgula e valida cada conta cadastrada."""
+    if isinstance(entrada, list):
+        brutos = entrada
+    else:
+        brutos = [parte.strip() for parte in str(entrada or "").split(",")]
+
+    validados = []
+    vistos = set()
+    for item in brutos:
+        nome_exato = resolver_orientador(cursor, item)
+        if not nome_exato:
+            return None
+        chave = " ".join(nome_exato.split()).casefold()
+        if chave not in vistos:
+            vistos.add(chave)
+            validados.append(nome_exato)
+    return ", ".join(validados) if validados else None
 
 
 def montar_membros_do_grupo(cursor, grupo_id, usuario):
@@ -880,6 +900,195 @@ def listar_orientadores():
     return jsonify(lista)
 
 
+@app.route("/api/carga-massiva/exemplo", methods=["GET"])
+def exemplo_carga_massiva():
+    """Gera variações de JSON de exemplo com base nos dados reais cadastrados no banco."""
+    usuario = usuario_logado()
+    if not usuario or usuario["role"] not in ("admin", "coordenador"):
+        return jsonify({"error": "Acesso restrito a Administradores e Coordenadores."}), 403
+
+    tipo = request.args.get("tipo", "projetos").strip().lower()
+    try:
+        variacao = int(request.args.get("variacao", "0"))
+    except ValueError:
+        variacao = 0
+    if variacao < 0:
+        variacao = 0
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    orientadores = orientadores_cadastrados(cursor)
+
+    cursor.execute(
+        """SELECT ra, nome, COALESCE(curso, '') AS curso
+           FROM usuarios
+           WHERE role = 'aluno'
+           ORDER BY id ASC"""
+    )
+    alunos_db = [dict(r) for r in cursor.fetchall()]
+
+    cursor.execute(
+        """SELECT DISTINCT TRIM(curso) AS curso
+           FROM usuarios
+           WHERE role = 'aluno' AND TRIM(COALESCE(curso, '')) != ''
+           ORDER BY curso COLLATE NOCASE"""
+    )
+    cursos_db = [r["curso"] for r in cursor.fetchall()]
+
+    cursor.close()
+    conn.close()
+
+    if tipo == "usuarios":
+        variacoes_usuarios = [
+            "Perfil Orientador + Aluno",
+            "Apenas Novos Alunos",
+            "Apenas Novos Professores"
+        ]
+        idx_var = variacao % len(variacoes_usuarios)
+        rotulo_var = variacoes_usuarios[idx_var]
+        curso_base = cursos_db[idx_var % len(cursos_db)] if cursos_db else "Ciência da Computação"
+        ori_base = orientadores[idx_var % len(orientadores)] if orientadores else None
+
+        exemplo = []
+        if idx_var == 0:
+            if ori_base:
+                exemplo.append({
+                    "ra": f"PROF_EX_{variacao + 1:02d}",
+                    "nome": f"Prof. Base {ori_base['nome']}",
+                    "email": f"prof.ex{variacao + 1}@faccamp.com.br",
+                    "role": ori_base["role"]
+                })
+            exemplo.append({
+                "ra": f"ALUNO_EX_{variacao + 1:02d}",
+                "nome": f"Aluno {curso_base}",
+                "email": f"aluno.ex{variacao + 1}@faccamp.com.br",
+                "role": "aluno",
+                "curso": curso_base
+            })
+        elif idx_var == 1:
+            for i in range(2):
+                c_item = cursos_db[(idx_var + i) % len(cursos_db)] if cursos_db else "Ciência da Computação"
+                exemplo.append({
+                    "ra": f"ALUNO_LOTE_{variacao + 1}_{i + 1}",
+                    "nome": f"Estudante {c_item} {i + 1}",
+                    "email": f"estudante.{variacao + 1}.{i + 1}@faccamp.com.br",
+                    "role": "aluno",
+                    "curso": c_item
+                })
+        else:
+            for i in range(2):
+                ref_ori = orientadores[(idx_var + i) % len(orientadores)] if orientadores else None
+                papel = ref_ori["role"] if ref_ori else "orientador"
+                base_nome = ref_ori["nome"] if ref_ori else "Docente"
+                exemplo.append({
+                    "ra": f"DOCENTE_EX_{variacao + 1}_{i + 1}",
+                    "nome": f"Docente Ref. {base_nome} ({i + 1})",
+                    "email": f"docente.{variacao + 1}.{i + 1}@faccamp.com.br",
+                    "role": papel
+                })
+
+        return jsonify({
+            "tipo": "usuarios",
+            "variacao_index": idx_var,
+            "total_variacoes": len(variacoes_usuarios),
+            "variacao_label": rotulo_var,
+            "exemplo": exemplo
+        })
+
+    variacoes_projetos = [
+        "Projeto Individual (Rascunho Interno)",
+        "Projeto Interdisciplinar (Publicado)",
+        "Lote com 2 Projetos do Banco"
+    ]
+    idx_var = variacao % len(variacoes_projetos)
+    rotulo_var = variacoes_projetos[idx_var]
+
+    orientador_1 = orientadores[idx_var % len(orientadores)]["nome"] if orientadores else "Nome completo de um orientador cadastrado"
+    orientador_2 = orientadores[(idx_var + 1) % len(orientadores)]["nome"] if orientadores else orientador_1
+
+    curso_1 = cursos_db[idx_var % len(cursos_db)] if cursos_db else "Ciência da Computação"
+    curso_2 = cursos_db[(idx_var + 1) % len(cursos_db)] if cursos_db else curso_1
+    inter_str = curso_1 if curso_1 == curso_2 else f"{curso_1} + {curso_2}"
+
+    def montar_membros(offset, qtd):
+        if not alunos_db:
+            return [{"ra": "RA_ALUNO_CADASTRADO", "nome": "Nome do Aluno Cadastrado", "status_participacao": "PENDENTE"}]
+        selecionados = []
+        total_alunos = len(alunos_db)
+        limite = min(qtd, total_alunos)
+        for i in range(limite):
+            a = alunos_db[(offset + i) % total_alunos]
+            selecionados.append({
+                "ra": a["ra"],
+                "nome": a["nome"],
+                "status_participacao": "CONFIRMADO" if i == 0 else "PENDENTE"
+            })
+        return selecionados
+
+    if idx_var == 0:
+        exemplo_projeto = [
+            {
+                "titulo": f"Projeto {curso_1} — Var. {variacao + 1}",
+                "setor_externo": "Escola Pública / Comunidade Local",
+                "areas_atuacao": curso_1,
+                "interdisciplinaridade": curso_1,
+                "orientador_nome": orientador_1,
+                "status": "NOVO",
+                "publicado": False,
+                "grupo_nome": f"Grupo {curso_1} #{variacao + 1}",
+                "membros": montar_membros(idx_var, 1)
+            }
+        ]
+    elif idx_var == 1:
+        exemplo_projeto = [
+            {
+                "titulo": f"Integração {inter_str} — Var. {variacao + 1}",
+                "setor_externo": "Associação Comunitária / Unidade de Saúde",
+                "areas_atuacao": f"{curso_1}, {curso_2}",
+                "interdisciplinaridade": inter_str,
+                "orientador_nome": orientador_1,
+                "status": "PENDENTE",
+                "publicado": True,
+                "grupo_nome": f"Equipe Inter {variacao + 1}",
+                "membros": montar_membros(idx_var + 1, 2)
+            }
+        ]
+    else:
+        exemplo_projeto = [
+            {
+                "titulo": f"Ação Extensionista {curso_1} ({variacao + 1}A)",
+                "setor_externo": "Centro Comunitário",
+                "areas_atuacao": curso_1,
+                "interdisciplinaridade": curso_1,
+                "orientador_nome": orientador_1,
+                "status": "NOVO",
+                "publicado": False,
+                "grupo_nome": f"Equipe A #{variacao + 1}",
+                "membros": montar_membros(idx_var, 1)
+            },
+            {
+                "titulo": f"Ação Extensionista {curso_2} ({variacao + 1}B)",
+                "setor_externo": "Projeto Social Local",
+                "areas_atuacao": curso_2,
+                "interdisciplinaridade": inter_str,
+                "orientador_nome": orientador_2,
+                "status": "PENDENTE",
+                "publicado": True,
+                "grupo_nome": f"Equipe B #{variacao + 1}",
+                "membros": montar_membros(idx_var + 2, 2)
+            }
+        ]
+
+    return jsonify({
+        "tipo": "projetos",
+        "variacao_index": idx_var,
+        "total_variacoes": len(variacoes_projetos),
+        "variacao_label": rotulo_var,
+        "exemplo": exemplo_projeto
+    })
+
+
 @app.route("/api/estatisticas", methods=["GET"])
 def obter_estatisticas():
     if not exigir_acesso_relatorios():
@@ -901,21 +1110,21 @@ def criar_projeto():
     setor_externo = str(data.get("setor_externo") or "").strip()
     areas_atuacao = str(data.get("areas_atuacao") or "").strip()
     interdisciplinaridade = str(data.get("interdisciplinaridade") or "").strip()
-    orientador_nome = str(data.get("orientador_nome") or "").strip()
+    orientadores_raw = data.get("orientadores") if isinstance(data.get("orientadores"), list) else data.get("orientador_nome", "")
     grupo_nome = str(data.get("grupo_nome") or "").strip()
     membros = data.get("membros", [])
 
-    if not all([titulo, setor_externo, areas_atuacao, interdisciplinaridade, orientador_nome, grupo_nome]):
-        return jsonify({"error": "Preencha título, setor externo, áreas de atuação, interdisciplinaridade, orientador e nome do grupo."}), 400
+    if not all([titulo, setor_externo, areas_atuacao, interdisciplinaridade, grupo_nome]):
+        return jsonify({"error": "Preencha título, setor externo, áreas de atuação, interdisciplinaridade, orientador(es) e nome do grupo."}), 400
 
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    orientador_nome = resolver_orientador(cursor, orientador_nome)
+    orientador_nome = resolver_orientadores(cursor, orientadores_raw)
     if not orientador_nome:
         cursor.close()
         conn.close()
-        return jsonify({"error": "Selecione um orientador cadastrado no sistema."}), 400
+        return jsonify({"error": "Selecione pelo menos um orientador cadastrado no sistema."}), 400
 
     membros_validados = []
     ras_vistos = set()
@@ -987,16 +1196,16 @@ def editar_projeto(projeto_id):
         conn.close()
         return jsonify({"error": "Projeto não encontrado."}), 404
 
-    # Orientador: mantém o atual quando não vier (ou vier igual); uma troca precisa ser por um orientador cadastrado.
-    pedido = str(data.get("orientador_nome") or "").strip()
-    if not pedido or " ".join(pedido.split()).casefold() == " ".join(proj_atual["orientador_nome"].split()).casefold():
+    # Orientador(es): mantém os atuais quando não vierem; qualquer alteração precisa usar contas cadastradas.
+    orientadores_raw = data.get("orientadores") if isinstance(data.get("orientadores"), list) else str(data.get("orientador_nome") or "").strip()
+    if not orientadores_raw:
         novo_orientador = proj_atual["orientador_nome"]
     else:
-        novo_orientador = resolver_orientador(cursor, pedido)
+        novo_orientador = resolver_orientadores(cursor, orientadores_raw)
         if not novo_orientador:
             cursor.close()
             conn.close()
-            return jsonify({"error": "Selecione um orientador cadastrado no sistema."}), 400
+            return jsonify({"error": "Selecione apenas orientadores cadastrados no sistema."}), 400
 
     membros_validados = []
     ras_vistos = set()
@@ -1329,7 +1538,7 @@ def carga_massiva_json():
                 setor_externo = str(p.get("setor_externo", "Não informado")).strip()
                 areas_atuacao = str(p.get("areas_atuacao", "Geral")).strip()
                 interdisciplinaridade = str(p.get("interdisciplinaridade", "Não especificada")).strip()
-                orientador_nome = str(p.get("orientador_nome", "Orientador")).strip()
+                orientadores_raw = p.get("orientadores") if isinstance(p.get("orientadores"), list) else str(p.get("orientador_nome", "")).strip()
                 status = str(p.get("status", "NOVO")).strip().upper().replace(" ", "_")
                 if status not in STATUS_PROJETO or status == "DESENVOLVIMENTO":
                     status = "NOVO"
@@ -1341,8 +1550,8 @@ def carga_massiva_json():
                     ignorados += 1
                     continue
 
-                # O orientador precisa ser uma conta cadastrada; o nome gravado é o da conta.
-                orientador_nome = resolver_orientador(cursor, orientador_nome)
+                # Os orientadores precisam ser contas cadastradas; os nomes gravados são os das contas.
+                orientador_nome = resolver_orientadores(cursor, orientadores_raw)
                 if not orientador_nome:
                     ignorados += 1
                     continue
