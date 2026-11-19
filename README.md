@@ -18,11 +18,11 @@ Grupo: [4]. Orientador: [André Marcos].
 
 A modelagem da Etapa 1 está na pasta [documentos](documentos/README.md): caso de uso, atividades, classes, estados e matriz de rastreabilidade.
 
-## Nomes e orientador
+## Nomes e orientadores
 
 - Cada pessoa escolhe em **Meu perfil** como o próprio nome aparece (completo, ou primeiro nome e último sobrenome). A escolha vale para todos os perfis nas telas de consulta, inclusive para a própria pessoa.
 - O nome completo e o RA só aparecem para a gestão nos formulários de criar e editar projeto, na exportação CSV e em Gerenciar Contas. Público e alunos nunca recebem o RA.
-- O orientador responsável de cada projeto é escolhido entre as contas de Orientador e Coordenador cadastradas. Na carga massiva de projetos, `orientador_nome` precisa ser o nome completo de uma dessas contas, senão o projeto é ignorado e entra na contagem de ignorados.
+- Cada projeto pode ter **um ou mais orientadores/coorientadores**, selecionados por checklist entre as contas de Orientador e Coordenador cadastradas. Todos os orientadores vinculados ao projeto possuem permissão para editá-lo, publicá-lo e alterar seus estados permitidos. Na carga massiva de projetos em JSON, pode-se informar `"orientadores": ["Nome 1", "Nome 2"]` ou `"orientador_nome": "Nome 1, Nome 2"`, sempre correspondendo aos nomes completos das contas cadastradas (caso contrário o projeto é ignorado).
 
 ## Configuração local (segredos.py)
 
