@@ -235,14 +235,6 @@
                 <div class="w-full h-2 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
                   <div id="taxa-conformidade-bar" class="h-full bg-indigo-500 w-0 transition-all duration-500"></div>
                 </div>
-                <div id="conformidade-visoes" class="flex flex-col gap-2 mt-3 mb-2">
-                  <div class="flex flex-wrap gap-1" aria-label="Análises adicionais">
-                    <button type="button" data-visao="situacao" onclick="mudarVisaoConformidade('situacao')" class="px-2 py-1 rounded-md text-[10px] font-semibold border border-slate-700">Ética × Conselho</button>
-                    <button type="button" data-visao="curso" onclick="mudarVisaoConformidade('curso')" class="px-2 py-1 rounded-md text-[10px] font-semibold border border-slate-700">Por curso</button>
-                    <button type="button" data-visao="orientador" onclick="mudarVisaoConformidade('orientador')" class="px-2 py-1 rounded-md text-[10px] font-semibold border border-slate-700">Por orientador</button>
-                    <button type="button" data-visao="estado" onclick="mudarVisaoConformidade('estado')" class="px-2 py-1 rounded-md text-[10px] font-semibold border border-slate-700">Por estado</button>
-                  </div>
-                </div>
                 <div id="conformidade-linha" class="w-full"></div>
               </div>
             </div>
@@ -995,7 +987,7 @@
     let assinaturaProjetos = null, assinaturaUsuarios = null, assinaturaEstat = null, sincronizando = false;
 
     let visaoConformidade = "linha";
-    let analiseConformidade = "indice";
+    const analiseConformidade = "indice";
     const iconesVisaoConformidade = { linha: "fa-chart-line", tabela: "fa-table", pizza: "fa-chart-pie", rosca: "fa-circle-half-stroke", coluna: "fa-chart-column", barra: "fa-chart-bar" };
     function toggleMenuConformidade() {
       const menu = document.getElementById("conformidade-menu");
@@ -1011,10 +1003,6 @@
       const toggle = document.getElementById("conformidade-menu-toggle");
       if (menu) menu.classList.add("hidden");
       if (toggle) toggle.setAttribute("aria-expanded", "false");
-      renderProjetos();
-    }
-    function mudarVisaoConformidade(v) {
-      analiseConformidade = v;
       renderProjetos();
     }
     document.addEventListener("click", event => {
@@ -2006,7 +1994,7 @@
         barConformidade.style.width = `${taxaConformidade}%`;
       }
 
-      // Visões do índice de conformidade: seletor no ícone do cabeçalho; análises adicionais permanecem como botões.
+      // Um único índice de conformidade com seleção do formato de visualização.
       const boxLinha = document.getElementById("conformidade-linha");
       const iconeAtual = document.getElementById("conformidade-menu-icone");
       if (iconeAtual) {
@@ -2018,10 +2006,6 @@
         btn.classList.toggle("text-white", ativo);
         btn.classList.toggle("bg-slate-800", ativo);
         btn.setAttribute("aria-current", ativo ? "true" : "false");
-      });
-      document.querySelectorAll("#conformidade-visoes button[data-visao]").forEach(btn => {
-        const ativo = btn.dataset.visao === analiseConformidade;
-        btn.className = `px-2 py-1 rounded-md text-[10px] font-semibold border ${ativo ? "bg-indigo-600 border-indigo-500 text-white" : "border-slate-700 text-slate-300 hover:bg-slate-800"}`;
       });
       if (boxLinha) {
         const conforme = p => p.etica?.status === "APROVADO" && p.conselho?.status === "APROVADO";
@@ -2155,40 +2139,57 @@
           const total = dados.reduce((s, x) => s + x.valor, 0);
           if (!total) boxLinha.innerHTML = `<p class="text-[11px] text-slate-500">Sem projetos para exibir.</p>`;
           else {
-            let angulo = -Math.PI / 2;
-            const cx = 110, cy = 78, r = 58;
-            const caminhos = dados.map(d => {
-              const a = (d.valor / total) * Math.PI * 2, fim = angulo + a;
-              const x1 = cx + r * Math.cos(angulo), y1 = cy + r * Math.sin(angulo), x2 = cx + r * Math.cos(fim), y2 = cy + r * Math.sin(fim);
-              const grande = a > Math.PI ? 1 : 0;
-              const path = dados.length === 1 ? `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 1 1 ${x1 - 0.01} ${y1 - 0.01} Z` : `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${grande} 1 ${x2} ${y2} Z`;
-              const tip = `${d.nome}: ${d.valor} projeto(s) (${Math.round((d.valor / total) * 100)}%)\n\n${d.projetos.map(detalhesProjeto).join("\n")}`;
-              angulo = fim;
-              return `<path d="${path}" fill="${d.cor}" stroke="#0f172a" stroke-width="2"><title>${escapeTip(tip)}</title></path>`;
-            }).join("");
             const donut = visaoConformidade === "rosca";
-            const svg = `<svg viewBox="0 0 220 156" class="w-full max-w-xs mx-auto" role="img" aria-label="Distribuição de conformidade"><g>${caminhos}</g>${donut ? `<circle cx="${cx}" cy="${cy}" r="30" fill="#020617"/><text x="${cx}" y="${cy-2}" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="700">${total}</text><text x="${cx}" y="${cy+10}" text-anchor="middle" fill="#94a3b8" font-size="8">projetos</text>` : ""}</svg>`;
-            const legenda = dados.map(d => `<div class="flex items-center gap-2 text-[10px] text-slate-300"><span class="w-2.5 h-2.5 rounded-sm" style="background:${d.cor}"></span>${d.nome}: ${d.valor} (${Math.round((d.valor / total) * 100)}%)</div>`).join("");
-            boxLinha.innerHTML = `${svg}<div class="flex flex-col items-center gap-1 mt-1">${legenda}</div><p class="text-[10px] text-slate-500 text-center mt-1">Passe sobre uma fatia para consultar os projetos que compõem o grupo.</p>`;
+            const cx = 110, cy = 90, r = 65;
+            let angulo = -Math.PI / 2;
+            const fatias = dados.map(d => {
+              const fracao = d.valor / total, a = fracao * Math.PI * 2, fim = angulo + a;
+              const x1 = cx + r * Math.cos(angulo), y1 = cy + r * Math.sin(angulo);
+              const x2 = cx + r * Math.cos(fim), y2 = cy + r * Math.sin(fim);
+              const grande = a > Math.PI ? 1 : 0;
+              const path = dados.length === 1
+                ? `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 1 1 ${x1 - 0.01} ${y1 - 0.01} Z`
+                : `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${grande} 1 ${x2} ${y2} Z`;
+              const tip = `${d.nome}: ${d.valor} projeto(s) (${Math.round(fracao * 100)}%)\n\n${d.projetos.map(detalhesProjeto).join("\n")}`;
+              const meio = angulo + a / 2;
+              // Fatias pequenas recebem etiqueta externa para não sobrepor valores.
+              const externo = fracao < (donut ? 0.19 : 0.12);
+              const dist = externo ? r + 15 : (donut ? 48 : 39);
+              const tx = cx + dist * Math.cos(meio), ty = cy + dist * Math.sin(meio);
+              const corTexto = externo ? "#e2e8f0" : "#0f172a";
+              const fonte = externo ? 10 : 12;
+              angulo = fim;
+              return `<g><path d="${path}" fill="${d.cor}" stroke="#0f172a" stroke-width="2"><title>${escapeTip(tip)}</title></path><text x="${tx.toFixed(1)}" y="${(ty+4).toFixed(1)}" text-anchor="middle" fill="${corTexto}" font-size="${fonte}" font-weight="700" pointer-events="none">${Math.round(fracao * 100)}%</text></g>`;
+            }).join("");
+            const centro = donut ? `<circle cx="${cx}" cy="${cy}" r="34" fill="#020617"/><text x="${cx}" y="${cy-3}" text-anchor="middle" fill="#e2e8f0" font-size="16" font-weight="700">${total}</text><text x="${cx}" y="${cy+12}" text-anchor="middle" fill="#94a3b8" font-size="9">projetos</text>` : "";
+            const svg = `<svg viewBox="0 0 220 180" class="w-full max-w-xs mx-auto" role="img" aria-label="Conformidade: ${dados.map(d => `${d.nome} ${Math.round(d.valor/total*100)}%`).join(', ')}">${fatias}${centro}</svg>`;
+            const legenda = dados.map(d => `<div class="flex items-center gap-2 text-[11px] text-slate-300"><span class="w-2.5 h-2.5 rounded-sm shrink-0" style="background:${d.cor}"></span><span>${d.nome}: <strong>${d.valor} projeto(s) (${Math.round(d.valor / total * 100)}%)</strong></span></div>`).join("");
+            boxLinha.innerHTML = `${svg}<div class="flex flex-col items-center gap-1 mt-1">${legenda}</div><p class="text-[10px] text-slate-500 text-center mt-1">Passe sobre uma fatia para consultar os projetos do grupo.</p>`;
           }
         } else if (["coluna", "barra"].includes(visaoConformidade)) {
           if (!meses.length) boxLinha.innerHTML = `<p class="text-[11px] text-slate-500">Sem projetos para exibir.</p>`;
           else {
-            const W = 340, H = 150, left = visaoConformidade === "barra" ? 112 : 28, right = 8, top = 12, bottom = 26;
+            // Mesma métrica de conformidade da linha, acumulada até cada mês.
+            let totalAcumulado = 0, okAcumulado = 0;
+            const serie = meses.map(([mes, g]) => {
+              totalAcumulado += g.projetos.length;
+              okAcumulado += g.conformes;
+              return { mes, g, indice: Math.round(okAcumulado / totalAcumulado * 100) };
+            });
+            const W = 340, H = Math.max(150, visaoConformidade === "barra" ? serie.length * 25 + 25 : 150);
+            const left = visaoConformidade === "barra" ? 94 : 30, right = 14, top = 14, bottom = 27;
             const plotW = W - left - right, plotH = H - top - bottom;
-            const max = Math.max(...meses.map(([,g]) => g.projetos.length), 1);
-            const itens = meses.map(([mes,g],i) => {
-              const count = g.projetos.length, tip = tooltipMes(mes,g);
+            const itens = serie.map(({mes,g,indice},i) => {
+              const tip = `${nomeMes(mes)}\nÍndice acumulado: ${indice}%\n${tooltipMes(mes,g)}`;
               if (visaoConformidade === "coluna") {
-                const slot = plotW / meses.length, bw = Math.max(5, slot * .58), x = left + slot * i + (slot-bw)/2, h = (count/max)*plotH, y = top+plotH-h;
-                return `<rect x="${x}" y="${y}" width="${bw}" height="${h}" rx="2" fill="#818cf8"><title>${escapeTip(tip)}</title></rect><text x="${x+bw/2}" y="${H-8}" text-anchor="middle" font-size="8" fill="#94a3b8">${escapeParecerHtml(nomeMes(mes))}</text>`;
-              } else {
-                const slot = plotH / meses.length, bh = Math.max(5, slot*.58), y = top + slot*i+(slot-bh)/2, bw = (count/max)*plotW;
-                const label = nomeMes(mes);
-                return `<text x="${left-5}" y="${y+bh/2+3}" text-anchor="end" font-size="8" fill="#94a3b8">${escapeParecerHtml(label)}</text><rect x="${left}" y="${y}" width="${bw}" height="${bh}" rx="2" fill="#818cf8"><title>${escapeTip(tip)}</title></rect>`;
+                const slot = plotW / serie.length, bw = Math.max(5, slot * .55);
+                const x = left + slot * i + (slot-bw)/2, h = indice/100*plotH, y = top+plotH-h;
+                return `<rect x="${x}" y="${y}" width="${bw}" height="${h}" rx="2" fill="#818cf8"><title>${escapeTip(tip)}</title></rect><text x="${x+bw/2}" y="${Math.max(9,y-3)}" text-anchor="middle" font-size="8" fill="#e2e8f0">${indice}%</text><text x="${x+bw/2}" y="${H-7}" text-anchor="middle" font-size="8" fill="#94a3b8">${escapeParecerHtml(nomeMes(mes))}</text>`;
               }
+              const slot = plotH / serie.length, bh = Math.max(5, slot*.55), y = top + slot*i+(slot-bh)/2, bw = indice/100*plotW;
+              return `<text x="${left-5}" y="${y+bh/2+3}" text-anchor="end" font-size="8" fill="#94a3b8">${escapeParecerHtml(nomeMes(mes))}</text><rect x="${left}" y="${y}" width="${bw}" height="${bh}" rx="2" fill="#818cf8"><title>${escapeTip(tip)}</title></rect><text x="${Math.min(W-8,left+bw+5)}" y="${y+bh/2+3}" font-size="8" fill="#e2e8f0">${indice}%</text>`;
             }).join("");
-            boxLinha.innerHTML = `<svg viewBox="0 0 ${W} ${H}" class="w-full h-auto" role="img" aria-label="Projetos adicionados por mês">${visaoConformidade === "coluna" ? `<line x1="${left}" y1="${top+plotH}" x2="${W-right}" y2="${top+plotH}" stroke="#475569"/>` : ""}${itens}</svg><p class="text-[10px] text-slate-500 text-center mt-1">Passe sobre a barra/coluna para ver os projetos adicionados no mês.</p>`;
+            boxLinha.innerHTML = `<svg viewBox="0 0 ${W} ${H}" class="w-full h-auto" role="img" aria-label="Índice acumulado de conformidade por mês">${visaoConformidade === "coluna" ? `<line x1="${left}" y1="${top+plotH}" x2="${W-right}" y2="${top+plotH}" stroke="#475569"/>` : ""}${itens}</svg><p class="text-[10px] text-slate-500 text-center mt-1">Índice acumulado por mês. Passe sobre os dados para ver detalhes.</p>`;
           }
         } else {
           // Evolução: preserva o gráfico de linha existente, com tooltip de projetos criados no dia.
