@@ -13,6 +13,18 @@
     .custom-scrollbar::-webkit-scrollbar-track { background: #0f172a; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 9999px; }
     .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+    /* Tela de acesso: fotografia em tela cheia e logo original sem efeitos */
+    #login-modal { isolation: isolate; background: #061a35 url('/static/tela_login_unifaccamp.png') center 54% / cover no-repeat; }
+    #login-modal::before { content: ''; position: absolute; inset: 0; z-index: -1; background: rgba(2, 17, 42, .51); pointer-events: none; }
+    .login-layout { min-height: 100%; width: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 32px 18px; }
+    .login-logo { width: min(90vw, 700px); height: auto; max-height: 155px; object-fit: contain; filter: none; box-shadow: none; margin-bottom: 12px; }
+    .login-card { width: min(100%, 490px); padding: 32px 34px; background: rgba(15,23,42,.94); border: 1px solid rgba(100,116,139,.6); border-radius: 22px; box-shadow: 0 18px 65px rgba(0, 12, 35, .35); color: #f1f5f9; backdrop-filter: blur(12px); }
+    .login-field { width: 100%; border: 1px solid #475569; background: rgba(2,6,23,.88); color: #f1f5f9; border-radius: 11px; padding: 13px 15px; font-size: 14px; outline: none; }
+    .login-field:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,.18); }
+    .login-field::placeholder { color: #94a3b8; }
+    @media (max-width: 640px) { .login-layout { padding: 28px 16px; } .login-logo { width: min(92vw, 440px); margin-bottom: 10px; } .login-card { padding: 26px 21px; } #login-modal { background-position: 50% center; } }
+    @media (prefers-reduced-motion: reduce) { .login-card, .login-field { transition: none; } }
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 antialiased selection:bg-indigo-500 selection:text-white">
@@ -670,64 +682,50 @@
     </div>
   </div>
 
-  <!-- TELA EXCLUSIVA DE LOGIN (APARECE SOZINHA COM LOGO GRANDE DA UNIFACCAMP NO TOPO) -->
-<div id="login-modal" class="fixed inset-0 z-50 hidden flex flex-col md:flex-row items-stretch overflow-y-auto" style="background-color:#030a26;">
-    <!-- Foto da universidade, inteira e sem cortes -->
-    <div class="w-full md:w-1/2 h-64 md:h-auto shrink-0 flex items-center justify-center" style="background-color:#030a26;">
-      <img src="/static/tela_login_unifaccamp.jpg" alt="Prédio da UNIFACCAMP" class="max-w-full max-h-full object-contain" />
-    </div>
-    <div class="w-full md:w-1/2 flex-1 flex flex-col items-center justify-center p-4 bg-slate-950">
-    <div class="w-full max-w-sm flex flex-col items-center">
-      <!-- Logo UNIFACCAMP bem grande acima da caixa de login -->
-      <div class="w-full mb-6 flex flex-col items-center justify-center">
-        <img src="/static/logo_faccamp.png" alt="Logo UNIFACCAMP" class="max-h-24 w-auto object-contain" onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');" />
-        <div class="hidden flex items-center gap-3 text-slate-100 font-black tracking-tight text-2xl py-2">
-          <i class="fa-solid fa-graduation-cap text-indigo-700 text-3xl"></i>
-          <span>UNIFACCAMP</span>
-        </div>
-      </div>
-
-      <!-- Caixa de Login -->
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full p-6 shadow-2xl">
-        <div class="flex items-center justify-between mb-5">
-          <div>
-            <h3 class="text-base font-bold text-slate-100">Acessar o Sistema</h3>
-            <p class="text-[11px] text-slate-400">DevTrack System · Módulo 2: Controle</p>
-          </div>
-          <button onclick="closeLoginModal()" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800" title="Voltar para consulta pública">
+  <!-- TELA EXCLUSIVA DE LOGIN: foto em tela cheia, logo sem brilho e formulário centralizado -->
+  <div id="login-modal" class="fixed inset-0 z-50 hidden overflow-y-auto" role="dialog" aria-modal="true" aria-label="Acesso ao DevTrack System">
+    <div class="login-layout">
+      <img src="/static/logo_faccamp.png" alt="UNIFACCAMP - Centro Universitário Campo Limpo Paulista" class="login-logo" />
+      <div class="login-card">
+        <div class="relative text-center mb-6">
+          <button type="button" onclick="closeLoginModal()" class="absolute right-0 top-0 text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800" title="Voltar para consulta pública" aria-label="Fechar login">
             <i class="fa-solid fa-xmark text-base"></i>
           </button>
+          <i class="fa-solid fa-user text-indigo-400 text-3xl mb-3" aria-hidden="true"></i>
+          <h3 class="text-xl sm:text-2xl font-bold text-slate-100">Acesso ao Sistema</h3>
+          <p class="text-xs sm:text-sm text-slate-400 mt-1">DevTrack System · Projetos Extensionistas</p>
         </div>
-
         <form onsubmit="handleLogin(event)" class="space-y-4">
           <div>
-            <label class="block text-xs font-medium text-slate-300 mb-1">E-mail ou RA</label>
-            <input type="text" id="login-identifier" required placeholder="exemplo@hotmail.com ou seu RA" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3.5 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
+            <label for="login-identifier" class="block text-xs font-semibold text-slate-200 mb-1.5">Usuário (RA ou e-mail)</label>
+            <div class="relative">
+              <i class="fa-regular fa-user absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" aria-hidden="true"></i>
+              <input type="text" id="login-identifier" required autocomplete="username" placeholder="Seu RA ou e-mail" class="login-field pl-11" />
+            </div>
           </div>
           <div>
-            <label class="block text-xs font-medium text-slate-300 mb-1">Senha</label>
+            <label for="login-senha" class="block text-xs font-semibold text-slate-200 mb-1.5">Senha</label>
             <div class="relative">
-              <input type="password" id="login-senha" required minlength="6" maxlength="18" oninput="avaliarForcaSenha('login-senha', 'login-senha-strength-bar', 'login-senha-strength-text')" class="w-full bg-slate-950 border border-slate-700 rounded-lg pl-3.5 pr-10 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
-              <button type="button" onclick="togglePasswordVisibility('login-senha', 'icon-eye-login')" class="absolute inset-y-0 right-0 px-3 flex items-center text-slate-400 hover:text-slate-200" title="Mostrar/Ocultar senha">
-                <i id="icon-eye-login" class="fa-solid fa-eye text-xs"></i>
+              <i class="fa-solid fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" aria-hidden="true"></i>
+              <input type="password" id="login-senha" required minlength="6" maxlength="18" autocomplete="current-password" oninput="avaliarForcaSenha('login-senha', 'login-senha-strength-bar', 'login-senha-strength-text')" class="login-field pl-11 pr-12" />
+              <button type="button" onclick="togglePasswordVisibility('login-senha', 'icon-eye-login')" class="absolute inset-y-0 right-0 px-4 flex items-center text-slate-400 hover:text-indigo-300" title="Mostrar/Ocultar senha" aria-label="Mostrar ou ocultar senha">
+                <i id="icon-eye-login" class="fa-solid fa-eye text-sm"></i>
               </button>
             </div>
-            <!-- Indicador de força da senha -->
-            <div class="mt-1.5 space-y-1">
-              <div class="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
+            <div class="mt-2 space-y-1">
+              <div class="w-full h-1 bg-slate-700 rounded-full overflow-hidden">
                 <div id="login-senha-strength-bar" class="h-full w-0 transition-all duration-300"></div>
               </div>
               <p id="login-senha-strength-text" class="text-[11px] text-slate-400">De 6 a 18 caracteres ou dígitos.</p>
             </div>
           </div>
-          <p id="login-error" class="text-xs text-red-400 hidden"></p>
-          <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg shadow-lg shadow-indigo-600/20 transition-all">
-            Entrar
+          <p id="login-error" class="text-xs text-red-400 hidden" role="alert"></p>
+          <button type="submit" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold rounded-xl transition-colors flex items-center justify-center gap-2">
+            <i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i> Entrar
           </button>
         </form>
       </div>
     </div>
-  </div>
   </div>
 
   <!-- MODAL: TROCA DE SENHA (OBRIGATÓRIA NO 1º ACESSO E OPCIONAL A QUALQUER MOMENTO) -->
