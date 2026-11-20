@@ -10,7 +10,7 @@ Ator: Orientador. Imagem: [01-registrar-trabalho-grupo-membros.png](01-registrar
 flowchart TD
   ini(("Início")) --> a1["Orientador acessa o sistema"]
   a1 --> a2["Orientador informa os dados do trabalho"]
-  a2 --> a3["Orientador informa áreas de atuação, interdisciplinaridade e setor externo e seleciona o orientador responsável entre os cadastrados"]
+  a2 --> a3["Orientador informa áreas de atuação, setor externo e, se houver, interdisciplinaridade (opcional) e seleciona o orientador responsável entre os cadastrados"]
   a3 --> d1{"Dados válidos e orientador cadastrado?"}
   d1 -- Não --> s1["Sistema exibe os erros"]
   s1 --> a2
@@ -113,7 +113,7 @@ flowchart TD
   d1 -- Não --> e1["Sistema rejeita o arquivo e informa o erro"]
   d1 -- Sim --> s1["Sistema lê o próximo registro"]
   s1 --> d2{"Registro válido?"}
-  d2 -- Sim --> s2["Sistema grava o registro"]
+  d2 -- Sim --> s2["Sistema grava o registro como projeto Novo, em visualização interna"]
   d2 -- Não --> s3["Sistema anota o registro como rejeitado"]
   s2 --> d3{"Há mais registros?"}
   s3 --> d3
@@ -144,15 +144,18 @@ flowchart TD
   a3 --> d1{"Ator é Coordenador ou Administrador?"}
   d1 -- Não --> e1["Sistema recusa: parecer de Ética restrito à coordenação"]
   d1 -- Sim --> s1["Sistema grava o parecer, o nome de quem registrou e a data"]
-  s1 --> fim((Fim))
+  s1 --> d2{"Projeto Novo ou Pendente com Ética e Conselho aprovados?"}
+  d2 -- Sim --> s2["Sistema move o projeto para Desenvolvimento automaticamente"]
+  d2 -- Não --> fim((Fim))
+  s2 --> fim
   e1 --> fim
   classDef ator fill:#E6F1FB,stroke:#185FA5,color:#0C447C
   classDef sis fill:#F1EFE8,stroke:#5F5E5A,color:#2C2C2A
   classDef dec fill:#FAEEDA,stroke:#854F0B,color:#633806
   classDef err fill:#FCEBEB,stroke:#A32D2D,color:#791F1F
   class a1,a2,a3 ator
-  class x1,s1 sis
-  class d1 dec
+  class x1,s1,s2 sis
+  class d1,d2 dec
   class e1 err
 ```
 
@@ -164,14 +167,14 @@ Ator: Coordenador e Administrador. Imagem: [06-definir-membros-conselho.png](06-
 flowchart TD
   ini(("Início")) --> a1["Ator acessa Criar Acessos / Contas"]
   a1 --> a2["Ator escolhe um orientador"]
-  a2 --> a3["Ator seleciona Incluir ou Remover do Conselho"]
+  a2 --> a3["Ator seleciona Incluir/Remover do Conselho (geral) ou Conselho de curso e escolhe o curso"]
   a3 --> d1{"Ator é Coordenador ou Administrador?"}
   d1 -- Não --> e1["Sistema recusa: sem permissão"]
   d1 -- Sim --> d2{"A conta é de Orientador?"}
   d2 -- Não --> e2["Sistema recusa: somente orientadores participam do Conselho"]
   d2 -- Sim --> d3{"Incluir?"}
-  d3 -- Sim --> s1["Sistema inclui o orientador no Conselho"]
-  d3 -- Não --> s2["Sistema remove o orientador do Conselho e deixa de contar o voto dele"]
+  d3 -- Sim --> s1["Sistema inclui o orientador no Conselho geral ou no Conselho do curso escolhido"]
+  d3 -- Não --> s2["Sistema remove o orientador do Conselho (geral ou do curso) e deixa de contar o voto dele"]
   s1 --> fim((Fim))
   s2 --> fim
   e1 --> fim
@@ -192,15 +195,15 @@ Ator: Orientador membro do Conselho. Imagem: [07-votar-conselho.png](07-votar-co
 
 ```mermaid
 flowchart TD
-  ini(("Início")) --> a1["Orientador entra com o próprio login e acessa Pareceres"]
+  ini(("Início")) --> a1["Orientador membro do Conselho entra com o próprio login e acessa Pareceres (menu oculto para quem não é do Conselho)"]
   a1 --> a2["Orientador escolhe o projeto"]
   a2 --> a3["Orientador informa Aprovado ou Reprovado e o comentário"]
-  a3 --> d1{"Orientador está no Conselho?"}
+  a3 --> d1{"Orientador está no Conselho geral ou no Conselho do curso dos alunos do projeto?"}
   d1 -- Não --> e1["Sistema recusa: solicitar inclusão à coordenação"]
   d1 -- Sim --> s1["Sistema grava o voto somente na conta do orientador logado"]
   s1 --> s2["Sistema recalcula o parecer do Conselho"]
   s2 --> d2{"Mais da metade dos membros aprovou?"}
-  d2 -- Sim --> s3["Parecer do Conselho: Aprovado"]
+  d2 -- Sim --> s3["Parecer do Conselho: Aprovado; se a Ética também aprovou e o projeto é Novo ou Pendente, ele entra em Desenvolvimento automaticamente"]
   d2 -- Não --> d3{"Aprovação deixou de ser possível?"}
   d3 -- Sim --> s4["Parecer do Conselho: Reprovado"]
   d3 -- Não --> s5["Parecer do Conselho: Pendente"]

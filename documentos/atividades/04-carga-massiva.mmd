@@ -6,7 +6,7 @@ flowchart TD
   d1 -- Não --> e1["Sistema rejeita o arquivo e informa o erro"]
   d1 -- Sim --> s1["Sistema lê o próximo registro"]
   s1 --> d2{"Registro válido?"}
-  d2 -- Sim --> s2["Sistema grava o registro"]
+  d2 -- Sim --> s2["Sistema grava o registro como projeto Novo, em visualização interna"]
   d2 -- Não --> s3["Sistema anota o registro como rejeitado"]
   s2 --> d3{"Há mais registros?"}
   s3 --> d3

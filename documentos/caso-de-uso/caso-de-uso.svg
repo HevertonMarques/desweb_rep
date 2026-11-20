@@ -48,7 +48,7 @@
 <ellipse cx="340" cy="224" rx="170" ry="24" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.8"/>
 <text x="340" y="224" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" fill="#3C3489">Gerenciar contas de acesso</text>
 <ellipse cx="340" cy="286" rx="170" ry="24" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.8"/>
-<text x="340" y="286" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" fill="#3C3489">Definir membros do Conselho</text>
+<text x="340" y="286" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" fill="#3C3489">Definir membros do Conselho (geral/curso)</text>
 <ellipse cx="340" cy="348" rx="170" ry="24" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.8"/>
 <text x="340" y="348" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" fill="#3C3489">Registrar parecer de Ética</text>
 <ellipse cx="340" cy="410" rx="170" ry="24" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.8"/>
@@ -59,14 +59,14 @@
 <text x="340" y="534" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" fill="#3C3489">Registrar trabalho, grupo e membros</text>
 <ellipse cx="340" cy="596" rx="170" ry="28" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.8"/>
 <text x="340" y="587" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" fill="#3C3489">Informar áreas,</text>
-<text x="340" y="605" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" fill="#3C3489">interdisciplinaridade e setor externo</text>
+<text x="340" y="605" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" fill="#3C3489">setor externo (interdisciplin. opcional)</text>
 <ellipse cx="340" cy="658" rx="170" ry="28" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.8"/>
 <text x="340" y="649" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" fill="#3C3489">Realizar status do projeto</text>
 <text x="340" y="667" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="normal" fill="#3C3489">Aluno: pendente, cancelado, concluído</text>
 <ellipse cx="340" cy="720" rx="170" ry="24" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.8"/>
 <text x="340" y="720" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" fill="#3C3489">Confirmar participação no grupo</text>
 <ellipse cx="340" cy="782" rx="170" ry="24" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.8"/>
-<text x="340" y="782" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" fill="#3C3489">Votar no Conselho</text>
+<text x="340" y="782" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" fill="#3C3489">Votar no Conselho (membros)</text>
 <ellipse cx="340" cy="844" rx="170" ry="24" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.8"/>
 <text x="340" y="844" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" fill="#3C3489">Escolher exibição do nome (Meu perfil)</text>
 <g stroke="#2C2C2A" stroke-width="1.5" fill="none" stroke-linecap="round">

@@ -1,13 +1,13 @@
 flowchart TD
-  ini(("Início")) --> a1["Orientador entra com o próprio login e acessa Pareceres"]
+  ini(("Início")) --> a1["Orientador membro do Conselho entra com o próprio login e acessa Pareceres (menu oculto para quem não é do Conselho)"]
   a1 --> a2["Orientador escolhe o projeto"]
   a2 --> a3["Orientador informa Aprovado ou Reprovado e o comentário"]
-  a3 --> d1{"Orientador está no Conselho?"}
+  a3 --> d1{"Orientador está no Conselho geral ou no Conselho do curso dos alunos do projeto?"}
   d1 -- Não --> e1["Sistema recusa: solicitar inclusão à coordenação"]
   d1 -- Sim --> s1["Sistema grava o voto somente na conta do orientador logado"]
   s1 --> s2["Sistema recalcula o parecer do Conselho"]
   s2 --> d2{"Mais da metade dos membros aprovou?"}
-  d2 -- Sim --> s3["Parecer do Conselho: Aprovado"]
+  d2 -- Sim --> s3["Parecer do Conselho: Aprovado; se a Ética também aprovou e o projeto é Novo ou Pendente, ele entra em Desenvolvimento automaticamente"]
   d2 -- Não --> d3{"Aprovação deixou de ser possível?"}
   d3 -- Sim --> s4["Parecer do Conselho: Reprovado"]
   d3 -- Não --> s5["Parecer do Conselho: Pendente"]

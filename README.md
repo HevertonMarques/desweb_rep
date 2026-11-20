@@ -1,6 +1,6 @@
 # [Controle HRV]
 
-Projeto Extensionista 2026 sem. 2: Módulo 2, Controle (Registro).
+Projeto Extensionista 2026 sem. 2: DevTrack System, Módulo 2, Controle (Registro).
 
 Sistema web para registrar e controlar os projetos extensionistas desenvolvidos durante o semestre letivo, usado pelo coordenador, pelos professores orientadores e pelos alunos.
 
@@ -54,3 +54,16 @@ Este repositório contém o código de programação e os materiais do trabalho 
 - **Sem garantias:** o código é fornecido "como está", sem garantias de qualquer tipo.
 
 Termos completos no arquivo [LICENSE](LICENSE).
+
+## Novidades de 19/11/2026
+
+- **Conselho por curso:** em Criar Acessos / Contas, além de incluir o orientador no Conselho (todos os cursos), há o botão **Conselho de curso**, que o inclui no Conselho de um curso específico. Ele passa a votar só nos projetos com alunos daquele curso.
+- **Pareceres:** o menu e os botões de voto só aparecem para quem pode votar (membros do Conselho); Administrador e Coordenador continuam vendo o menu.
+- **Dashboard:** a Distribuição por Áreas de Atuação separa cada área; as outras áreas do mesmo projeto aparecem entre parênteses, seguidas da barra, do número de projetos e da porcentagem.
+- **Contas cadastradas:** clique em RA, Nome ou Perfil / Curso para ordenar (clique de novo para inverter).
+- **Interdisciplinaridade** é opcional no cadastro e na edição do projeto.
+- **Identidade visual:** sistema chamado DevTrack System, com Módulo 2: Controle como subtítulo; imagem na tela de login (static/tela_login_unifaccamp.jpg) e logo sem fundo branco.
+- **Projetos novos:** nascem em visualização interna (cadastro manual e carga massiva) e entram sozinhos em Desenvolvimento quando os pareceres de Ética e do Conselho estão aprovados.
+- **Atualização ao vivo:** as telas consultam o servidor a cada 4 segundos e se atualizam sozinhas quando algo muda (ex.: aluno vê o projeto criado pelo orientador sem recarregar). A atualização é adiada enquanto você digita em um formulário.
+- **Índice de Conformidade:** além da barra e do gráfico de linha, há tabelas por Ética × Conselho, por curso, por orientador e por estado (botões no próprio painel).
+- **Pendente → Desenvolvimento:** projetos Novos ou Pendentes entram sozinhos em Desenvolvimento quando Ética e Conselho aprovam.

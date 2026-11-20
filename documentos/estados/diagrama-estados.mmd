@@ -4,9 +4,9 @@ stateDiagram-v2
   state "Liberado apresentação" as Liberado
   [*] --> Novo : criação automática
   Novo --> Pendente
-  Novo --> Desenvolvimento
+  Novo --> Desenvolvimento : automático com Ética e Conselho aprovados
   Novo --> Cancelado
-  Pendente --> Desenvolvimento
+  Pendente --> Desenvolvimento : automático com Ética e Conselho aprovados
   Desenvolvimento --> Pendente
   Desenvolvimento --> Cancelado
   Desenvolvimento --> Concluido

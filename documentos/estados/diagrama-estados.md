@@ -9,9 +9,9 @@ stateDiagram-v2
   state "Liberado apresentação" as Liberado
   [*] --> Novo : criação automática
   Novo --> Pendente
-  Novo --> Desenvolvimento
+  Novo --> Desenvolvimento : automático com Ética e Conselho aprovados
   Novo --> Cancelado
-  Pendente --> Desenvolvimento
+  Pendente --> Desenvolvimento : automático com Ética e Conselho aprovados
   Desenvolvimento --> Pendente
   Desenvolvimento --> Cancelado
   Desenvolvimento --> Concluido
@@ -36,7 +36,7 @@ Cancelado, Finalizado e Avaliado. Cancelado e Avaliado não aceitam nova mudanç
 |---|---|---|---|
 | Novo | Automático | Automático | Criação do projeto |
 | Pendente | Sim | Sim | A partir de Novo ou Desenvolvimento |
-| Desenvolvimento | Sim | Não | Pareceres de Ética **e** do Conselho aprovados |
+| Desenvolvimento | Sim; entra sozinho a partir de Novo ou Pendente quando Ética e Conselho aprovam | Não | Pareceres de Ética **e** do Conselho aprovados |
 | Cancelado | Sim | Sim | A partir de Novo ou Desenvolvimento |
 | Concluído | Sim | Sim | A partir de Desenvolvimento |
 | Finalizado | Sim | Não | A partir de Concluído |
@@ -49,5 +49,6 @@ Cancelado, Finalizado e Avaliado. Cancelado e Avaliado não aceitam nova mudanç
 - O orientador só altera os projetos em que consta como responsável; Coordenador e Administrador alteram todos.
 - O aluno só altera o estado dos projetos em que sua participação está **confirmada**, e apenas para Pendente, Cancelado ou Concluído.
 - Qualquer mudança para Desenvolvimento, inclusive o retorno a partir de Concluído, exige os pareceres de Ética e do Conselho aprovados ([atividades 05 a 07](../atividades/diagramas-atividade.md)). A reabertura de um projeto Finalizado é exceção: os pareceres já foram aprovados antes de o projeto entrar em Desenvolvimento.
+- Todo projeto novo (cadastro manual ou carga massiva) nasce como Novo e em visualização interna; ao ter os pareceres de Ética e do Conselho aprovados, o sistema o move sozinho para Desenvolvimento (também quando ele estiver Pendente). A publicação para o público continua sendo ação da gestão.
 - Projetos Finalizados saem da listagem principal, mas continuam disponíveis na pesquisa e no histórico. Nenhum projeto é apagado ao mudar de estado.
 - Projetos antigos no estado "Em andamento" foram convertidos para Desenvolvimento.

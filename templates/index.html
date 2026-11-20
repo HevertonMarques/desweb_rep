@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Módulo 2: Controle — Sistema de Projetos Extensionistas UNIFACCAMP</title>
+  <title>DevTrack System — Sistema de Projetos Extensionistas UNIFACCAMP</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
   <style>
@@ -27,16 +27,16 @@
       <div>
         <!-- Brand Header com Logo UNIFACCAMP em cima e Módulo 2: Controle abaixo -->
         <div class="px-5 pt-5 pb-4 border-b border-slate-800/80 flex flex-col items-center text-center">
-          <div class="w-full flex items-center justify-center mb-3 bg-white/95 rounded-xl p-2.5 shadow-md">
+          <div class="w-full flex items-center justify-center mb-3 p-1">
             <img src="/static/logo_faccamp.png" alt="Logo UNIFACCAMP" class="max-h-12 w-auto object-contain" onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');" />
-            <div class="hidden flex items-center gap-2 text-slate-900 font-extrabold tracking-tight text-base">
+            <div class="hidden flex items-center gap-2 text-slate-100 font-extrabold tracking-tight text-base">
               <i class="fa-solid fa-graduation-cap text-indigo-700 text-xl"></i>
               <span>UNIFACCAMP</span>
             </div>
           </div>
           <div class="w-full">
-            <h1 class="text-sm font-bold text-slate-100">Módulo 2: Controle</h1>
-            <p class="text-[11px] text-slate-400">Registro Extensionista</p>
+            <h1 class="text-sm font-bold text-slate-100">DevTrack System</h1>
+            <p class="text-[11px] text-slate-400">Módulo 2: Controle</p>
           </div>
         </div>
 
@@ -199,7 +199,19 @@
               <div>
                 <div class="flex items-center justify-between mb-2">
                   <h4 class="text-xs font-bold text-slate-200 uppercase tracking-wider">Índice de Conformidade</h4>
-                  <i class="fa-solid fa-chart-pie text-indigo-400"></i>
+                  <div class="relative" id="conformidade-menu-container">
+                    <button type="button" id="conformidade-menu-toggle" onclick="toggleMenuConformidade()" aria-label="Alterar tipo de visualização" aria-haspopup="true" aria-expanded="false" title="Alterar tipo de visualização" class="w-9 h-9 rounded-lg bg-slate-900/80 border border-slate-700 hover:border-indigo-400 hover:bg-slate-800 flex items-center justify-center text-indigo-400 transition">
+                      <i id="conformidade-menu-icone" class="fa-solid fa-chart-line"></i>
+                    </button>
+                    <div id="conformidade-menu" class="hidden absolute right-0 top-full mt-2 z-50 min-w-[150px] rounded-lg border border-slate-700 bg-slate-950 shadow-xl p-1" role="menu" aria-label="Tipos de visualização">
+                      <button type="button" data-visao="linha" onclick="selecionarVisaoConformidade('linha')" class="w-full text-left px-3 py-2 rounded-md text-xs text-slate-200 hover:bg-slate-800" role="menuitem"><i class="fa-solid fa-chart-line w-5 text-indigo-400"></i> Linha</button>
+                      <button type="button" data-visao="tabela" onclick="selecionarVisaoConformidade('tabela')" class="w-full text-left px-3 py-2 rounded-md text-xs text-slate-200 hover:bg-slate-800" role="menuitem"><i class="fa-solid fa-table w-5 text-indigo-400"></i> Tabela</button>
+                      <button type="button" data-visao="pizza" onclick="selecionarVisaoConformidade('pizza')" class="w-full text-left px-3 py-2 rounded-md text-xs text-slate-200 hover:bg-slate-800" role="menuitem"><i class="fa-solid fa-chart-pie w-5 text-indigo-400"></i> Pizza</button>
+                      <button type="button" data-visao="rosca" onclick="selecionarVisaoConformidade('rosca')" class="w-full text-left px-3 py-2 rounded-md text-xs text-slate-200 hover:bg-slate-800" role="menuitem"><i class="fa-solid fa-circle-half-stroke w-5 text-indigo-400"></i> Rosca</button>
+                      <button type="button" data-visao="coluna" onclick="selecionarVisaoConformidade('coluna')" class="w-full text-left px-3 py-2 rounded-md text-xs text-slate-200 hover:bg-slate-800" role="menuitem"><i class="fa-solid fa-chart-column w-5 text-indigo-400"></i> Colunas</button>
+                      <button type="button" data-visao="barra" onclick="selecionarVisaoConformidade('barra')" class="w-full text-left px-3 py-2 rounded-md text-xs text-slate-200 hover:bg-slate-800" role="menuitem"><i class="fa-solid fa-chart-bar w-5 text-indigo-400"></i> Barras</button>
+                    </div>
+                  </div>
                 </div>
                 <p class="text-[11px] text-slate-400 mb-3">Projetos com Ética e Conselho aprovados frente ao total.</p>
               </div>
@@ -211,6 +223,15 @@
                 <div class="w-full h-2 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
                   <div id="taxa-conformidade-bar" class="h-full bg-indigo-500 w-0 transition-all duration-500"></div>
                 </div>
+                <div id="conformidade-visoes" class="flex flex-col gap-2 mt-3 mb-2">
+                  <div class="flex flex-wrap gap-1" aria-label="Análises adicionais">
+                    <button type="button" data-visao="situacao" onclick="mudarVisaoConformidade('situacao')" class="px-2 py-1 rounded-md text-[10px] font-semibold border border-slate-700">Ética × Conselho</button>
+                    <button type="button" data-visao="curso" onclick="mudarVisaoConformidade('curso')" class="px-2 py-1 rounded-md text-[10px] font-semibold border border-slate-700">Por curso</button>
+                    <button type="button" data-visao="orientador" onclick="mudarVisaoConformidade('orientador')" class="px-2 py-1 rounded-md text-[10px] font-semibold border border-slate-700">Por orientador</button>
+                    <button type="button" data-visao="estado" onclick="mudarVisaoConformidade('estado')" class="px-2 py-1 rounded-md text-[10px] font-semibold border border-slate-700">Por estado</button>
+                  </div>
+                </div>
+                <div id="conformidade-linha" class="w-full"></div>
               </div>
             </div>
 
@@ -397,8 +418,8 @@
                   <input type="text" id="proj-areas" required placeholder="Ex: Tecnologia, Educação, Gestão" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
                 </div>
                 <div>
-                  <label class="block text-xs font-medium text-slate-300 mb-1">Interdisciplinaridade *</label>
-                  <input type="text" id="proj-inter" required placeholder="Ex: Ciência da Computação + Administração" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
+                  <label class="block text-xs font-medium text-slate-300 mb-1">Interdisciplinaridade <span class="text-slate-500 font-normal">(opcional)</span></label>
+                  <input type="text" id="proj-inter" placeholder="Ex: Ciência da Computação + Administração" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
                 </div>
               </div>
 
@@ -541,9 +562,9 @@
               <table class="w-full text-left border-collapse">
                 <thead>
                   <tr class="border-b border-slate-800 text-[11px] font-semibold text-slate-400 uppercase bg-slate-950/40">
-                    <th class="py-3 px-4">RA</th>
-                    <th class="py-3 px-4">Nome</th>
-                    <th class="py-3 px-4">Perfil / Curso</th>
+                    <th class="py-3 px-4"><button type="button" onclick="ordenarUsuarios('ra')" class="uppercase font-semibold hover:text-indigo-300 inline-flex items-center gap-1" title="Ordenar por RA">RA <i id="sort-icon-ra" class="fa-solid fa-sort text-[10px] opacity-60"></i></button></th>
+                    <th class="py-3 px-4"><button type="button" onclick="ordenarUsuarios('nome')" class="uppercase font-semibold hover:text-indigo-300 inline-flex items-center gap-1" title="Ordenar por nome">Nome <i id="sort-icon-nome" class="fa-solid fa-sort text-[10px] opacity-60"></i></button></th>
+                    <th class="py-3 px-4"><button type="button" onclick="ordenarUsuarios('curso')" class="uppercase font-semibold hover:text-indigo-300 inline-flex items-center gap-1" title="Ordenar por perfil e curso">Perfil / Curso <i id="sort-icon-curso" class="fa-solid fa-sort text-[10px] opacity-60"></i></button></th>
                     <th class="py-3 px-4">Status de Acesso</th>
                     <th class="py-3 px-4 text-right">Ações</th>
                   </tr>
@@ -630,13 +651,37 @@
     </main>
   </div>
 
+  <!-- MODAL: CONSELHO DE CURSO -->
+  <div id="conselho-curso-modal" class="fixed inset-0 bg-slate-950/80 z-50 hidden flex items-center justify-center p-4">
+    <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-2xl space-y-4">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <h3 class="text-sm font-bold text-slate-100">Conselho de curso</h3>
+          <p id="conselho-curso-nome" class="text-[11px] text-slate-400"></p>
+        </div>
+        <button onclick="fecharConselhoCurso()" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800" title="Fechar"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <p class="text-[11px] text-slate-400">O orientador passa a votar apenas nos projetos cujo grupo tenha alunos do curso escolhido.</p>
+      <div id="conselho-curso-atuais" class="flex flex-wrap gap-1.5"></div>
+      <div class="flex gap-2">
+        <select id="conselho-curso-select" class="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500"></select>
+        <button onclick="incluirConselhoCurso()" class="px-3 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold">Incluir</button>
+      </div>
+    </div>
+  </div>
+
   <!-- TELA EXCLUSIVA DE LOGIN (APARECE SOZINHA COM LOGO GRANDE DA UNIFACCAMP NO TOPO) -->
-  <div id="login-modal" class="fixed inset-0 bg-slate-950 z-50 hidden flex flex-col items-center justify-center p-4 overflow-y-auto">
+<div id="login-modal" class="fixed inset-0 z-50 hidden flex flex-col md:flex-row items-stretch overflow-y-auto" style="background-color:#030a26;">
+    <!-- Foto da universidade, inteira e sem cortes -->
+    <div class="w-full md:w-1/2 h-64 md:h-auto shrink-0 flex items-center justify-center" style="background-color:#030a26;">
+      <img src="/static/tela_login_unifaccamp.jpg" alt="Prédio da UNIFACCAMP" class="max-w-full max-h-full object-contain" />
+    </div>
+    <div class="w-full md:w-1/2 flex-1 flex flex-col items-center justify-center p-4 bg-slate-950">
     <div class="w-full max-w-sm flex flex-col items-center">
       <!-- Logo UNIFACCAMP bem grande acima da caixa de login -->
-      <div class="w-full bg-white rounded-2xl p-5 mb-6 shadow-2xl flex flex-col items-center justify-center">
+      <div class="w-full mb-6 flex flex-col items-center justify-center">
         <img src="/static/logo_faccamp.png" alt="Logo UNIFACCAMP" class="max-h-24 w-auto object-contain" onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');" />
-        <div class="hidden flex items-center gap-3 text-slate-900 font-black tracking-tight text-2xl py-2">
+        <div class="hidden flex items-center gap-3 text-slate-100 font-black tracking-tight text-2xl py-2">
           <i class="fa-solid fa-graduation-cap text-indigo-700 text-3xl"></i>
           <span>UNIFACCAMP</span>
         </div>
@@ -647,7 +692,7 @@
         <div class="flex items-center justify-between mb-5">
           <div>
             <h3 class="text-base font-bold text-slate-100">Acessar o Sistema</h3>
-            <p class="text-[11px] text-slate-400">Módulo 2: Controle Extensionista</p>
+            <p class="text-[11px] text-slate-400">DevTrack System · Módulo 2: Controle</p>
           </div>
           <button onclick="closeLoginModal()" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800" title="Voltar para consulta pública">
             <i class="fa-solid fa-xmark text-base"></i>
@@ -682,6 +727,7 @@
         </form>
       </div>
     </div>
+  </div>
   </div>
 
   <!-- MODAL: TROCA DE SENHA (OBRIGATÓRIA NO 1º ACESSO E OPCIONAL A QUALQUER MOMENTO) -->
@@ -768,8 +814,8 @@
             <input type="text" id="edit-proj-areas" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100" />
           </div>
           <div>
-            <label class="block text-xs font-medium text-slate-300 mb-1">Interdisciplinaridade</label>
-            <input type="text" id="edit-proj-inter" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100" />
+            <label class="block text-xs font-medium text-slate-300 mb-1">Interdisciplinaridade <span class="text-slate-500 font-normal">(opcional)</span></label>
+            <input type="text" id="edit-proj-inter" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100" />
           </div>
           <div class="md:col-span-2">
             <label class="block text-xs font-medium text-slate-300 mb-1">Nome do Grupo</label>
@@ -894,7 +940,6 @@
           interdisciplinaridade: "Ciência da Computação + Elétrica",
           orientador_nome: "Nome completo de um orientador cadastrado",
           status: "PENDENTE",
-          publicado: true,
           grupo_nome: "Equipe Tech Extensão",
           membros: [
             { ra: "2026001", nome: "João Silva", status_participacao: "CONFIRMADO" },
@@ -945,6 +990,109 @@
       addMembroField("membros-list-create");
       await loadProjetos();
     });
+
+
+    // ===== Atualização ao vivo: consulta o servidor a cada poucos segundos e redesenha só quando algo mudou =====
+    const INTERVALO_AO_VIVO_MS = 4000;
+    let assinaturaProjetos = null, assinaturaUsuarios = null, assinaturaEstat = null, sincronizando = false;
+
+    let visaoConformidade = "linha";
+    let analiseConformidade = "indice";
+    const iconesVisaoConformidade = { linha: "fa-chart-line", tabela: "fa-table", pizza: "fa-chart-pie", rosca: "fa-circle-half-stroke", coluna: "fa-chart-column", barra: "fa-chart-bar" };
+    function toggleMenuConformidade() {
+      const menu = document.getElementById("conformidade-menu");
+      const toggle = document.getElementById("conformidade-menu-toggle");
+      if (!menu || !toggle) return;
+      const abrir = menu.classList.contains("hidden");
+      menu.classList.toggle("hidden", !abrir);
+      toggle.setAttribute("aria-expanded", String(abrir));
+    }
+    function selecionarVisaoConformidade(v) {
+      visaoConformidade = v;
+      const menu = document.getElementById("conformidade-menu");
+      const toggle = document.getElementById("conformidade-menu-toggle");
+      if (menu) menu.classList.add("hidden");
+      if (toggle) toggle.setAttribute("aria-expanded", "false");
+      renderProjetos();
+    }
+    function mudarVisaoConformidade(v) {
+      analiseConformidade = v;
+      renderProjetos();
+    }
+    document.addEventListener("click", event => {
+      const container = document.getElementById("conformidade-menu-container");
+      const menu = document.getElementById("conformidade-menu");
+      const toggle = document.getElementById("conformidade-menu-toggle");
+      if (container && menu && !container.contains(event.target)) {
+        menu.classList.add("hidden");
+        if (toggle) toggle.setAttribute("aria-expanded", "false");
+      }
+    });
+
+    function usuarioEditandoAgora() {
+      const el = document.activeElement;
+      return !!(el && el.closest && el.closest("form, [id$='-modal'], #pareceres-lista"));
+    }
+
+    async function sincronizarAoVivo() {
+      if (sincronizando || document.hidden || usuarioEditandoAgora()) return;
+      sincronizando = true;
+      try {
+        if (currentUser) {
+          const sessao = await fetch("/api/session");
+          if (sessao.ok) {
+            const novo = await sessao.json();
+            if (novo && novo.conselho !== currentUser.conselho) {
+              currentUser = { ...currentUser, conselho: novo.conselho };
+              updateUIForUser();
+            }
+          }
+        }
+        const resP = await fetch("/api/projetos");
+        if (resP.ok) {
+          const txt = await resP.text();
+          if (txt !== assinaturaProjetos && !usuarioEditandoAgora()) {
+            allProjetos = JSON.parse(txt);
+            renderProjetos(); renderPareceres(); renderMeusProjetos(); renderHistorico();
+            if (currentUser && currentUser.role === "aluno") renderAlunoGrupos();
+            assinaturaProjetos = txt;
+          }
+        }
+        if (currentUser && ["admin", "coordenador", "orientador"].includes(currentUser.role)) {
+          const resU = await fetch(`/api/usuarios?actor_role=${encodeURIComponent(currentUser.role)}`);
+          if (resU.ok) {
+            const txt = await resU.text();
+            if (txt !== assinaturaUsuarios && !usuarioEditandoAgora()) {
+              allUsuarios = JSON.parse(txt);
+              atualizarSeletorDeCursos();
+              renderUsuariosTable();
+              assinaturaUsuarios = txt;
+            }
+          }
+          const viewEst = document.getElementById("view-estatisticas");
+          if (viewEst && !viewEst.classList.contains("hidden")) {
+            const resE = await fetch("/api/estatisticas");
+            if (resE.ok) {
+              const txt = await resE.text();
+              if (txt !== assinaturaEstat && !usuarioEditandoAgora()) {
+                projetosEstatisticas = JSON.parse(txt);
+                renderTabelaEstatisticas();
+                assinaturaEstat = txt;
+              }
+            }
+          } else {
+            assinaturaEstat = null;
+          }
+        }
+      } catch (e) {
+        // falha de rede momentânea: tenta de novo no próximo ciclo
+      } finally {
+        sincronizando = false;
+      }
+    }
+
+    setInterval(sincronizarAoVivo, INTERVALO_AO_VIVO_MS);
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) sincronizarAoVivo(); });
 
     function popularDropdownCursosCadastro() {
       const sel = document.getElementById("user-new-curso");
@@ -1057,7 +1205,7 @@
         "pareceres": "Pareceres de Ética e Conselho",
         "estatisticas": "Painel Geral e Relatório Analítico",
       };
-      document.getElementById("page-title").textContent = titles[tab] || "Módulo 2: Controle";
+      document.getElementById("page-title").textContent = titles[tab] || "DevTrack System";
 
       if (window.innerWidth < 768) {
         document.getElementById("sidebar").classList.add("-translate-x-full");
@@ -1134,7 +1282,7 @@
       if (["admin", "coordenador", "orientador"].includes(currentUser.role)) {
         navRegistrar.classList.remove("hidden");
         navContas.classList.remove("hidden");
-        navPareceres.classList.remove("hidden");
+        if (currentUser.role !== "orientador" || currentUser.conselho) navPareceres.classList.remove("hidden");
         navEstatisticas.classList.remove("hidden");
         navHistorico.classList.remove("hidden");
         btnExportCsv.classList.remove("hidden");
@@ -1860,28 +2008,255 @@
         barConformidade.style.width = `${taxaConformidade}%`;
       }
 
+      // Visões do índice de conformidade: seletor no ícone do cabeçalho; análises adicionais permanecem como botões.
+      const boxLinha = document.getElementById("conformidade-linha");
+      const iconeAtual = document.getElementById("conformidade-menu-icone");
+      if (iconeAtual) {
+        iconeAtual.className = `fa-solid ${iconesVisaoConformidade[visaoConformidade] || "fa-chart-line"}`;
+      }
+      document.querySelectorAll("#conformidade-menu button[data-visao]").forEach(btn => {
+        const ativo = btn.dataset.visao === visaoConformidade;
+        btn.classList.toggle("bg-indigo-600", ativo);
+        btn.classList.toggle("text-white", ativo);
+        btn.classList.toggle("bg-slate-800", ativo);
+        btn.setAttribute("aria-current", ativo ? "true" : "false");
+      });
+      document.querySelectorAll("#conformidade-visoes button[data-visao]").forEach(btn => {
+        const ativo = btn.dataset.visao === analiseConformidade;
+        btn.className = `px-2 py-1 rounded-md text-[10px] font-semibold border ${ativo ? "bg-indigo-600 border-indigo-500 text-white" : "border-slate-700 text-slate-300 hover:bg-slate-800"}`;
+      });
+      if (boxLinha) {
+        const conforme = p => p.etica?.status === "APROVADO" && p.conselho?.status === "APROVADO";
+        const rotulos = { APROVADO: "Aprovado", REPROVADO: "Reprovado", PENDENTE: "Pendente" };
+        const estados = { NOVO: "Novo", PENDENTE: "Pendente", DESENVOLVIMENTO: "Desenvolvimento", CONCLUIDO: "Concluído", FINALIZADO: "Finalizado", LIBERADO_APRESENTACAO: "Liberado apresentação", AVALIADO: "Avaliado", CANCELADO: "Cancelado" };
+        const cel = "py-1.5 px-2";
+        const escapeTip = texto => escapeParecerHtml(String(texto ?? "")).replace(/\r?\n/g, "&#10;");
+        const detalhesProjeto = p => `${p.titulo || "Projeto sem título"} | ${dataBrasileira(p.criado_em)} | Ética: ${rotulos[p.etica?.status] || p.etica?.status || "Pendente"} | Conselho: ${rotulos[p.conselho?.status] || p.conselho?.status || "Pendente"}`;
+        const porMes = new Map();
+        visiveisPorPerfil.forEach(p => {
+          const iso = dataLocalISO(p.criado_em);
+          if (!iso) return;
+          const mes = iso.slice(0, 7);
+          if (!porMes.has(mes)) porMes.set(mes, { projetos: [], conformes: 0 });
+          const g = porMes.get(mes);
+          g.projetos.push(p);
+          if (conforme(p)) g.conformes++;
+        });
+        const meses = [...porMes.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+        const nomeMes = mes => {
+          const [ano, m] = mes.split("-").map(Number);
+          return new Date(ano, m - 1, 1).toLocaleDateString("pt-BR", { month: "short", year: "numeric" });
+        };
+        const tooltipMes = (mes, g) => `${nomeMes(mes)}\nProjetos adicionados: ${g.projetos.length}\nConformes: ${g.conformes}\n\n${g.projetos.map(detalhesProjeto).join("\n")}`;
+        const pct = n => totalVisiveis ? Math.round((n / totalVisiveis) * 100) : 0;
+        if (["curso", "orientador", "estado"].includes(analiseConformidade)) {
+          const chaveGrupo = p => analiseConformidade === "curso"
+            ? (p.cursos && p.cursos.length ? p.cursos : ["Sem curso identificado"])
+            : analiseConformidade === "orientador"
+              ? [(p.orientador_exibicao || p.orientador_nome || "Sem orientador")]
+              : [estados[p.status] || p.status || "Sem estado"];
+          const grupos = {};
+          visiveisPorPerfil.forEach(p => chaveGrupo(p).forEach(nome => {
+            grupos[nome] = grupos[nome] || { total: 0, ok: 0, projetos: [] };
+            grupos[nome].total++;
+            grupos[nome].projetos.push(p);
+            if (conforme(p)) grupos[nome].ok++;
+          }));
+          const dados = Object.entries(grupos).map(([nome, g]) => ({ nome, ...g, percentual: g.total ? Math.round(g.ok / g.total * 100) : 0 }))
+            .sort((a,b) => a.nome.localeCompare(b.nome, "pt-BR"));
+          const tituloGrupo = { curso: "Curso", orientador: "Orientador", estado: "Estado" }[analiseConformidade];
+          const tipGrupo = d => `${tituloGrupo}: ${d.nome}\nProjetos: ${d.total}\nConformes: ${d.ok}\nÍndice de conformidade: ${d.percentual}%\n\n${d.projetos.map(detalhesProjeto).join("\n")}`;
+          if (!dados.length) {
+            boxLinha.innerHTML = `<p class="text-[11px] text-slate-500">Sem dados para esta análise.</p>`;
+          } else if (visaoConformidade === "tabela") {
+            const linhas = dados.map(d => `<tr title="${escapeTip(tipGrupo(d))}" class="border-t border-slate-800 hover:bg-slate-800/50 cursor-help"><td class="${cel} text-slate-300">${escapeParecerHtml(d.nome)}</td><td class="${cel} text-right">${d.total}</td><td class="${cel} text-right">${d.ok}</td><td class="${cel} text-right text-indigo-300 font-semibold">${d.percentual}%</td></tr>`).join("");
+            boxLinha.innerHTML = `<div class="max-h-56 overflow-y-auto"><table class="w-full text-[11px] text-slate-200"><thead class="text-slate-400"><tr><th class="${cel} text-left">${tituloGrupo}</th><th class="${cel} text-right">Projetos</th><th class="${cel} text-right">Conformes</th><th class="${cel} text-right">Índice</th></tr></thead><tbody>${linhas}</tbody></table><p class="text-[10px] text-slate-500 mt-1">Passe o cursor sobre uma linha para ver os projetos do grupo.</p></div>`;
+          } else if (["pizza", "rosca"].includes(visaoConformidade)) {
+            const cores = ["#818cf8", "#34d399", "#f59e0b", "#38bdf8", "#f472b6", "#a78bfa", "#fb7185", "#2dd4bf"];
+            const total = dados.reduce((s,d) => s + d.total, 0);
+            let ang = -Math.PI/2;
+            const cx=110, cy=76, r=56;
+            const fatias = dados.map((d,i) => {
+              const a = d.total / total * Math.PI*2, fim=ang+a, x1=cx+r*Math.cos(ang), y1=cy+r*Math.sin(ang), x2=cx+r*Math.cos(fim), y2=cy+r*Math.sin(fim);
+              const path = dados.length===1 ? `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 1 1 ${x1-.01} ${y1-.01} Z` : `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${a>Math.PI?1:0} 1 ${x2} ${y2} Z`;
+              ang=fim; return `<path d="${path}" fill="${cores[i%cores.length]}" stroke="#0f172a" stroke-width="2"><title>${escapeTip(tipGrupo(d))}</title></path>`;
+            }).join("");
+            const furo = visaoConformidade === "rosca" ? `<circle cx="${cx}" cy="${cy}" r="29" fill="#020617"/><text x="${cx}" y="${cy+4}" text-anchor="middle" fill="#e2e8f0" font-size="12">${total}</text>` : "";
+            const legenda = dados.map((d,i)=>`<div class="flex items-center gap-2 text-[10px] text-slate-300"><span class="w-2.5 h-2.5 rounded-sm" style="background:${cores[i%cores.length]}"></span>${escapeParecerHtml(d.nome)}: ${d.total}</div>`).join("");
+            boxLinha.innerHTML = `<svg viewBox="0 0 220 152" class="w-full max-w-xs mx-auto" role="img" aria-label="Distribuição por ${tituloGrupo}">${fatias}${furo}</svg><div class="flex flex-col items-center gap-1 mt-1">${legenda}</div><p class="text-[10px] text-slate-500 text-center mt-1">Passe sobre uma fatia para consultar os projetos do grupo.</p>`;
+          } else if (["coluna", "barra"].includes(visaoConformidade)) {
+            const W=340,H=Math.max(150,dados.length*30+24),left=visaoConformidade==="barra"?112:28,right=8,top=10,bottom=visaoConformidade==="coluna"?28:10;
+            const plotW=W-left-right,plotH=H-top-bottom,max=Math.max(...dados.map(d=>d.total),1);
+            const barras=dados.map((d,i)=>{
+              const cor=["#818cf8","#34d399","#f59e0b","#38bdf8","#f472b6"][i%5];
+              if(visaoConformidade==="coluna") { const slot=plotW/dados.length,bw=Math.max(6,slot*.58),x=left+slot*i+(slot-bw)/2,h=d.total/max*plotH,y=top+plotH-h; return `<rect x="${x}" y="${y}" width="${bw}" height="${h}" rx="2" fill="${cor}"><title>${escapeTip(tipGrupo(d))}</title></rect><text x="${x+bw/2}" y="${H-5}" text-anchor="middle" font-size="8" fill="#94a3b8">${escapeParecerHtml(d.nome.slice(0,12))}</text>`; }
+              const slot=plotH/dados.length,bh=Math.min(20,slot*.62),y=top+slot*i+(slot-bh)/2,bw=d.total/max*plotW; return `<text x="${left-5}" y="${y+bh/2+3}" text-anchor="end" font-size="8" fill="#94a3b8">${escapeParecerHtml(d.nome.slice(0,17))}</text><rect x="${left}" y="${y}" width="${bw}" height="${bh}" rx="2" fill="${cor}"><title>${escapeTip(tipGrupo(d))}</title></rect>`;
+            }).join("");
+            boxLinha.innerHTML=`<div class="max-h-56 overflow-y-auto"><svg viewBox="0 0 ${W} ${H}" class="w-full h-auto" role="img" aria-label="Projetos por ${tituloGrupo}">${barras}</svg></div><p class="text-[10px] text-slate-500 text-center mt-1">Passe sobre a barra ou coluna para ver os projetos do grupo.</p>`;
+          } else {
+            const W=340,H=150,left=28,right=8,top=12,bottom=28,plotW=W-left-right,plotH=H-top-bottom,max=Math.max(...dados.map(d=>d.total),1);
+            const pts=dados.map((d,i)=>({x:dados.length===1?W/2:left+i*plotW/(dados.length-1),y:top+plotH-(d.total/max)*plotH,d}));
+            const poly=pts.map(p=>`${p.x},${p.y}`).join(" ");
+            const marcas=pts.map(p=>`<circle cx="${p.x}" cy="${p.y}" r="4" fill="#818cf8"><title>${escapeTip(tipGrupo(p.d))}</title></circle>`).join("");
+            boxLinha.innerHTML=`<svg viewBox="0 0 ${W} ${H}" class="w-full h-auto" role="img" aria-label="Projetos por ${tituloGrupo}"><polyline points="${poly}" fill="none" stroke="#818cf8" stroke-width="2"/>${marcas}</svg><p class="text-[10px] text-slate-500 text-center mt-1">Passe sobre um ponto para ver os projetos do grupo.</p>`;
+          }
+        } else if (analiseConformidade === "situacao") {
+          const statusLista = ["APROVADO", "PENDENTE", "REPROVADO"];
+          const statusDados = statusLista.map(st => ({
+            nome: rotulos[st],
+            etica: visiveisPorPerfil.filter(p => (p.etica?.status || "PENDENTE") === st).length,
+            conselho: visiveisPorPerfil.filter(p => (p.conselho?.status || "PENDENTE") === st).length,
+            projetosEtica: visiveisPorPerfil.filter(p => (p.etica?.status || "PENDENTE") === st),
+            projetosConselho: visiveisPorPerfil.filter(p => (p.conselho?.status || "PENDENTE") === st)
+          }));
+          const tipStatus = d => `Ética × Conselho | ${d.nome}\nÉtica: ${d.etica} projeto(s)\nConselho: ${d.conselho} projeto(s)\n\nÉtica:\n${d.projetosEtica.map(detalhesProjeto).join("\n")}\n\nConselho:\n${d.projetosConselho.map(detalhesProjeto).join("\n")}`;
+          if (visaoConformidade === "tabela") {
+            const linhas = statusDados.map(d => `<tr title="${escapeTip(tipStatus(d))}" class="border-t border-slate-800 hover:bg-slate-800/50 cursor-help"><td class="${cel} text-slate-300">${d.nome}</td><td class="${cel} text-right">${d.etica}</td><td class="${cel} text-right">${d.conselho}</td></tr>`).join("");
+            const html = `<table class="w-full text-[11px] text-slate-200"><thead class="text-slate-400"><tr><th class="${cel} text-left font-semibold">Parecer</th><th class="${cel} text-right font-semibold">Ética</th><th class="${cel} text-right font-semibold">Conselho</th></tr></thead><tbody>${linhas}<tr class="border-t border-slate-700 font-semibold"><td class="${cel}">Conformes (ambos aprovados)</td><td class="${cel} text-right" colspan="2">${aprovadosConformidade} de ${totalVisiveis}</td></tr></tbody></table>`;
+            boxLinha.innerHTML = `<div class="max-h-56 overflow-y-auto">${html}<p class="text-[10px] text-slate-500 mt-1">Passe o cursor sobre uma linha para consultar os projetos.</p></div>`;
+          } else if (["pizza", "rosca"].includes(visaoConformidade)) {
+            const fatias = [
+              { nome: "Ética aprovada", valor: statusDados[0].etica, cor: "#34d399", projetos: statusDados[0].projetosEtica },
+              { nome: "Ética pendente", valor: statusDados[1].etica, cor: "#f59e0b", projetos: statusDados[1].projetosEtica },
+              { nome: "Ética reprovada", valor: statusDados[2].etica, cor: "#fb7185", projetos: statusDados[2].projetosEtica },
+              { nome: "Conselho aprovado", valor: statusDados[0].conselho, cor: "#38bdf8", projetos: statusDados[0].projetosConselho },
+              { nome: "Conselho pendente", valor: statusDados[1].conselho, cor: "#a78bfa", projetos: statusDados[1].projetosConselho },
+              { nome: "Conselho reprovado", valor: statusDados[2].conselho, cor: "#f472b6", projetos: statusDados[2].projetosConselho }
+            ].filter(d => d.valor > 0);
+            const total = fatias.reduce((a,d) => a+d.valor, 0);
+            if (!total) boxLinha.innerHTML = `<p class="text-[11px] text-slate-500">Sem dados para esta análise.</p>`;
+            else {
+              let ang = -Math.PI/2; const cx=110, cy=78, r=58;
+              const paths = fatias.map(d => { const a=d.valor/total*Math.PI*2, fim=ang+a, x1=cx+r*Math.cos(ang), y1=cy+r*Math.sin(ang), x2=cx+r*Math.cos(fim), y2=cy+r*Math.sin(fim); const path=fatias.length===1?`M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 1 1 ${x1-.01} ${y1-.01} Z`:`M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${a>Math.PI?1:0} 1 ${x2} ${y2} Z`; ang=fim; return `<path d="${path}" fill="${d.cor}" stroke="#0f172a" stroke-width="2"><title>${escapeTip(`${d.nome}: ${d.valor}\n${d.projetos.map(detalhesProjeto).join("\n")}`)}</title></path>`; }).join("");
+              const furo=visaoConformidade==="rosca"?`<circle cx="${cx}" cy="${cy}" r="29" fill="#020617"/><text x="${cx}" y="${cy+4}" text-anchor="middle" fill="#e2e8f0" font-size="12">${total}</text>`:"";
+              const legenda=fatias.map(d=>`<div class="flex items-center gap-2 text-[10px] text-slate-300"><span class="w-2.5 h-2.5 rounded-sm" style="background:${d.cor}"></span>${d.nome}: ${d.valor}</div>`).join("");
+              boxLinha.innerHTML=`<svg viewBox="0 0 220 156" class="w-full max-w-xs mx-auto">${paths}${furo}</svg><div class="grid grid-cols-2 gap-1 mt-1">${legenda}</div>`;
+            }
+          } else if (["coluna", "barra"].includes(visaoConformidade)) {
+            const W=340, H=178, left=visaoConformidade==="barra"?112:28, right=8, top=12, bottom=visaoConformidade==="coluna"?28:8, plotW=W-left-right, plotH=H-top-bottom;
+            const max=Math.max(...statusDados.flatMap(d=>[d.etica,d.conselho]),1);
+            const barras=statusDados.map((d,i)=>{ const yslot=plotH/statusDados.length, colors=["#34d399","#f59e0b","#fb7185"]; if(visaoConformidade==="coluna"){ const slot=plotW/statusDados.length, bw=Math.min(18,slot*.28), gap=3, h1=d.etica/max*plotH, h2=d.conselho/max*plotH, x=left+slot*i+(slot-(bw*2+gap))/2; return `<rect x="${x}" y="${top+plotH-h1}" width="${bw}" height="${h1}" fill="#818cf8"><title>${escapeTip(`Ética | ${d.nome}: ${d.etica}\n${d.projetosEtica.map(detalhesProjeto).join("\n")}`)}</title></rect><rect x="${x+bw+gap}" y="${top+plotH-h2}" width="${bw}" height="${h2}" fill="#34d399"><title>${escapeTip(`Conselho | ${d.nome}: ${d.conselho}\n${d.projetosConselho.map(detalhesProjeto).join("\n")}`)}</title></rect><text x="${left+slot*i+slot/2}" y="${H-7}" text-anchor="middle" font-size="9" fill="#94a3b8">${d.nome}</text>`; } const bh=Math.min(9,yslot*.3), y=top+yslot*i+yslot/2-bh, w1=d.etica/max*plotW, w2=d.conselho/max*plotW; return `<text x="${left-5}" y="${y+bh+1}" text-anchor="end" font-size="9" fill="#94a3b8">${d.nome}</text><rect x="${left}" y="${y}" width="${w1}" height="${bh}" fill="#818cf8"><title>${escapeTip(`Ética | ${d.nome}: ${d.etica}\n${d.projetosEtica.map(detalhesProjeto).join("\n")}`)}</title></rect><rect x="${left}" y="${y+bh+2}" width="${w2}" height="${bh}" fill="#34d399"><title>${escapeTip(`Conselho | ${d.nome}: ${d.conselho}\n${d.projetosConselho.map(detalhesProjeto).join("\n")}`)}</title></rect>`; }).join("");
+            boxLinha.innerHTML=`<svg viewBox="0 0 ${W} ${H}" class="w-full h-auto">${barras}</svg><div class="flex justify-center gap-3 text-[10px] text-slate-300"><span>■ Ética</span><span class="text-emerald-400">■ Conselho</span></div>`;
+          } else {
+            const W=340,H=150,left=28,right=8,top=12,bottom=28,plotW=W-left-right,plotH=H-top-bottom,max=Math.max(...statusDados.flatMap(d=>[d.etica,d.conselho]),1);
+            const pontos=statusDados.map((d,i)=>({d,x:left+i*plotW/(statusDados.length-1),y1:top+plotH-d.etica/max*plotH,y2:top+plotH-d.conselho/max*plotH}));
+            const linha1=pontos.map(p=>`${p.x},${p.y1}`).join(" "), linha2=pontos.map(p=>`${p.x},${p.y2}`).join(" ");
+            const marcas=pontos.map(p=>`<circle cx="${p.x}" cy="${p.y1}" r="4" fill="#818cf8"><title>${escapeTip(`Ética | ${p.d.nome}: ${p.d.etica}\n${p.d.projetosEtica.map(detalhesProjeto).join("\n")}`)}</title></circle><circle cx="${p.x}" cy="${p.y2}" r="4" fill="#34d399"><title>${escapeTip(`Conselho | ${p.d.nome}: ${p.d.conselho}\n${p.d.projetosConselho.map(detalhesProjeto).join("\n")}`)}</title></circle><text x="${p.x}" y="${H-7}" text-anchor="middle" font-size="9" fill="#94a3b8">${p.d.nome}</text>`).join("");
+            boxLinha.innerHTML=`<svg viewBox="0 0 ${W} ${H}" class="w-full h-auto"><polyline points="${linha1}" fill="none" stroke="#818cf8" stroke-width="2"/><polyline points="${linha2}" fill="none" stroke="#34d399" stroke-width="2"/>${marcas}</svg><div class="flex justify-center gap-3 text-[10px] text-slate-300"><span>■ Ética</span><span class="text-emerald-400">■ Conselho</span></div>`;
+          }
+        } else if (visaoConformidade === "tabela") {
+          const linhas = meses.slice().reverse().map(([mes, g]) => {
+            const indice = g.projetos.length ? Math.round((g.conformes / g.projetos.length) * 100) : 0;
+            const tip = tooltipMes(mes, g);
+            return `<tr title="${escapeTip(tip)}" class="border-t border-slate-800 hover:bg-slate-800/50 cursor-help"><td class="${cel} text-slate-300">${escapeParecerHtml(nomeMes(mes))}</td><td class="${cel} text-right">${g.projetos.length}</td><td class="${cel} text-right">${g.conformes}</td><td class="${cel} text-right text-indigo-300 font-semibold">${indice}%</td></tr>`;
+          }).join("");
+          boxLinha.innerHTML = meses.length ? `<div class="max-h-56 overflow-y-auto"><table class="w-full text-[11px] text-slate-200"><thead class="text-slate-400"><tr><th class="${cel} text-left">Mês</th><th class="${cel} text-right">Adicionados</th><th class="${cel} text-right">Conformes</th><th class="${cel} text-right">Índice</th></tr></thead><tbody>${linhas}</tbody></table><p class="text-[10px] text-slate-500 mt-1">Passe o cursor sobre o mês para ver os projetos adicionados nele e seus status.</p></div>` : `<p class="text-[11px] text-slate-500">Sem projetos para exibir.</p>`;
+        } else if (["pizza", "rosca"].includes(visaoConformidade)) {
+          const nOk = aprovadosConformidade, nNao = Math.max(0, totalVisiveis - nOk);
+          const dados = [{ nome: "Conformes", valor: nOk, cor: "#34d399", projetos: visiveisPorPerfil.filter(conforme) }, { nome: "Não conformes", valor: nNao, cor: "#f59e0b", projetos: visiveisPorPerfil.filter(p => !conforme(p)) }].filter(x => x.valor > 0);
+          const total = dados.reduce((s, x) => s + x.valor, 0);
+          if (!total) boxLinha.innerHTML = `<p class="text-[11px] text-slate-500">Sem projetos para exibir.</p>`;
+          else {
+            let angulo = -Math.PI / 2;
+            const cx = 110, cy = 78, r = 58;
+            const caminhos = dados.map(d => {
+              const a = (d.valor / total) * Math.PI * 2, fim = angulo + a;
+              const x1 = cx + r * Math.cos(angulo), y1 = cy + r * Math.sin(angulo), x2 = cx + r * Math.cos(fim), y2 = cy + r * Math.sin(fim);
+              const grande = a > Math.PI ? 1 : 0;
+              const path = dados.length === 1 ? `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 1 1 ${x1 - 0.01} ${y1 - 0.01} Z` : `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${grande} 1 ${x2} ${y2} Z`;
+              const tip = `${d.nome}: ${d.valor} projeto(s) (${Math.round((d.valor / total) * 100)}%)\n\n${d.projetos.map(detalhesProjeto).join("\n")}`;
+              angulo = fim;
+              return `<path d="${path}" fill="${d.cor}" stroke="#0f172a" stroke-width="2"><title>${escapeTip(tip)}</title></path>`;
+            }).join("");
+            const donut = visaoConformidade === "rosca";
+            const svg = `<svg viewBox="0 0 220 156" class="w-full max-w-xs mx-auto" role="img" aria-label="Distribuição de conformidade"><g>${caminhos}</g>${donut ? `<circle cx="${cx}" cy="${cy}" r="30" fill="#020617"/><text x="${cx}" y="${cy-2}" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="700">${total}</text><text x="${cx}" y="${cy+10}" text-anchor="middle" fill="#94a3b8" font-size="8">projetos</text>` : ""}</svg>`;
+            const legenda = dados.map(d => `<div class="flex items-center gap-2 text-[10px] text-slate-300"><span class="w-2.5 h-2.5 rounded-sm" style="background:${d.cor}"></span>${d.nome}: ${d.valor} (${Math.round((d.valor / total) * 100)}%)</div>`).join("");
+            boxLinha.innerHTML = `${svg}<div class="flex flex-col items-center gap-1 mt-1">${legenda}</div><p class="text-[10px] text-slate-500 text-center mt-1">Passe sobre uma fatia para consultar os projetos que compõem o grupo.</p>`;
+          }
+        } else if (["coluna", "barra"].includes(visaoConformidade)) {
+          if (!meses.length) boxLinha.innerHTML = `<p class="text-[11px] text-slate-500">Sem projetos para exibir.</p>`;
+          else {
+            const W = 340, H = 150, left = visaoConformidade === "barra" ? 112 : 28, right = 8, top = 12, bottom = 26;
+            const plotW = W - left - right, plotH = H - top - bottom;
+            const max = Math.max(...meses.map(([,g]) => g.projetos.length), 1);
+            const itens = meses.map(([mes,g],i) => {
+              const count = g.projetos.length, tip = tooltipMes(mes,g);
+              if (visaoConformidade === "coluna") {
+                const slot = plotW / meses.length, bw = Math.max(5, slot * .58), x = left + slot * i + (slot-bw)/2, h = (count/max)*plotH, y = top+plotH-h;
+                return `<rect x="${x}" y="${y}" width="${bw}" height="${h}" rx="2" fill="#818cf8"><title>${escapeTip(tip)}</title></rect><text x="${x+bw/2}" y="${H-8}" text-anchor="middle" font-size="8" fill="#94a3b8">${escapeParecerHtml(nomeMes(mes))}</text>`;
+              } else {
+                const slot = plotH / meses.length, bh = Math.max(5, slot*.58), y = top + slot*i+(slot-bh)/2, bw = (count/max)*plotW;
+                const label = nomeMes(mes);
+                return `<text x="${left-5}" y="${y+bh/2+3}" text-anchor="end" font-size="8" fill="#94a3b8">${escapeParecerHtml(label)}</text><rect x="${left}" y="${y}" width="${bw}" height="${bh}" rx="2" fill="#818cf8"><title>${escapeTip(tip)}</title></rect>`;
+              }
+            }).join("");
+            boxLinha.innerHTML = `<svg viewBox="0 0 ${W} ${H}" class="w-full h-auto" role="img" aria-label="Projetos adicionados por mês">${visaoConformidade === "coluna" ? `<line x1="${left}" y1="${top+plotH}" x2="${W-right}" y2="${top+plotH}" stroke="#475569"/>` : ""}${itens}</svg><p class="text-[10px] text-slate-500 text-center mt-1">Passe sobre a barra/coluna para ver os projetos adicionados no mês.</p>`;
+          }
+        } else {
+          // Evolução: preserva o gráfico de linha existente, com tooltip de projetos criados no dia.
+          const ordenados = [...visiveisPorPerfil].sort((x, y) => String(x.criado_em).localeCompare(String(y.criado_em)) || x.id - y.id);
+          const porDia = new Map();
+          let acumTotal = 0, acumOk = 0;
+          ordenados.forEach(p => {
+            acumTotal++;
+            if (conforme(p)) acumOk++;
+            const dia = dataLocalISO(p.criado_em);
+            if (!dia) return;
+            const g = porDia.get(dia) || { indice: 0, projetos: [] };
+            g.indice = Math.round((acumOk / acumTotal) * 100);
+            g.projetos.push(p);
+            porDia.set(dia, g);
+          });
+          const pontos = [...porDia.entries()];
+          if (pontos.length === 0) boxLinha.innerHTML = `<p class="text-[11px] text-slate-500">Sem projetos para o gráfico.</p>`;
+          else {
+            const W = 340, H = 130, mx = 30, my = 10;
+            const px = i => pontos.length === 1 ? W/2 : mx + (i*(W-mx-8))/(pontos.length-1);
+            const py = v => H-my-(v/100)*(H-2*my);
+            const linha = pontos.map(([,g],i) => `${px(i).toFixed(1)},${py(g.indice).toFixed(1)}`).join(" ");
+            const grade = [0,50,100].map(v => `<line x1="${mx}" x2="${W-8}" y1="${py(v)}" y2="${py(v)}" stroke="#334155" stroke-dasharray="3 3" stroke-width="0.5"/><text x="${mx-4}" y="${py(v)+3}" text-anchor="end" font-size="8" fill="#94a3b8">${v}%</text>`).join("");
+            const bolas = pontos.map(([d,g],i) => {
+              const tip = `${dataBrasileira(d+"T12:00:00")}\nÍndice acumulado: ${g.indice}%\nProjetos adicionados no dia: ${g.projetos.length}\n\n${g.projetos.map(detalhesProjeto).join("\n")}`;
+              return `<circle cx="${px(i).toFixed(1)}" cy="${py(g.indice).toFixed(1)}" r="3.5" fill="#818cf8"><title>${escapeTip(tip)}</title></circle>`;
+            }).join("");
+            const rot = i => `<text x="${px(i).toFixed(1)}" y="${H-1}" text-anchor="${i===0?"start":"end"}" font-size="8" fill="#94a3b8">${dataBrasileira(pontos[i][0]+"T12:00:00")}</text>`;
+            boxLinha.innerHTML = `<svg viewBox="0 0 ${W} ${H+4}" class="w-full h-auto" role="img" aria-label="Evolução do índice de conformidade">${grade}<polyline points="${linha}" fill="none" stroke="#818cf8" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>${bolas}${rot(0)}${pontos.length>1?rot(pontos.length-1):""}</svg><p class="text-[10px] text-slate-500 text-center mt-1">Passe sobre um ponto para ver os projetos adicionados naquele dia.</p>`;
+          }
+        }
+      }
+
+
+      // Cada área de atuação vira uma linha própria; as demais áreas do mesmo projeto aparecem entre parênteses.
       const categoriasContagem = {};
+      const coAreas = {};
       visiveisPorPerfil.forEach(p => {
-        const area = (p.areas_atuacao || "Geral").trim();
-        categoriasContagem[area] = (categoriasContagem[area] || 0) + 1;
+        const lista = [...new Set((p.areas_atuacao || "Geral").split(/[,;\/]+/).map(x => x.trim()).filter(Boolean))];
+        if (lista.length === 0) lista.push("Geral");
+        lista.forEach(area => {
+          const chave = area.toLowerCase();
+          if (!categoriasContagem[chave]) { categoriasContagem[chave] = { nome: area, qtd: 0 }; coAreas[chave] = {}; }
+          categoriasContagem[chave].qtd++;
+          lista.filter(o => o !== area).forEach(o => { coAreas[chave][o.toLowerCase()] = o; });
+        });
       });
 
       const catContainer = document.getElementById("categorias-distribuicao-container");
       if (catContainer) {
-        const maxCat = Math.max(...Object.values(categoriasContagem), 1);
-        catContainer.innerHTML = Object.keys(categoriasContagem).length === 0 
+        const entradas = Object.entries(categoriasContagem).sort((x, y) => y[1].qtd - x[1].qtd || x[1].nome.localeCompare(y[1].nome, "pt-BR"));
+        const maxCat = Math.max(...entradas.map(([, v]) => v.qtd), 1);
+        catContainer.innerHTML = entradas.length === 0
           ? `<p class="text-[11px] text-slate-500">Sem dados de categorias registados.</p>`
-          : Object.entries(categoriasContagem).map(([cat, qtd]) => {
-              const percentual = Math.round((qtd / totalVisiveis) * 100);
+          : entradas.map(([chave, info]) => {
+              const percentual = totalVisiveis ? Math.round((info.qtd / totalVisiveis) * 100) : 0;
+              const temOutras = Object.keys(coAreas[chave]).length > 0;
+              const sufixo = temOutras ? ` <span class="text-slate-500 font-normal">(podendo ter outras áreas)</span>` : "";
               return `
-                <div>
-                  <div class="flex justify-between text-[11px] mb-1">
-                    <span class="text-slate-300 font-medium">${cat}</span>
-                    <span class="text-slate-400">${qtd} projeto(s) (${percentual}%)</span>
+                <div class="flex items-center gap-3 text-[11px]">
+                  <div class="w-[45%] shrink-0 min-w-0 text-slate-300 font-medium break-words" title="${escapeParecerHtml(info.nome)}${temOutras ? " (podendo ter outras áreas)" : ""}">${escapeParecerHtml(info.nome)}${sufixo}</div>
+                  <div class="flex-1 h-1.5 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
+                    <div class="h-full bg-emerald-500 rounded-full transition-all duration-500" style="width: ${(info.qtd / maxCat) * 100}%"></div>
                   </div>
-                  <div class="w-full h-1.5 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
-                    <div class="h-full bg-emerald-500 rounded-full transition-all duration-500" style="width: ${(qtd / maxCat) * 100}%"></div>
-                  </div>
+                  <div class="shrink-0 text-slate-400 whitespace-nowrap">${info.qtd} projeto(s) (${percentual}%)</div>
                 </div>
               `;
             }).join("");
@@ -1979,7 +2354,7 @@
 
               <div class="space-y-1 text-[11px] text-slate-300 mb-3">
                 <div><span class="text-slate-500">Áreas:</span> ${p.areas_atuacao}</div>
-                <div><span class="text-slate-500">Interdisciplinaridade:</span> ${p.interdisciplinaridade}</div>
+                <div><span class="text-slate-500">Interdisciplinaridade:</span> ${p.interdisciplinaridade || "—"}</div>
                 <div><span class="text-slate-500">Orientador(es):</span> ${p.orientador_exibicao}</div>
               </div>
 
@@ -2249,7 +2624,7 @@
       document.getElementById("edit-proj-titulo").value = p.titulo;
       document.getElementById("edit-proj-setor").value = p.setor_externo;
       document.getElementById("edit-proj-areas").value = p.areas_atuacao;
-      document.getElementById("edit-proj-inter").value = p.interdisciplinaridade;
+      document.getElementById("edit-proj-inter").value = p.interdisciplinaridade || "";
       document.getElementById("edit-proj-grupo").value = p.grupo?.nome || "";
       const nomesOri = String(p.orientador_nome || "").split(",").map(s => s.trim()).filter(Boolean);
       renderChecklistOrientadores("orientadores-checklist-edit", nomesOri);
@@ -2478,6 +2853,18 @@
       renderUsuariosTable();
     }
 
+    const ordenacaoUsuarios = { campo: null, dir: "asc" };
+
+    function ordenarUsuarios(campo) {
+      if (ordenacaoUsuarios.campo === campo) {
+        ordenacaoUsuarios.dir = ordenacaoUsuarios.dir === "asc" ? "desc" : "asc";
+      } else {
+        ordenacaoUsuarios.campo = campo;
+        ordenacaoUsuarios.dir = "asc";
+      }
+      renderUsuariosTable();
+    }
+
     function renderUsuariosTable() {
       const tbody = document.getElementById("usuarios-table-body");
       if (!tbody || !currentUser) return;
@@ -2494,6 +2881,17 @@
       const filtrados = visiveisPorHierarquia.filter(u => {
         if (cursoFiltro !== "TODOS" && (u.curso || "").trim() !== cursoFiltro) return false;
         return u.nome.toLowerCase().includes(query) || u.ra.toLowerCase().includes(query);
+      });
+
+      const chaveOrd = ordenacaoUsuarios.campo;
+      if (chaveOrd) {
+        const dir = ordenacaoUsuarios.dir === "desc" ? -1 : 1;
+        const valor = u => chaveOrd === "curso" ? `${u.role} ${u.curso || ""}` : (u[chaveOrd] || "");
+        filtrados.sort((x, y) => dir * String(valor(x)).localeCompare(String(valor(y)), "pt-BR", { numeric: true, sensitivity: "base" }));
+      }
+      ["ra", "nome", "curso"].forEach(c => {
+        const ic = document.getElementById(`sort-icon-${c}`);
+        if (ic) ic.className = `fa-solid ${chaveOrd === c ? (ordenacaoUsuarios.dir === "desc" ? "fa-sort-down text-indigo-300" : "fa-sort-up text-indigo-300") : "fa-sort opacity-60"} text-[10px]`;
       });
 
       if (filtrados.length === 0) {
@@ -2523,6 +2921,10 @@
           ? `<button onclick="alternarMembroConselho(${u.id}, '${u.nome.replace(/'/g, "\\'")}', ${!u.conselho})" class="px-2.5 py-1 ${u.conselho ? "bg-violet-600/20 text-violet-300 border-violet-500/40 hover:bg-red-950/60 hover:text-red-300" : "bg-slate-800 text-slate-200 border-slate-700 hover:bg-violet-600 hover:text-white"} border text-[11px] font-semibold rounded-lg transition-colors" title="${u.conselho ? "Remover do Conselho" : "Incluir no Conselho"}"><i class="fa-solid ${u.conselho ? "fa-user-minus" : "fa-user-plus"} mr-1"></i> ${u.conselho ? "Remover do Conselho" : "Incluir no Conselho"}</button>`
           : "";
 
+        const btnConselhoCurso = (canUnlock && u.role === "orientador")
+          ? `<button onclick="abrirConselhoCurso(${u.id})" class="px-2.5 py-1 bg-slate-800 text-slate-200 border border-slate-700 hover:bg-violet-600 hover:text-white text-[11px] font-semibold rounded-lg transition-colors" title="Incluir ou remover do Conselho de um curso específico"><i class="fa-solid fa-graduation-cap mr-1"></i> Conselho de curso</button>`
+          : "";
+
         const btnExcluir = (u.role !== "admin")
           ? `<button onclick="deletarUsuario(${u.id})" class="p-1.5 text-red-400 hover:text-red-300 hover:bg-red-950/50 rounded-lg transition-colors" title="Excluir conta"><i class="fa-solid fa-trash"></i></button>`
           : `<span class="text-[10px] text-slate-600">Protegido</span>`;
@@ -2535,7 +2937,7 @@
               <div class="text-[11px] text-slate-400">${u.email}</div>
             </td>
             <td class="py-2.5 px-4">
-              <div class="uppercase text-[10px] font-bold text-indigo-400">${u.role}${u.conselho ? ' <span class="ml-1 px-1.5 py-0.5 rounded bg-violet-500/20 text-violet-300 border border-violet-500/40">Conselho</span>' : ""}</div>
+              <div class="uppercase text-[10px] font-bold text-indigo-400">${u.role}${u.conselho ? ' <span class="ml-1 px-1.5 py-0.5 rounded bg-violet-500/20 text-violet-300 border border-violet-500/40">Conselho</span>' : ""}${(u.conselho_cursos || []).map(c => ` <span class="ml-1 px-1.5 py-0.5 rounded bg-fuchsia-500/20 text-fuchsia-300 border border-fuchsia-500/40" title="Membro do Conselho deste curso">Conselho: ${escapeParecerHtml(c)}</span>`).join("")}</div>
               <div class="text-[11px] text-slate-300">${u.curso || "—"}</div>
             </td>
             <td class="py-2.5 px-4">${statusBadge}</td>
@@ -2543,6 +2945,7 @@
               <div class="inline-flex flex-wrap items-center justify-end gap-1.5">
                 ${btnDesbloquear}
                 ${btnConselho}
+                ${btnConselhoCurso}
                 ${btnRedefinirSenha}
                 ${btnExcluir}
               </div>
@@ -2566,6 +2969,62 @@
       }
       await loadUsuarios();
       alert(data.message);
+    }
+
+    let conselhoCursoAlvoId = null;
+
+    function abrirConselhoCurso(id) {
+      conselhoCursoAlvoId = id;
+      renderConselhoCursoModal();
+      document.getElementById("conselho-curso-modal").classList.remove("hidden");
+    }
+
+    function fecharConselhoCurso() {
+      document.getElementById("conselho-curso-modal").classList.add("hidden");
+      conselhoCursoAlvoId = null;
+    }
+
+    function renderConselhoCursoModal() {
+      const u = allUsuarios.find(x => x.id === conselhoCursoAlvoId);
+      if (!u) return;
+      document.getElementById("conselho-curso-nome").textContent = u.nome;
+      const atuais = u.conselho_cursos || [];
+      document.getElementById("conselho-curso-atuais").innerHTML = atuais.length
+        ? atuais.map(c => `<span class="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] bg-fuchsia-500/20 text-fuchsia-300 border border-fuchsia-500/40">${escapeParecerHtml(c)} <button type="button" onclick="removerConselhoCurso(decodeURIComponent('${encodeURIComponent(c)}'))" class="hover:text-red-300" title="Remover do Conselho deste curso"><i class="fa-solid fa-xmark"></i></button></span>`).join("")
+        : `<span class="text-[11px] text-slate-500">Nenhum Conselho de curso atribuído.</span>`;
+      const extras = allUsuarios.map(x => (x.curso || "").trim()).filter(c => c && !CURSOS_UNIFACCAMP.includes(c));
+      const cursos = [...new Set([...CURSOS_UNIFACCAMP, ...extras])]
+        .filter(c => !atuais.some(a => a.toLowerCase() === c.toLowerCase()))
+        .sort((a, b) => a.localeCompare(b, "pt-BR"));
+      document.getElementById("conselho-curso-select").innerHTML = cursos.length
+        ? cursos.map(c => `<option value="${escapeParecerHtml(c)}">${escapeParecerHtml(c)}</option>`).join("")
+        : `<option value="">Nenhum curso disponível</option>`;
+    }
+
+    async function alterarConselhoCurso(curso, incluir) {
+      const res = await fetch(`/api/usuarios/${conselhoCursoAlvoId}/conselho-curso`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ curso, membro: incluir })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Erro ao atualizar o Conselho do curso.");
+        return;
+      }
+      await loadUsuarios();
+      await loadProjetos();
+      renderConselhoCursoModal();
+    }
+
+    function incluirConselhoCurso() {
+      const curso = document.getElementById("conselho-curso-select").value;
+      if (!curso) return;
+      alterarConselhoCurso(curso, true);
+    }
+
+    function removerConselhoCurso(curso) {
+      alterarConselhoCurso(curso, false);
     }
 
     async function alternarMembroConselho(id, nome, incluir) {

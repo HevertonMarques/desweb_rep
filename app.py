@@ -124,7 +124,7 @@ def init_db():
             titulo TEXT NOT NULL,
             setor_externo TEXT NOT NULL,
             areas_atuacao TEXT NOT NULL,
-            interdisciplinaridade TEXT NOT NULL,
+            interdisciplinaridade TEXT NOT NULL DEFAULT '',
             status TEXT DEFAULT 'NOVO',
             publicado INTEGER DEFAULT 0,
             orientador_nome TEXT NOT NULL,
@@ -163,6 +163,16 @@ def init_db():
             orientador_id INTEGER NOT NULL UNIQUE,
             adicionado_por TEXT DEFAULT '',
             criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (orientador_id) REFERENCES usuarios(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS conselho_cursos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            orientador_id INTEGER NOT NULL,
+            curso TEXT NOT NULL,
+            adicionado_por TEXT DEFAULT '',
+            criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(orientador_id, curso),
             FOREIGN KEY (orientador_id) REFERENCES usuarios(id) ON DELETE CASCADE
         );
 
@@ -242,7 +252,24 @@ def usuario_logado():
             "COALESCE(exibicao_nome, 'completo') AS exibicao_nome "
             "FROM usuarios WHERE id = ?", (user_id,)
         ).fetchone()
-        return dict(row) if row else None
+        if not row:
+            return None
+        dados = dict(row)
+        dados["conselho"] = dados["role"] == "orientador" and orientador_no_conselho(dados["id"])
+        return dados
+    finally:
+        conn.close()
+
+
+def orientador_no_conselho(usuario_id):
+    """True se o orientador integra o Conselho geral ou o de algum curso."""
+    conn = get_db_connection()
+    try:
+        return bool(conn.execute(
+            "SELECT 1 FROM conselho_membros WHERE orientador_id = ? "
+            "UNION SELECT 1 FROM conselho_cursos WHERE orientador_id = ? LIMIT 1",
+            (usuario_id, usuario_id)
+        ).fetchone())
     finally:
         conn.close()
 
@@ -390,6 +417,7 @@ def montar_projeto(cursor, linha, usuario):
     # `orientador_exibicao` é o que a tela mostra. A gestão também recebe o nome completo em `orientador_nome`
     # (usado em formulários, na verificação de "projeto meu" e na exportação); os demais só recebem o de exibição.
     p["orientador_exibicao"] = mascarar_nomes_gestao(cursor, p["orientador_nome"])
+    p["cursos"] = cursos_do_projeto(cursor, p["id"], original=True)
     if not (usuario and usuario["role"] in PERFIS_GESTAO):
         p["orientador_nome"] = p["orientador_exibicao"]
     cursor.execute("SELECT * FROM grupos WHERE projeto_id = ?", (p["id"],))
@@ -417,24 +445,81 @@ def exigir_acesso_relatorios():
     return None
 
 
+def cursos_do_projeto(cursor, projeto_id, original=False):
+    """Cursos dos alunos do grupo do projeto (em minúsculas, ou como cadastrados se original=True), exceto quem recusou participar."""
+    cursor.execute(
+        """SELECT DISTINCT TRIM(u.curso) AS curso
+           FROM grupos g
+           JOIN grupo_membros gm ON gm.grupo_id = g.id AND gm.status_participacao != 'RECUSADO'
+           JOIN usuarios u ON LOWER(u.ra) = LOWER(gm.ra) AND u.role = 'aluno'
+           WHERE g.projeto_id = ? AND TRIM(COALESCE(u.curso, '')) != ''""",
+        (projeto_id,)
+    )
+    if original:
+        return sorted({r["curso"] for r in cursor.fetchall()}, key=str.lower)
+    return {r["curso"].lower() for r in cursor.fetchall()}
+
+
+def ids_conselho_do_projeto(cursor, projeto_id):
+    """Orientadores que compõem o Conselho deste projeto.
+
+    Membros gerais (todos os cursos) + membros de curso cujo curso coincide com o de algum aluno do projeto.
+    """
+    cursor.execute("SELECT orientador_id FROM conselho_membros")
+    ids = {r["orientador_id"] for r in cursor.fetchall()}
+    cursos = cursos_do_projeto(cursor, projeto_id)
+    if cursos:
+        cursor.execute("SELECT orientador_id, curso FROM conselho_cursos")
+        for r in cursor.fetchall():
+            if r["curso"].strip().lower() in cursos:
+                ids.add(r["orientador_id"])
+    return ids
+
+
+def avancar_para_desenvolvimento(cursor, projeto_id=None):
+    """Move para DESENVOLVIMENTO os projetos NOVO ou PENDENTE com parecer de Ética e do Conselho aprovados.
+
+    Com projeto_id (parecer ou voto registrado), avalia projetos NOVO ou PENDENTE.
+    Sem projeto_id (composição do Conselho mudou), avalia só os NOVO, para não desfazer
+    um PENDENTE que alguém colocou de propósito num projeto já aprovado.
+    Retorna os ids dos projetos que avançaram.
+    """
+    if projeto_id is None:
+        cursor.execute("SELECT id FROM projetos WHERE status = 'NOVO'")
+    else:
+        cursor.execute("SELECT id FROM projetos WHERE id = ? AND status IN ('NOVO', 'PENDENTE')", (projeto_id,))
+    avancados = []
+    for linha in cursor.fetchall():
+        pid = linha["id"]
+        cursor.execute("SELECT status FROM pareceres_etica WHERE projeto_id = ?", (pid,))
+        etica = cursor.fetchone()
+        if etica and etica["status"] == "APROVADO" and calcular_conselho(cursor, pid)["status"] == "APROVADO":
+            cursor.execute("UPDATE projetos SET status = 'DESENVOLVIMENTO' WHERE id = ?", (pid,))
+            avancados.append(pid)
+    return avancados
+
+
 def calcular_conselho(cursor, projeto_id, mascarar=False):
     """Monta o parecer do Conselho a partir do voto individual de cada orientador.
 
-    Participam apenas os orientadores incluídos no Conselho por Coordenador/Administrador.
+    Participam os orientadores incluídos no Conselho (geral) e os incluídos no Conselho
+    do curso dos alunos do projeto, por Coordenador/Administrador.
     Regra: APROVADO quando mais da metade dos membros aprovou;
     REPROVADO quando a aprovação deixou de ser possível; senão PENDENTE.
     """
+    ids = sorted(ids_conselho_do_projeto(cursor, projeto_id))
+    marcas = ",".join("?" for _ in ids) or "NULL"
     cursor.execute(
-        """SELECT u.id AS orientador_id, u.nome AS nome,
+        f"""SELECT u.id AS orientador_id, u.nome AS nome,
                   COALESCE(u.exibicao_nome, 'completo') AS exibicao_nome,
                   COALESCE(v.status, 'PENDENTE') AS status,
                   COALESCE(v.comentario, '') AS comentario,
                   v.atualizado_em AS atualizado_em
-           FROM conselho_membros cm
-           JOIN usuarios u ON u.id = cm.orientador_id AND u.role = 'orientador'
+           FROM usuarios u
            LEFT JOIN votos_conselho v ON v.orientador_id = u.id AND v.projeto_id = ?
+           WHERE u.role = 'orientador' AND u.id IN ({marcas})
            ORDER BY u.nome COLLATE NOCASE""",
-        (projeto_id,)
+        (projeto_id, *ids)
     )
     votos = [dict(r) for r in cursor.fetchall()]
     # Na tela, o nome de cada orientador segue a preferência de exibição dele, para todos.
@@ -445,19 +530,26 @@ def calcular_conselho(cursor, projeto_id, mascarar=False):
     total = len(votos)
     aprovados = sum(1 for v in votos if v["status"] == "APROVADO")
     reprovados = sum(1 for v in votos if v["status"] == "REPROVADO")
+    votantes = aprovados + reprovados
+    todos_votaram = total > 0 and votantes == total
 
-    if total == 0:
+    # O Conselho só consolida o parecer depois que todos os membros elegíveis votarem.
+    # Maioria antes disso não aprova nem reprova o projeto: permanece PENDENTE.
+    if not todos_votaram:
         status = "PENDENTE"
     elif aprovados * 2 > total:
         status = "APROVADO"
-    elif reprovados * 2 >= total:
+    elif reprovados * 2 > total:
         status = "REPROVADO"
     else:
+        # Empate após todos votarem continua pendente, sem liberar o projeto.
         status = "PENDENTE"
 
     return {
         "status": status,
         "total": total,
+        "votantes": votantes,
+        "todos_votaram": todos_votaram,
         "aprovados": aprovados,
         "reprovados": reprovados,
         "votos": votos
@@ -554,7 +646,8 @@ def login():
         "role": user["role"],
         "curso": user["curso"],
         "primeiro_acesso": bool(user["primeiro_acesso"]),
-        "exibicao_nome": user["exibicao_nome"]
+        "exibicao_nome": user["exibicao_nome"],
+        "conselho": user["role"] == "orientador" and orientador_no_conselho(user["id"])
     })
 
 
@@ -737,8 +830,13 @@ def listar_usuarios():
     users = [dict(row) for row in cursor.fetchall()]
     cursor.execute("SELECT orientador_id FROM conselho_membros")
     ids_conselho = {r["orientador_id"] for r in cursor.fetchall()}
+    cursor.execute("SELECT orientador_id, curso FROM conselho_cursos ORDER BY curso COLLATE NOCASE")
+    cursos_conselho = {}
+    for r in cursor.fetchall():
+        cursos_conselho.setdefault(r["orientador_id"], []).append(r["curso"])
     for u in users:
         u["conselho"] = u["id"] in ids_conselho
+        u["conselho_cursos"] = cursos_conselho.get(u["id"], [])
     cursor.close()
     conn.close()
     return jsonify(users)
@@ -772,10 +870,52 @@ def alterar_membro_conselho(user_id):
         )
     else:
         cursor.execute("DELETE FROM conselho_membros WHERE orientador_id = ?", (user_id,))
+    avancar_para_desenvolvimento(cursor)
     conn.commit()
     cursor.close()
     conn.close()
     return jsonify({"message": "Orientador incluído no Conselho." if membro else "Orientador removido do Conselho."})
+
+
+@app.route("/api/usuarios/<int:user_id>/conselho-curso", methods=["PATCH"])
+def alterar_membro_conselho_curso(user_id):
+    """Inclui ou remove um orientador do Conselho de um curso específico (Coordenador ou Administrador)."""
+    usuario = usuario_logado()
+    if not usuario:
+        return jsonify({"error": "Faça login para continuar."}), 401
+    if usuario["role"] not in ("admin", "coordenador"):
+        return jsonify({"error": "Apenas Coordenadores e o Administrador podem definir os membros do Conselho."}), 403
+
+    data = request.get_json(silent=True) or {}
+    curso = str(data.get("curso", "")).strip()
+    membro = bool(data.get("membro", True))
+    if not curso:
+        return jsonify({"error": "Informe o curso do Conselho."}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT role FROM usuarios WHERE id = ?", (user_id,))
+    alvo = cursor.fetchone()
+    if not alvo or alvo["role"] != "orientador":
+        cursor.close()
+        conn.close()
+        return jsonify({"error": "Somente contas de Orientador podem participar do Conselho."}), 400
+
+    if membro:
+        cursor.execute("SELECT 1 FROM conselho_cursos WHERE orientador_id = ? AND LOWER(curso) = LOWER(?)", (user_id, curso))
+        if not cursor.fetchone():
+            cursor.execute(
+                "INSERT INTO conselho_cursos (orientador_id, curso, adicionado_por) VALUES (?, ?, ?)",
+                (user_id, curso, usuario["nome"])
+            )
+    else:
+        cursor.execute("DELETE FROM conselho_cursos WHERE orientador_id = ? AND LOWER(curso) = LOWER(?)", (user_id, curso))
+    avancar_para_desenvolvimento(cursor)
+    conn.commit()
+    cursor.close()
+    conn.close()
+    return jsonify({"message": f"Orientador incluído no Conselho do curso {curso}." if membro
+                    else f"Orientador removido do Conselho do curso {curso}."})
 
 
 @app.route("/api/usuarios", methods=["POST"])
@@ -1114,8 +1254,8 @@ def criar_projeto():
     grupo_nome = str(data.get("grupo_nome") or "").strip()
     membros = data.get("membros", [])
 
-    if not all([titulo, setor_externo, areas_atuacao, interdisciplinaridade, grupo_nome]):
-        return jsonify({"error": "Preencha título, setor externo, áreas de atuação, interdisciplinaridade, orientador(es) e nome do grupo."}), 400
+    if not all([titulo, setor_externo, areas_atuacao, grupo_nome]):
+        return jsonify({"error": "Preencha título, setor externo, áreas de atuação, orientador(es) e nome do grupo."}), 400
 
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -1231,7 +1371,7 @@ def editar_projeto(projeto_id):
     cursor.execute(
         """UPDATE projetos SET titulo=?, setor_externo=?, areas_atuacao=?, interdisciplinaridade=?, orientador_nome=?
            WHERE id=?""",
-        (data["titulo"], data["setor_externo"], data["areas_atuacao"], data["interdisciplinaridade"], novo_orientador, projeto_id)
+        (data["titulo"], data["setor_externo"], data["areas_atuacao"], str(data.get("interdisciplinaridade") or "").strip(), novo_orientador, projeto_id)
     )
 
     cursor.execute("SELECT id FROM grupos WHERE projeto_id = ?", (projeto_id,))
@@ -1430,10 +1570,14 @@ def atualizar_parecer(projeto_id):
         "por=excluded.por, atualizado_em=CURRENT_TIMESTAMP",
         (projeto_id, status, parecer, usuario["nome"])
     )
+    avancou = bool(avancar_para_desenvolvimento(cursor, projeto_id))
     conn.commit()
     cursor.close()
     conn.close()
-    return jsonify({"message": "Parecer de Ética atualizado com sucesso."})
+    msg = "Parecer de Ética atualizado com sucesso."
+    if avancou:
+        msg += " Com Ética e Conselho aprovados, o projeto entrou em Desenvolvimento."
+    return jsonify({"message": msg, "status_projeto_alterado": avancou})
 
 
 @app.route("/api/projetos/<int:projeto_id>/conselho/voto", methods=["PUT"])
@@ -1454,16 +1598,15 @@ def votar_conselho(projeto_id):
 
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT 1 FROM conselho_membros WHERE orientador_id = ?", (usuario["id"],))
-    if not cursor.fetchone():
-        cursor.close()
-        conn.close()
-        return jsonify({"error": "Você não foi incluído no Conselho. Solicite a um Coordenador ou ao Administrador."}), 403
     cursor.execute("SELECT id FROM projetos WHERE id = ?", (projeto_id,))
     if not cursor.fetchone():
         cursor.close()
         conn.close()
         return jsonify({"error": "Projeto não encontrado."}), 404
+    if usuario["id"] not in ids_conselho_do_projeto(cursor, projeto_id):
+        cursor.close()
+        conn.close()
+        return jsonify({"error": "Você não faz parte do Conselho deste projeto. Solicite a um Coordenador ou ao Administrador."}), 403
 
     if status == "PENDENTE":
         cursor.execute(
@@ -1478,10 +1621,14 @@ def votar_conselho(projeto_id):
             "comentario=excluded.comentario, atualizado_em=CURRENT_TIMESTAMP",
             (projeto_id, usuario["id"], status, comentario)
         )
+    avancou = bool(avancar_para_desenvolvimento(cursor, projeto_id))
     conn.commit()
     cursor.close()
     conn.close()
-    return jsonify({"message": "Seu voto no Conselho foi registrado."})
+    msg = "Seu voto no Conselho foi registrado."
+    if avancou:
+        msg += " Com Ética e Conselho aprovados, o projeto entrou em Desenvolvimento."
+    return jsonify({"message": msg, "status_projeto_alterado": avancou})
 
 
 # ==========================================
@@ -1537,12 +1684,12 @@ def carga_massiva_json():
                 titulo = str(p.get("titulo", "")).strip()
                 setor_externo = str(p.get("setor_externo", "Não informado")).strip()
                 areas_atuacao = str(p.get("areas_atuacao", "Geral")).strip()
-                interdisciplinaridade = str(p.get("interdisciplinaridade", "Não especificada")).strip()
+                interdisciplinaridade = str(p.get("interdisciplinaridade", "")).strip()
                 orientadores_raw = p.get("orientadores") if isinstance(p.get("orientadores"), list) else str(p.get("orientador_nome", "")).strip()
                 status = str(p.get("status", "NOVO")).strip().upper().replace(" ", "_")
                 if status not in STATUS_PROJETO or status == "DESENVOLVIMENTO":
                     status = "NOVO"
-                publicado = 1 if p.get("publicado", False) else 0
+                publicado = 0  # todo projeto novo entra como visualização interna
                 grupo_nome = str(p.get("grupo_nome", f"Grupo - {titulo[:25]}")).strip()
                 membros = p.get("membros", [])
 

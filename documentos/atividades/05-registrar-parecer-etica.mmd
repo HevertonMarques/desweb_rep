@@ -6,13 +6,16 @@ flowchart TD
   a3 --> d1{"Ator é Coordenador ou Administrador?"}
   d1 -- Não --> e1["Sistema recusa: parecer de Ética restrito à coordenação"]
   d1 -- Sim --> s1["Sistema grava o parecer, o nome de quem registrou e a data"]
-  s1 --> fim((Fim))
+  s1 --> d2{"Projeto Novo ou Pendente com Ética e Conselho aprovados?"}
+  d2 -- Sim --> s2["Sistema move o projeto para Desenvolvimento automaticamente"]
+  d2 -- Não --> fim((Fim))
+  s2 --> fim
   e1 --> fim
   classDef ator fill:#E6F1FB,stroke:#185FA5,color:#0C447C
   classDef sis fill:#F1EFE8,stroke:#5F5E5A,color:#2C2C2A
   classDef dec fill:#FAEEDA,stroke:#854F0B,color:#633806
   classDef err fill:#FCEBEB,stroke:#A32D2D,color:#791F1F
   class a1,a2,a3 ator
-  class x1,s1 sis
-  class d1 dec
+  class x1,s1,s2 sis
+  class d1,d2 dec
   class e1 err

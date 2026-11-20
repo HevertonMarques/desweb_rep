@@ -1,14 +1,14 @@
 flowchart TD
   ini(("Início")) --> a1["Ator acessa Criar Acessos / Contas"]
   a1 --> a2["Ator escolhe um orientador"]
-  a2 --> a3["Ator seleciona Incluir ou Remover do Conselho"]
+  a2 --> a3["Ator seleciona Incluir/Remover do Conselho (geral) ou Conselho de curso e escolhe o curso"]
   a3 --> d1{"Ator é Coordenador ou Administrador?"}
   d1 -- Não --> e1["Sistema recusa: sem permissão"]
   d1 -- Sim --> d2{"A conta é de Orientador?"}
   d2 -- Não --> e2["Sistema recusa: somente orientadores participam do Conselho"]
   d2 -- Sim --> d3{"Incluir?"}
-  d3 -- Sim --> s1["Sistema inclui o orientador no Conselho"]
-  d3 -- Não --> s2["Sistema remove o orientador do Conselho e deixa de contar o voto dele"]
+  d3 -- Sim --> s1["Sistema inclui o orientador no Conselho geral ou no Conselho do curso escolhido"]
+  d3 -- Não --> s2["Sistema remove o orientador do Conselho (geral ou do curso) e deixa de contar o voto dele"]
   s1 --> fim((Fim))
   s2 --> fim
   e1 --> fim

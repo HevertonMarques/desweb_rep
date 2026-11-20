@@ -2,15 +2,15 @@
 Carga massiva de projetos;X;X;;;
 Carga massiva de contas (professores e alunos);X;X;;;
 Gerenciar contas de acesso;X;X;X;;
-Definir membros do Conselho;X;X;;;
+Definir membros do Conselho (geral ou por curso);X;X;;;
 Registrar parecer de Ética;X;X;;;
-Votar no Conselho (membros incluídos);;;X;;
+Votar no Conselho e acessar Pareceres (membros incluídos);;;X;;
 Consultar projetos;X;X;X;X;X
 Consultar histórico de projetos (do aluno: somente os próprios);X;X;X;X;
 Visualizar nome completo e RA dos alunos (formulários de projeto, exportação CSV e Gerenciar Contas);X;X;X;;
 Escolher exibição do nome (Meu perfil);X;X;X;X;
 Registrar trabalho, grupo e membros (CRUD de trabalhos);X;X;X;;
-Informar áreas de atuação, interdisciplinaridade e setor externo;X;X;X;;
+Informar áreas de atuação e setor externo (interdisciplinaridade opcional);X;X;X;;
 Realizar status: todos, exceto Avaliado;X;X;X;;
 Realizar status Avaliado;X;X;;;
 Reabrir projeto Finalizado (volta a Concluído ou Desenvolvimento);X;X;;;

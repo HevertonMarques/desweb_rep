@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS projetos (
     titulo TEXT NOT NULL,
     setor_externo TEXT NOT NULL,
     areas_atuacao TEXT NOT NULL,
-    interdisciplinaridade TEXT NOT NULL,
+    interdisciplinaridade TEXT NOT NULL DEFAULT '',
     status TEXT DEFAULT 'NOVO',
     publicado INTEGER DEFAULT 0,
     orientador_nome TEXT NOT NULL,
@@ -66,6 +66,17 @@ CREATE TABLE IF NOT EXISTS conselho_membros (
     orientador_id INTEGER NOT NULL UNIQUE,
     adicionado_por TEXT DEFAULT '',
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (orientador_id) REFERENCES usuarios(id) ON DELETE CASCADE
+);
+
+-- Conselho por curso: o orientador vota só nos projetos com alunos do curso indicado
+CREATE TABLE IF NOT EXISTS conselho_cursos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    orientador_id INTEGER NOT NULL,
+    curso TEXT NOT NULL,
+    adicionado_por TEXT DEFAULT '',
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(orientador_id, curso),
     FOREIGN KEY (orientador_id) REFERENCES usuarios(id) ON DELETE CASCADE
 );
 
